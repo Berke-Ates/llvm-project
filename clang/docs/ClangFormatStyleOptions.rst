@@ -7,7 +7,7 @@
 .. raw:: html
 
       <style type="text/css">
-        .versionbadge { background-color: #1c913d; height: 20px; display: inline-block; width: 120px; text-align: center; border-radius: 5px; color: #FFFFFF; font-family: "Verdana,Geneva,DejaVu Sans,sans-serif"; }
+        .versionbadge { background-color: #1c913d; height: 20px; display: inline-block; min-width: 120px; text-align: center; border-radius: 5px; color: #FFFFFF; font-family: "Verdana,Geneva,DejaVu Sans,sans-serif"; }
       </style>
 
 .. role:: versionbadge
@@ -1828,6 +1828,41 @@ the configuration (without a prefix: ``Auto``).
       {}                   {
                            }
 
+
+.. _BracedInitializerIndentWidth:
+
+**BracedInitializerIndentWidth** (``Unsigned``) :versionbadge:`clang-format 17` :ref:`¶ <BracedInitializerIndentWidth>`
+  The number of columns to use to indent the contents of braced init lists.
+  If unset, ``ContinuationIndentWidth`` is used.
+
+  .. code-block:: c++
+
+    AlignAfterOpenBracket: AlwaysBreak
+    BracedInitializerIndentWidth: 2
+
+    void f() {
+      SomeClass c{
+        "foo",
+        "bar",
+        "baz",
+      };
+      auto s = SomeStruct{
+        .foo = "foo",
+        .bar = "bar",
+        .baz = "baz",
+      };
+      SomeArrayT a[3] = {
+        {
+          foo,
+          bar,
+        },
+        {
+          foo,
+          bar,
+        },
+        SomeArrayT{},
+      };
+    }
 
 .. _BreakAfterAttributes:
 
@@ -4782,7 +4817,8 @@ the configuration (without a prefix: ``Auto``).
 .. _SpaceBeforeJsonColon:
 
 **SpaceBeforeJsonColon** (``Boolean``) :versionbadge:`clang-format 17` :ref:`¶ <SpaceBeforeJsonColon>`
-  If ``true``, a space will be add before a JSON colon.
+  If ``true``, a space will be added before a JSON colon. For other
+  languages, e.g. JavaScript, use ``SpacesInContainerLiterals`` instead.
 
   .. code-block:: c++
 
@@ -5100,8 +5136,9 @@ the configuration (without a prefix: ``Auto``).
 .. _SpacesInContainerLiterals:
 
 **SpacesInContainerLiterals** (``Boolean``) :versionbadge:`clang-format 3.7` :ref:`¶ <SpacesInContainerLiterals>`
-  If ``true``, spaces are inserted inside container literals (e.g.
-  ObjC and Javascript array and dict literals).
+  If ``true``, spaces are inserted inside container literals (e.g.  ObjC and
+  Javascript array and dict literals). For JSON, use
+  ``SpaceBeforeJsonColon`` instead.
 
   .. code-block:: js
 

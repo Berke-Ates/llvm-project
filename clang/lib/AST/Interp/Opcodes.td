@@ -94,7 +94,7 @@ def AllTypeClass : TypeClass {
 }
 
 def ComparableTypeClass : TypeClass {
-  let Types = !listconcat(AluTypeClass.Types, [Ptr], [Float]);
+  let Types = !listconcat(AluTypeClass.Types, [Ptr], [Float], [FnPtr]);
 }
 
 class SingletonTypeClass<Type Ty> : TypeClass {
@@ -179,19 +179,16 @@ def NoRet : Opcode {}
 def Call : Opcode {
   let Args = [ArgFunction];
   let Types = [];
-  let ChangesPC = 1;
 }
 
 def CallBI : Opcode {
   let Args = [ArgFunction];
   let Types = [];
-  let ChangesPC = 1;
 }
 
 def CallPtr : Opcode {
   let Args = [];
   let Types = [];
-  let ChangesPC = 1;
 }
 
 //===----------------------------------------------------------------------===//

@@ -40,7 +40,7 @@ private:
 };
 
 /// Scope used to handle initialization methods.
-template <class Emitter> class OptionScope {
+template <class Emitter> class OptionScope final {
 public:
   /// Root constructor, compiling or discarding primitives.
   OptionScope(ByteCodeExprGen<Emitter> *Ctx, bool NewDiscardResult)
@@ -148,6 +148,17 @@ bool ByteCodeExprGen<Emitter>::VisitCastExpr(const CastExpr *CE) {
 
     // TODO: Emit this only if FromT != ToT.
     return this->emitCast(*FromT, *ToT, CE);
+  }
+
+  case CK_PointerToBoolean: {
+    // Just emit p != nullptr for this.
+    if (!this->visit(SubExpr))
+      return false;
+
+    if (!this->emitNullPtr(CE))
+      return false;
+
+    return this->emitNEPtr(CE);
   }
 
   case CK_ToVoid:
@@ -390,7 +401,7 @@ bool ByteCodeExprGen<Emitter>::VisitImplicitValueInitExpr(const ImplicitValueIni
   if (!T)
     return false;
 
-  return this->visitZeroInitializer(*T, E);
+  return this->visitZeroInitializer(E->getType(), E);
 }
 
 template <class Emitter>
@@ -929,7 +940,12 @@ bool ByteCodeExprGen<Emitter>::visitConditional(
 }
 
 template <class Emitter>
-bool ByteCodeExprGen<Emitter>::visitZeroInitializer(PrimType T, const Expr *E) {
+bool ByteCodeExprGen<Emitter>::visitZeroInitializer(QualType QT,
+                                                    const Expr *E) {
+  // FIXME: We need the QualType to get the float semantics, but that means we
+  //   classify it over and over again in array situations.
+  PrimType T = classifyPrim(QT);
+
   switch (T) {
   case PT_Bool:
     return this->emitZeroBool(E);
@@ -954,8 +970,7 @@ bool ByteCodeExprGen<Emitter>::visitZeroInitializer(PrimType T, const Expr *E) {
   case PT_FnPtr:
     return this->emitNullFnPtr(E);
   case PT_Float: {
-    return this->emitConstFloat(
-        APFloat::getZero(Ctx.getFloatSemantics(E->getType())), E);
+    return this->emitConstFloat(APFloat::getZero(Ctx.getFloatSemantics(QT)), E);
   }
   }
   llvm_unreachable("unknown primitive type");
@@ -1276,7 +1291,7 @@ bool ByteCodeExprGen<Emitter>::visitArrayInitializer(const Expr *Initializer) {
       //   since we memset our Block*s to 0 and so we have the desired value
       //   without this.
       for (size_t I = 0; I != NumElems; ++I) {
-        if (!this->emitZero(*ElemT, Initializer))
+        if (!this->visitZeroInitializer(CAT->getElementType(), Initializer))
           return false;
         if (!this->emitInitElem(*ElemT, I, Initializer))
           return false;
@@ -1562,7 +1577,11 @@ bool ByteCodeExprGen<Emitter>::visitVarDecl(const VarDecl *VD) {
   std::optional<PrimType> VarT = classify(VD->getType());
 
   if (shouldBeGloballyIndexed(VD)) {
-    std::optional<unsigned> GlobalIndex = P.getOrCreateGlobal(VD, Init);
+    // We've already seen and initialized this global.
+    if (P.getGlobal(VD))
+      return true;
+
+    std::optional<unsigned> GlobalIndex = P.createGlobal(VD, Init);
 
     if (!GlobalIndex)
       return this->bail(VD);

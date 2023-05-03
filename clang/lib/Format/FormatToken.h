@@ -37,6 +37,8 @@ namespace format {
   TYPE(BitFieldColon)                                                          \
   TYPE(BlockComment)                                                           \
   TYPE(BracedListLBrace)                                                       \
+  /* The colon at the end of a case label. */                                  \
+  TYPE(CaseLabelColon)                                                         \
   TYPE(CastRParen)                                                             \
   TYPE(ClassLBrace)                                                            \
   TYPE(CompoundRequirementLBrace)                                              \
@@ -73,8 +75,7 @@ namespace format {
   TYPE(FunctionTypeLParen)                                                     \
   /* The colons as part of a C11 _Generic selection */                         \
   TYPE(GenericSelectionColon)                                                  \
-  /* The colon at the end of a goto label or a case label. Currently only used \
-   * for Verilog. */                                                           \
+  /* The colon at the end of a goto label. */                                  \
   TYPE(GotoLabelColon)                                                         \
   TYPE(IfMacro)                                                                \
   TYPE(ImplicitStringLiteral)                                                  \
@@ -949,6 +950,7 @@ struct AdditionalKeywords {
     kw_CF_OPTIONS = &IdentTable.get("CF_OPTIONS");
     kw_NS_CLOSED_ENUM = &IdentTable.get("NS_CLOSED_ENUM");
     kw_NS_ENUM = &IdentTable.get("NS_ENUM");
+    kw_NS_ERROR_ENUM = &IdentTable.get("NS_ERROR_ENUM");
     kw_NS_OPTIONS = &IdentTable.get("NS_OPTIONS");
 
     kw_as = &IdentTable.get("as");
@@ -1334,6 +1336,7 @@ struct AdditionalKeywords {
   IdentifierInfo *kw_CF_OPTIONS;
   IdentifierInfo *kw_NS_CLOSED_ENUM;
   IdentifierInfo *kw_NS_ENUM;
+  IdentifierInfo *kw_NS_ERROR_ENUM;
   IdentifierInfo *kw_NS_OPTIONS;
   IdentifierInfo *kw___except;
   IdentifierInfo *kw___has_include;
@@ -1801,7 +1804,7 @@ struct AdditionalKeywords {
   bool isVerilogEndOfLabel(const FormatToken &Tok) const {
     const FormatToken *Next = Tok.getNextNonComment();
     // In Verilog the colon in a default label is optional.
-    return Tok.is(TT_GotoLabelColon) ||
+    return Tok.is(TT_CaseLabelColon) ||
            (Tok.is(tok::kw_default) &&
             !(Next && Next->isOneOf(tok::colon, tok::semi, kw_clocking, kw_iff,
                                     kw_input, kw_output, kw_sequence)));
