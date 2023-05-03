@@ -23,12 +23,13 @@
 #include "mlir/IR/Operation.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 
-#include <type_traits>
 #include <optional>
+#include <type_traits>
 
 namespace mlir {
 class Builder;
 class OpBuilder;
+class PatternRewriter;
 
 /// This class implements `Optional` functionality for ParseResult. We don't
 /// directly use Optional here, because it provides an implicit conversion
@@ -633,7 +634,7 @@ public:
   class Impl
       : public TraitBase<ConcreteType, OneTypedResult<ResultType>::Impl> {
   public:
-   mlir::TypedValue<ResultType> getResult() {
+    mlir::TypedValue<ResultType> getResult() {
       return cast<mlir::TypedValue<ResultType>>(
           this->getOperation()->getResult(0));
     }
@@ -1449,6 +1450,14 @@ struct Tensorizable : public TraitBase<ConcreteType, Tensorizable> {
 /// provide an easy way for scalar operations to conveniently generalize their
 /// behavior to vectors/tensors, and systematize conversion between these forms.
 bool hasElementwiseMappableTraits(Operation *op);
+
+/// This class provides APIs for ops that can be used to randomly generate MLIR
+/// code.
+template <typename ConcreteType>
+class HasGenerator : public TraitBase<ConcreteType, HasGenerator> {
+public:
+  LogicalResult generate(PatternRewriter &rewriter) const { return failure(); }
+};
 
 } // namespace OpTrait
 

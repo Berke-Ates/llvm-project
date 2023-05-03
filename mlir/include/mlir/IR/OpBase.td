@@ -2022,6 +2022,9 @@ def AttrSizedResultSegments  :
 // Op attached regions have no arguments
 def NoRegionArguments : NativeOpTrait<"NoRegionArguments">, StructuralOpTrait;
 
+// Op can be used to randomly generate MLIR code.
+def HasGenerator : NativeOpTrait<"HasGenerator">;
+
 //===----------------------------------------------------------------------===//
 // Interface definitions
 //===----------------------------------------------------------------------===//
