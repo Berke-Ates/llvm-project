@@ -201,6 +201,10 @@ void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
                            builder.getIntegerAttr(type, value));
 }
 
+void arith::ConstantOp::generate(PatternRewriter &rewriter) {
+  printf("called generate on arith::constantop");
+}
+
 void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
                                  int64_t value, Type type) {
   assert(type.isSignlessInteger() &&

@@ -1490,11 +1490,11 @@ struct Tensorizable : public TraitBase<ConcreteType, Tensorizable> {
 bool hasElementwiseMappableTraits(Operation *op);
 
 /// This class provides APIs for ops that can be used to randomly generate MLIR
-/// code.
+/// programs.
 template <typename ConcreteType>
 class HasGenerator : public TraitBase<ConcreteType, HasGenerator> {
 public:
-  LogicalResult generate(PatternRewriter &rewriter) const { return failure(); }
+  static LogicalResult generate(PatternRewriter &rewriter) { return failure(); }
 };
 
 } // namespace OpTrait
