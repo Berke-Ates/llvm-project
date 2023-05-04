@@ -1,0 +1,8 @@
+add_mlir_library(
+  MLIRSmithLib
+  MlirSmithMain.cpp
+  ADDITIONAL_HEADER_DIRS
+  ${MLIR_MAIN_INCLUDE_DIR}/mlir/Tools/mlir-smith
+  LINK_LIBS
+  PUBLIC
+  MLIRIR)
