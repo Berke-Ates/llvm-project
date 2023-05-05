@@ -201,8 +201,9 @@ void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
                            builder.getIntegerAttr(type, value));
 }
 
-void arith::ConstantOp::generate(PatternRewriter &rewriter) {
-  printf("called generate on arith::constantop");
+LogicalResult arith::ConstantOp::generate(PatternRewriter &rewriter) {
+  printf("called generate on arith::constantop\n");
+  return failure();
 }
 
 void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,

@@ -12,11 +12,27 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Tools/mlir-smith/MlirSmithMain.h"
+#include "mlir/IR/Dialect.h"
+#include "mlir/IR/DialectRegistry.h"
+#include "mlir/IR/OpDefinition.h"
+#include "mlir/IR/Operation.h"
+#include "mlir/Interfaces/GeneratorInterfaces.h"
 
 using namespace mlir;
 
 LogicalResult mlir::mlirSmithMain(int argc, char **argv,
                                   DialectRegistry &registry) {
   printf("entered main\n");
+
+  mlir::MLIRContext context(registry);
+  context.loadAllAvailableDialects();
+  for (RegisteredOperationName registeredOperationName :
+       context.getRegisteredOperations()) {
+    if (registeredOperationName.hasInterface<GeneratorInterface>()) {
+      registeredOperationName.dump();
+      printf("\n");
+    }
+  }
+
   return success();
 }

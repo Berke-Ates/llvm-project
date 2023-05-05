@@ -12,6 +12,7 @@
 include "mlir/Dialect/Arith/IR/ArithBase.td"
 include "mlir/Dialect/Arith/IR/ArithOpsInterfaces.td"
 include "mlir/Interfaces/CastInterfaces.td"
+include "mlir/Interfaces/GeneratorInterfaces.td"
 include "mlir/Interfaces/InferIntRangeInterface.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
@@ -148,10 +149,11 @@ class Arith_CompareOpOfAnyRank<string mnemonic, list<Trait> traits = []> :
 //===----------------------------------------------------------------------===//
 
 def Arith_ConstantOp : Op<Arith_Dialect, "constant",
-    [ConstantLike, Pure, HasGenerator,
+    [ConstantLike, Pure,
      DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>,
      AllTypesMatch<["value", "result"]>,
-     DeclareOpInterfaceMethods<InferIntRangeInterface>]> {
+     DeclareOpInterfaceMethods<InferIntRangeInterface>,
+     DeclareOpInterfaceMethods<GeneratorInterface>]> {
   let summary = "integer or floating point constant";
   let description = [{
     The `constant` operation produces an SSA value equal to some integer or

@@ -29,7 +29,6 @@
 namespace mlir {
 class Builder;
 class OpBuilder;
-class PatternRewriter;
 
 /// This class implements `Optional` functionality for ParseResult. We don't
 /// directly use Optional here, because it provides an implicit conversion
@@ -1488,14 +1487,6 @@ struct Tensorizable : public TraitBase<ConcreteType, Tensorizable> {
 /// provide an easy way for scalar operations to conveniently generalize their
 /// behavior to vectors/tensors, and systematize conversion between these forms.
 bool hasElementwiseMappableTraits(Operation *op);
-
-/// This class provides APIs for ops that can be used to randomly generate MLIR
-/// programs.
-template <typename ConcreteType>
-class HasGenerator : public TraitBase<ConcreteType, HasGenerator> {
-public:
-  static LogicalResult generate(PatternRewriter &rewriter) { return failure(); }
-};
 
 } // namespace OpTrait
 
