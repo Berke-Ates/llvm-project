@@ -20,18 +20,30 @@
 
 using namespace mlir;
 
+/// A simple pattern rewriter that can be constructed from a context.
+class TrivialPatternRewriter : public PatternRewriter {
+public:
+  explicit TrivialPatternRewriter(MLIRContext *context)
+      : PatternRewriter(context) {}
+};
+
 LogicalResult mlir::mlirSmithMain(int argc, char **argv,
                                   DialectRegistry &registry) {
-  printf("entered main\n");
-
-  mlir::MLIRContext context(registry);
+  MLIRContext context(registry);
   context.loadAllAvailableDialects();
-  for (RegisteredOperationName registeredOperationName :
-       context.getRegisteredOperations()) {
-    if (registeredOperationName.hasInterface<GeneratorInterface>()) {
-      registeredOperationName.dump();
-      printf("\n");
-    }
+
+  // Collect all operations usable for generation
+  llvm::SmallVector<detail::GeneratorInterfaceInterfaceTraits::Concept *>
+      available_ops;
+
+  for (RegisteredOperationName ron : context.getRegisteredOperations())
+    if (ron.hasInterface<GeneratorInterface>())
+      available_ops.push_back(ron.getInterface<GeneratorInterface>());
+
+  TrivialPatternRewriter rewriter(&context);
+
+  for (auto a : available_ops) {
+    a->generate(rewriter);
   }
 
   return success();
