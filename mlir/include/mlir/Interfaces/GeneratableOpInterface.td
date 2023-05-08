@@ -1,4 +1,4 @@
-//===- GeneratorInterfaces.td - Generator Interfaces -------*- tablegen -*-===//
+//===- GeneratableOpInterface.td - Generatable interface ---*- tablegen -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,17 +6,16 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains a set of interfaces that can be used to define information
-// related to operations usable for random MLIR program generation.
+// Defines the interface for generatable operations.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MLIR_INTERFACES_GENERATORINTERFACES
-#define MLIR_INTERFACES_GENERATORINTERFACES
+#ifndef MLIR_INTERFACES_GENERATABLEOPINTERFACE
+#define MLIR_INTERFACES_GENERATABLEOPINTERFACE
 
 include "mlir/IR/OpBase.td"
 
-def GeneratorInterface : OpInterface<"GeneratorInterface"> {
+def GeneratableOpInterface : OpInterface<"GeneratableOpInterface"> {
   let description = [{
     This interface is designed for operations that support the generation of 
     random instances with random attribute values and operand types. The purpose
@@ -33,9 +32,9 @@ def GeneratorInterface : OpInterface<"GeneratorInterface"> {
       /*desc=*/"Attempts to generate this operation at the current location",
       /*retTy=*/"::mlir::LogicalResult",
       /*methodName=*/"generate",
-      /*args=*/(ins "::mlir::PatternRewriter &":$rewriter)
+      /*args=*/(ins "::mlir::GeneratorOpBuilder &":$builder)
     >,
   ];
 }
 
-#endif // MLIR_INTERFACES_GENERATORINTERFACES
+#endif // MLIR_INTERFACES_GENERATABLEOPINTERFACE

@@ -12,7 +12,7 @@
 include "mlir/Dialect/Arith/IR/ArithBase.td"
 include "mlir/Dialect/Arith/IR/ArithOpsInterfaces.td"
 include "mlir/Interfaces/CastInterfaces.td"
-include "mlir/Interfaces/GeneratorInterfaces.td"
+include "mlir/Interfaces/GeneratableOpInterface.td"
 include "mlir/Interfaces/InferIntRangeInterface.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
@@ -153,7 +153,7 @@ def Arith_ConstantOp : Op<Arith_Dialect, "constant",
      DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>,
      AllTypesMatch<["value", "result"]>,
      DeclareOpInterfaceMethods<InferIntRangeInterface>,
-     DeclareOpInterfaceMethods<GeneratorInterface>]> {
+     DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer or floating point constant";
   let description = [{
     The `constant` operation produces an SSA value equal to some integer or

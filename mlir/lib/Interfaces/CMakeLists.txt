@@ -6,7 +6,7 @@ set(LLVM_OPTIONAL_SOURCES
     DataLayoutInterfaces.cpp
     DerivedAttributeOpInterface.cpp
     DestinationStyleOpInterface.cpp
-    GeneratorInterfaces.cpp
+    GeneratableOpInterface.cpp
     InferIntRangeInterface.cpp
     InferTypeOpInterface.cpp
     LoopLikeInterface.cpp
@@ -40,7 +40,7 @@ add_mlir_interface_library(CopyOpInterface)
 add_mlir_interface_library(DataLayoutInterfaces)
 add_mlir_interface_library(DerivedAttributeOpInterface)
 add_mlir_interface_library(DestinationStyleOpInterface)
-add_mlir_interface_library(GeneratorInterfaces)
+add_mlir_interface_library(GeneratableOpInterface)
 add_mlir_interface_library(InferIntRangeInterface)
 add_mlir_interface_library(InferTypeOpInterface)
 add_mlir_interface_library(LoopLikeInterface)

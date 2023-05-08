@@ -12,39 +12,47 @@
 //===----------------------------------------------------------------------===//
 
 #include "mlir/Tools/mlir-smith/MlirSmithMain.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/Dialect.h"
 #include "mlir/IR/DialectRegistry.h"
 #include "mlir/IR/OpDefinition.h"
 #include "mlir/IR/Operation.h"
-#include "mlir/Interfaces/GeneratorInterfaces.h"
+#include "mlir/Interfaces/GeneratableOpInterface.h"
 
 using namespace mlir;
 
-/// A simple pattern rewriter that can be constructed from a context.
-class TrivialPatternRewriter : public PatternRewriter {
-public:
-  explicit TrivialPatternRewriter(MLIRContext *context)
-      : PatternRewriter(context) {}
-};
-
 LogicalResult mlir::mlirSmithMain(int argc, char **argv,
                                   DialectRegistry &registry) {
-  MLIRContext context(registry);
-  context.loadAllAvailableDialects();
+  MLIRContext ctx(registry);
+  ctx.loadAllAvailableDialects();
 
-  // Collect all operations usable for generation
-  llvm::SmallVector<detail::GeneratorInterfaceInterfaceTraits::Concept *>
-      available_ops;
+  GeneratorOpBuilder builder(&ctx);
 
-  for (RegisteredOperationName ron : context.getRegisteredOperations())
-    if (ron.hasInterface<GeneratorInterface>())
-      available_ops.push_back(ron.getInterface<GeneratorInterface>());
+  // Create top-level module & func
+  OperationState moduleState(builder.getUnknownLoc(),
+                             ModuleOp::getOperationName());
+  ModuleOp::build(builder, moduleState);
+  ModuleOp module = cast<ModuleOp>(builder.create(moduleState));
+  builder.setInsertionPointToStart(module.getBody());
 
-  TrivialPatternRewriter rewriter(&context);
+  OperationState funcState(builder.getUnknownLoc(),
+                           func::FuncOp::getOperationName());
+  func::FuncOp::build(builder, funcState, "main",
+                      builder.getFunctionType({}, {}));
+  func::FuncOp funcOp = cast<func::FuncOp>(builder.create(funcState));
+  builder.setInsertionPointToStart(funcOp.addEntryBlock());
 
-  for (auto a : available_ops) {
-    a->generate(rewriter);
-  }
+  if (builder.generateRegion().failed())
+    return failure();
 
+  // Insert return operation
+  OperationState returnState(builder.getUnknownLoc(),
+                             func::ReturnOp::getOperationName());
+  func::ReturnOp::build(builder, returnState, {});
+  builder.create(returnState);
+
+  // Print result
+  module.print(llvm::outs());
   return success();
 }

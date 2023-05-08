@@ -201,9 +201,13 @@ void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
                            builder.getIntegerAttr(type, value));
 }
 
-LogicalResult arith::ConstantOp::generate(PatternRewriter &rewriter) {
-  printf("called generate on arith::constantop\n");
-  return failure();
+LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
+  OperationState state(builder.getUnknownLoc(),
+                       arith::ConstantOp::getOperationName());
+  arith::ConstantOp::build(builder, state, builder.getI64Type(),
+                           builder.getI64IntegerAttr(10));
+  builder.create(state);
+  return success();
 }
 
 void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
