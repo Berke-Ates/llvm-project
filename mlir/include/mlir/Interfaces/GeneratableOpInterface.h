@@ -34,6 +34,9 @@ public:
   explicit GeneratorOpBuilder(MLIRContext *ctxt);
   ~GeneratorOpBuilder();
 
+  // TODO: Add other utilities
+  // TODO: Implement config class
+
   /// Returns a random boolean.
   bool sampleBool();
 
