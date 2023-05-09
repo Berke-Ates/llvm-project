@@ -34,7 +34,34 @@ public:
   explicit GeneratorOpBuilder(MLIRContext *ctxt);
   ~GeneratorOpBuilder();
 
-  /// Generates a region until a terminator is generated (if required)
+  /// Returns a random boolean.
+  bool sampleBool();
+
+  /// Returns a random number using a normal distribution around zero.
+  int8_t sampleNumberInt8();
+
+  /// Returns a random number using a normal distribution around zero.
+  int16_t sampleNumberInt16();
+
+  /// Returns a random number using a normal distribution around zero.
+  int32_t sampleNumberInt32();
+
+  /// Returns a random number using a normal distribution around zero.
+  int64_t sampleNumberInt64();
+
+  /// Returns a random number using a normal distribution around zero.
+  float_t sampleNumberFloat32();
+
+  /// Returns a random number using a normal distribution around zero.
+  double_t sampleNumberFloat64();
+
+  /// Samples from a geometric distribution of types.
+  TypeRange sampleTypeRange();
+
+  /// Randomly chooses a generated value of the given type.
+  Value sampleValueOfType(Type t);
+
+  /// Generates a region until a terminator is generated (if required).
   LogicalResult generateRegion();
 
 private:

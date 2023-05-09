@@ -204,8 +204,9 @@ void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
 LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
   OperationState state(builder.getUnknownLoc(),
                        arith::ConstantOp::getOperationName());
+  int64_t value = builder.sampleNumberInt64();
   arith::ConstantOp::build(builder, state, builder.getI64Type(),
-                           builder.getI64IntegerAttr(10));
+                           builder.getI64IntegerAttr(value));
   builder.create(state);
   return success();
 }
