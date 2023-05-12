@@ -43,8 +43,11 @@ struct GeneratorOpBuilderImpl {
   /// Samples from a geometric distribution of types.
   TypeRange sampleTypeRange();
 
-  /// Randomly chooses a generated value of the given type.
-  Value sampleValueOfType(Type t);
+  /// Randomly chooses a generated value of the given type, if one exists.
+  llvm::Optional<Value> sampleValueOfType(Type t);
+
+  /// Randomly generates an operation with the given return type, if possible.
+  llvm::Optional<Value> generateValueOfType(Type t);
 
   /// Generates a region until a terminator is generated (if required).
   LogicalResult generateRegion();
@@ -82,6 +85,14 @@ T GeneratorOpBuilderImpl::sampleNumber() {
   } else if constexpr (std::is_floating_point<T>::value) {
     return static_cast<T>(dist(gen));
   }
+}
+
+llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
+  return llvm::None;
+}
+
+llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
+  return llvm::None;
 }
 
 LogicalResult GeneratorOpBuilderImpl::generateRegion() {
@@ -128,8 +139,12 @@ TypeRange GeneratorOpBuilder::sampleTypeRange() {
   return impl->sampleTypeRange();
 }
 
-Value GeneratorOpBuilder::sampleValueOfType(Type t) {
+llvm::Optional<Value> GeneratorOpBuilder::sampleValueOfType(Type t) {
   return impl->sampleValueOfType(t);
+}
+
+llvm::Optional<Value> GeneratorOpBuilder::generateValueOfType(Type t) {
+  return impl->generateValueOfType(t);
 }
 
 LogicalResult GeneratorOpBuilder::generateRegion() {

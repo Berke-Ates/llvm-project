@@ -61,8 +61,11 @@ public:
   /// Samples from a geometric distribution of types.
   TypeRange sampleTypeRange();
 
-  /// Randomly chooses a generated value of the given type.
-  Value sampleValueOfType(Type t);
+  /// Randomly chooses a generated value of the given type, if one exists.
+  llvm::Optional<Value> sampleValueOfType(Type t);
+
+  /// Randomly generates an operation with the given return type, if possible.
+  llvm::Optional<Value> generateValueOfType(Type t);
 
   /// Generates a region until a terminator is generated (if required).
   LogicalResult generateRegion();
