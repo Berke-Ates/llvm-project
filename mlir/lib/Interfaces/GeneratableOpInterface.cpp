@@ -26,11 +26,15 @@ struct GeneratorOpBuilderImpl {
     for (RegisteredOperationName ron : ctx->getRegisteredOperations())
       if (ron.hasInterface<GeneratableOpInterface>())
         available_ops.push_back(ron.getInterface<GeneratableOpInterface>());
+
+    // Collect all generatable types
+    for (auto op : available_ops)
+      available_types.append(op->getGeneratableTypes());
   }
 
   /// Samples from a vector of choices.
   template <typename T>
-  T sample(SmallVector<T> choices);
+  llvm::Optional<T> sample(SmallVector<T> choices);
 
   /// Returns a random boolean.
   bool sampleBool();
@@ -39,6 +43,9 @@ struct GeneratorOpBuilderImpl {
   /// function combines all specialized functions.
   template <typename T>
   T sampleNumber();
+
+  /// Randomly generates an operation.
+  llvm::SmallVector<Value> generateOperation();
 
   /// Samples from a geometric distribution of types.
   TypeRange sampleTypeRange();
@@ -58,11 +65,22 @@ struct GeneratorOpBuilderImpl {
   /// All operations that can be generated.
   llvm::SmallVector<detail::GeneratableOpInterfaceInterfaceTraits::Concept *>
       available_ops;
+
+  /// All types that can be produced by a generatable operation.
+  llvm::SmallVector<Type> available_types;
 };
 } // namespace detail
 } // namespace mlir
 
-bool sampleBool() {
+template <typename T>
+llvm::Optional<T> GeneratorOpBuilderImpl::sample(SmallVector<T> choices) {
+  if (choices.size() == 0)
+    return std::nullopt;
+  int idx = std::rand() % choices.size();
+  return choices[idx];
+}
+
+bool GeneratorOpBuilderImpl::sampleBool() {
   std::random_device rd;
   std::mt19937 gen(rd());
   // 0.5 is the probability for generating true.
@@ -87,12 +105,86 @@ T GeneratorOpBuilderImpl::sampleNumber() {
   }
 }
 
+llvm::SmallVector<Value> GeneratorOpBuilderImpl::generateOperation() {
+  if (available_ops.empty())
+    return {};
+
+  LogicalResult logicalResult = failure();
+
+  while (logicalResult.failed())
+    logicalResult = sample(available_ops).value()->generate(builder);
+
+  // Results of the last inserted operation
+  return builder.getBlock()->back().getResults();
+}
+
+TypeRange GeneratorOpBuilderImpl::sampleTypeRange() {
+  if (available_types.empty())
+    return TypeRange({});
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+
+  // Geometric distribution, p=0.5
+  std::geometric_distribution<> dist(0.5);
+  int length = dist(gen);
+
+  SmallVector<Type> types;
+  for (int i = 0; i < length; ++i)
+    types.push_back(sample(available_types).value());
+
+  return TypeRange(types);
+}
+
 llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
-  return llvm::None;
+  SmallVector<Value> possible_values;
+  SmallVector<Value> excluded_values;
+
+  Block *block = builder.getBlock();
+
+  while (block != nullptr) {
+    // Add all operations in the block of type t
+    for (Operation &op : block->getOperations())
+      for (OpResult res : op.getResults())
+        if (res.getType() == t)
+          possible_values.push_back(res);
+
+    // Move up the hierarchy
+    Operation *parent = block->getParentOp();
+    block = nullptr;
+
+    if (parent != nullptr) {
+      for (OpResult res : parent->getResults())
+        excluded_values.push_back(res);
+
+      block = parent->getBlock();
+    }
+  }
+
+  for (Value val : excluded_values)
+    if (std::find(possible_values.begin(), possible_values.end(), val) !=
+        possible_values.end())
+      possible_values.erase(&val);
+
+  return sample(possible_values);
 }
 
 llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
-  return llvm::None;
+  if (std::find(available_types.begin(), available_types.end(), t) !=
+      available_types.end())
+    return std::nullopt;
+
+  while (true) {
+    SmallVector<Value> values = generateOperation();
+    if (values.empty())
+      return std::nullopt;
+
+    for (Value value : values)
+      if (value.getType() == t)
+        return value;
+  }
+
+  return std::nullopt;
 }
 
 LogicalResult GeneratorOpBuilderImpl::generateRegion() {

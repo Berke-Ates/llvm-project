@@ -29,10 +29,15 @@ def GeneratableOpInterface : OpInterface<"GeneratableOpInterface"> {
 
   let methods = [
     StaticInterfaceMethod<
-      /*desc=*/"Attempts to generate this operation at the current location",
+      /*desc=*/"Attempts to generate this operation at the current location.",
       /*retTy=*/"::mlir::LogicalResult",
       /*methodName=*/"generate",
       /*args=*/(ins "::mlir::GeneratorOpBuilder &":$builder)
+    >,
+    StaticInterfaceMethod<
+      /*desc=*/"Returns a list of types that this operation can generate.",
+      /*retTy=*/"::llvm::SmallVector<::mlir::Type>",
+      /*methodName=*/"getGeneratableTypes"
     >,
   ];
 }

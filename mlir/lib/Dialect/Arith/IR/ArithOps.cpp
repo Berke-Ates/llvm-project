@@ -211,6 +211,10 @@ LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
   return success();
 }
 
+llvm::SmallVector<Type> arith::ConstantOp::getGeneratableTypes() {
+  return {mlir::IntegerType(), mlir::FloatType(), mlir::IndexType()};
+}
+
 void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
                                  int64_t value, Type type) {
   assert(type.isSignlessInteger() &&
