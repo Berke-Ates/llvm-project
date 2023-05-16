@@ -14,9 +14,11 @@ include "mlir/IR/OpAsmInterface.td"
 include "mlir/IR/SymbolInterfaces.td"
 include "mlir/Interfaces/CallInterfaces.td"
 include "mlir/Interfaces/ControlFlowInterfaces.td"
+include "mlir/Interfaces/GeneratableOpInterface.td"
 include "mlir/IR/FunctionInterfaces.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
+
 
 def Func_Dialect : Dialect {
   let name = "func";
@@ -342,8 +344,9 @@ def FuncOp : Func_Op<"func", [
 // ReturnOp
 //===----------------------------------------------------------------------===//
 
-def ReturnOp : Func_Op<"return", [Pure, HasParent<"FuncOp">,
-                                MemRefsNormalizable, ReturnLike, Terminator]> {
+def ReturnOp : Func_Op<"return", 
+    [Pure, HasParent<"FuncOp">, MemRefsNormalizable, ReturnLike, Terminator, 
+     DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "Function return operation";
   let description = [{
     The `func.return` operation represents a return operation within a function.

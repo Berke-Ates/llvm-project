@@ -29,7 +29,7 @@ struct GeneratorOpBuilderImpl {
 
     // Collect all generatable types
     for (auto op : available_ops)
-      available_types.append(op->getGeneratableTypes());
+      available_types.append(op->getGeneratableTypes(ctx));
   }
 
   /// Samples from a vector of choices.
@@ -45,7 +45,7 @@ struct GeneratorOpBuilderImpl {
   T sampleNumber();
 
   /// Randomly generates an operation.
-  llvm::SmallVector<Value> generateOperation();
+  llvm::Optional<llvm::SmallVector<Value>> generateOperation();
 
   /// Samples from a geometric distribution of types.
   TypeRange sampleTypeRange();
@@ -57,7 +57,7 @@ struct GeneratorOpBuilderImpl {
   llvm::Optional<Value> generateValueOfType(Type t);
 
   /// Generates a region until a terminator is generated (if required).
-  LogicalResult generateRegion();
+  LogicalResult generateRegion(bool requiresTerminator);
 
   /// A reference to the builder to pass to the generation functions.
   GeneratorOpBuilder &builder;
@@ -76,8 +76,12 @@ template <typename T>
 llvm::Optional<T> GeneratorOpBuilderImpl::sample(SmallVector<T> choices) {
   if (choices.size() == 0)
     return std::nullopt;
-  int idx = std::rand() % choices.size();
-  return choices[idx];
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+
+  std::uniform_int_distribution<int> dist(0, choices.size() - 1);
+  return choices[dist(gen)];
 }
 
 bool GeneratorOpBuilderImpl::sampleBool() {
@@ -105,9 +109,10 @@ T GeneratorOpBuilderImpl::sampleNumber() {
   }
 }
 
-llvm::SmallVector<Value> GeneratorOpBuilderImpl::generateOperation() {
+llvm::Optional<llvm::SmallVector<Value>>
+GeneratorOpBuilderImpl::generateOperation() {
   if (available_ops.empty())
-    return {};
+    return std::nullopt;
 
   LogicalResult logicalResult = failure();
 
@@ -120,7 +125,7 @@ llvm::SmallVector<Value> GeneratorOpBuilderImpl::generateOperation() {
 
 TypeRange GeneratorOpBuilderImpl::sampleTypeRange() {
   if (available_types.empty())
-    return TypeRange({});
+    return {};
 
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -133,7 +138,7 @@ TypeRange GeneratorOpBuilderImpl::sampleTypeRange() {
   for (int i = 0; i < length; ++i)
     types.push_back(sample(available_types).value());
 
-  return TypeRange(types);
+  return types;
 }
 
 llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
@@ -175,20 +180,40 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
     return std::nullopt;
 
   while (true) {
-    SmallVector<Value> values = generateOperation();
-    if (values.empty())
+    llvm::Optional<SmallVector<Value>> values = generateOperation();
+    if (!values.has_value())
       return std::nullopt;
 
-    for (Value value : values)
+    SmallVector<Value> possible_values;
+
+    for (Value value : values.value())
       if (value.getType() == t)
-        return value;
+        possible_values.push_back(value);
+
+    if (!possible_values.empty())
+      return sample(possible_values);
   }
 
   return std::nullopt;
 }
 
-LogicalResult GeneratorOpBuilderImpl::generateRegion() {
-  available_ops[0]->generate(builder);
+LogicalResult GeneratorOpBuilderImpl::generateRegion(bool requiresTerminator) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  // 0.5 is the probability for generating true.
+  std::bernoulli_distribution dist(0.5);
+
+  Operation *lastOp = nullptr;
+  while (lastOp == nullptr ||
+         (requiresTerminator && !lastOp->hasTrait<OpTrait::IsTerminator>()) ||
+         (!requiresTerminator && dist(gen))) {
+    llvm::Optional<SmallVector<Value>> values = generateOperation();
+    if (!values.has_value())
+      return failure();
+
+    lastOp = &builder.getBlock()->back();
+  }
+
   return success();
 }
 
@@ -227,6 +252,11 @@ double_t GeneratorOpBuilder::sampleNumberFloat64() {
   return impl->sampleNumber<double_t>();
 }
 
+llvm::Optional<llvm::SmallVector<Value>>
+GeneratorOpBuilder::generateOperation() {
+  return impl->generateOperation();
+}
+
 TypeRange GeneratorOpBuilder::sampleTypeRange() {
   return impl->sampleTypeRange();
 }
@@ -239,8 +269,8 @@ llvm::Optional<Value> GeneratorOpBuilder::generateValueOfType(Type t) {
   return impl->generateValueOfType(t);
 }
 
-LogicalResult GeneratorOpBuilder::generateRegion() {
-  return impl->generateRegion();
+LogicalResult GeneratorOpBuilder::generateRegion(bool requiresTerminator) {
+  return impl->generateRegion(requiresTerminator);
 }
 
 //===----------------------------------------------------------------------===//

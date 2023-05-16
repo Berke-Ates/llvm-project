@@ -58,6 +58,9 @@ public:
   /// Returns a random number using a normal distribution around zero.
   double_t sampleNumberFloat64();
 
+  /// Randomly generates an operation.
+  llvm::Optional<llvm::SmallVector<Value>> generateOperation();
+
   /// Samples from a geometric distribution of types.
   TypeRange sampleTypeRange();
 
@@ -68,7 +71,7 @@ public:
   llvm::Optional<Value> generateValueOfType(Type t);
 
   /// Generates a region until a terminator is generated (if required).
-  LogicalResult generateRegion();
+  LogicalResult generateRegion(bool requiresTerminator);
 
 private:
   std::unique_ptr<detail::GeneratorOpBuilderImpl> impl;

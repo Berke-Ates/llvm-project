@@ -211,8 +211,9 @@ LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
   return success();
 }
 
-llvm::SmallVector<Type> arith::ConstantOp::getGeneratableTypes() {
-  return {mlir::IntegerType(), mlir::FloatType(), mlir::IndexType()};
+llvm::SmallVector<Type>
+arith::ConstantOp::getGeneratableTypes(MLIRContext *ctx) {
+  return {IntegerType::get(ctx, 64)};
 }
 
 void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,

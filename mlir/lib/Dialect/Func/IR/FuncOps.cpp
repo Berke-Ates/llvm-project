@@ -199,9 +199,7 @@ LogicalResult ConstantOp::verify() {
   return success();
 }
 
-OpFoldResult ConstantOp::fold(FoldAdaptor adaptor) {
-  return getValueAttr();
-}
+OpFoldResult ConstantOp::fold(FoldAdaptor adaptor) { return getValueAttr(); }
 
 void ConstantOp::getAsmResultNames(
     function_ref<void(Value, StringRef)> setNameFn) {
@@ -362,6 +360,37 @@ LogicalResult ReturnOp::verify() {
                          << " in function @" << function.getName();
 
   return success();
+}
+
+LogicalResult ReturnOp::generate(GeneratorOpBuilder &builder) {
+  Block *block = builder.getBlock();
+  if (block == nullptr)
+    return failure();
+
+  Operation *parent = block->getParentOp();
+  if (parent == nullptr || !isa<FuncOp>(parent))
+    return failure();
+
+  FuncOp funcOp = cast<FuncOp>(parent);
+
+  SmallVector<Value> results;
+  for (Type t : funcOp.getFunctionType().getResults()) {
+    Optional<Value> sampleValue = builder.sampleValueOfType(t);
+    if (!sampleValue.has_value())
+      return failure();
+
+    results.push_back(sampleValue.value());
+  }
+
+  OperationState state(builder.getUnknownLoc(), ReturnOp::getOperationName());
+
+  ReturnOp::build(builder, state, results);
+  builder.create(state);
+  return success();
+}
+
+llvm::SmallVector<Type> ReturnOp::getGeneratableTypes(MLIRContext *ctx) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//

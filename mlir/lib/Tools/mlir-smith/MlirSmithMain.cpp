@@ -30,31 +30,22 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   ctx.loadAllAvailableDialects();
 
   GeneratorOpBuilder builder(&ctx);
+  Location loc = builder.getUnknownLoc();
 
   // Create top-level module & func
-  OperationState moduleState(builder.getUnknownLoc(),
-                             ModuleOp::getOperationName());
+  OperationState moduleState(loc, ModuleOp::getOperationName());
   ModuleOp::build(builder, moduleState);
   ModuleOp module = cast<ModuleOp>(builder.create(moduleState));
   builder.setInsertionPointToStart(module.getBody());
 
-  // FIXME: Generate return types
-  OperationState funcState(builder.getUnknownLoc(),
-                           func::FuncOp::getOperationName());
-  func::FuncOp::build(builder, funcState, "main",
-                      builder.getFunctionType({}, {}));
+  OperationState funcState(loc, func::FuncOp::getOperationName());
+  FunctionType retType = builder.getFunctionType({}, builder.sampleTypeRange());
+  func::FuncOp::build(builder, funcState, "main", retType);
   func::FuncOp funcOp = cast<func::FuncOp>(builder.create(funcState));
   builder.setInsertionPointToStart(funcOp.addEntryBlock());
 
-  if (builder.generateRegion().failed())
+  if (builder.generateRegion(/*requiresTerminator=*/true).failed())
     return failure();
-
-  // Insert return operation
-  // FIXME: Should choose types to fit function signature
-  OperationState returnState(builder.getUnknownLoc(),
-                             func::ReturnOp::getOperationName());
-  func::ReturnOp::build(builder, returnState, {});
-  builder.create(returnState);
 
   // Print result
   module.print(llvm::outs());

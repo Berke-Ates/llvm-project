@@ -37,7 +37,8 @@ def GeneratableOpInterface : OpInterface<"GeneratableOpInterface"> {
     StaticInterfaceMethod<
       /*desc=*/"Returns a list of types that this operation can generate.",
       /*retTy=*/"::llvm::SmallVector<::mlir::Type>",
-      /*methodName=*/"getGeneratableTypes"
+      /*methodName=*/"getGeneratableTypes",
+      /*args=*/(ins "::mlir::MLIRContext *":$ctx)
     >,
   ];
 }
