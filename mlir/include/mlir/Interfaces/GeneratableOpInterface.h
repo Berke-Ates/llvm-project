@@ -19,7 +19,15 @@
 namespace mlir {
 
 //===----------------------------------------------------------------------===//
-// Generation OpBuilder
+// Configuration options for the generator
+//===----------------------------------------------------------------------===//
+
+struct GeneratorOpBuilderConfig {
+  // TODO: Implement config struct
+};
+
+//===----------------------------------------------------------------------===//
+// OpBuilder with utilities for IR generation
 //===----------------------------------------------------------------------===//
 
 namespace detail {
@@ -33,8 +41,6 @@ class GeneratorOpBuilder final : public OpBuilder {
 public:
   explicit GeneratorOpBuilder(MLIRContext *ctxt);
   ~GeneratorOpBuilder();
-
-  // TODO: Implement config class
 
   /// Returns a random number between 0 and max (inclusive) using uniform
   /// distribution.

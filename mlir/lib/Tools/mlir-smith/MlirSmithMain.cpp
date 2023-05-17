@@ -14,25 +14,62 @@
 #include "mlir/Tools/mlir-smith/MlirSmithMain.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/IR/BuiltinOps.h"
-#include "mlir/IR/Dialect.h"
-#include "mlir/IR/DialectRegistry.h"
-#include "mlir/IR/OpDefinition.h"
-#include "mlir/IR/Operation.h"
+#include "mlir/IR/Location.h"
+#include "mlir/IR/MLIRContext.h"
 #include "mlir/Interfaces/GeneratableOpInterface.h"
+#include "mlir/Support/FileUtilities.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/ToolOutputFile.h"
 
 using namespace mlir;
+using namespace llvm;
 
 LogicalResult mlir::mlirSmithMain(int argc, char **argv,
                                   DialectRegistry &registry) {
-  // TODO: Implement CLI arguments
-  // TODO: Load config file
+  static cl::OptionCategory mlirSmithCategory("mlir-smith options");
+
+  static cl::opt<std::string> outputFilename(
+      "o", cl::desc("Output filename"), cl::value_desc("filename"),
+      cl::init("-"), cl::cat(mlirSmithCategory));
+
+  static cl::opt<std::string> configFilename(
+      "c", cl::desc("Config filename"), cl::value_desc("filename"),
+      cl::Optional, cl::cat(mlirSmithCategory));
+
+  cl::HideUnrelatedOptions(mlirSmithCategory);
+  InitLLVM y(argc, argv);
+  cl::ParseCommandLineOptions(argc, argv, "MLIR generation tool");
+
+  // Set up the output file.
+  std::string errorMessage;
+  auto output = openOutputFile(outputFilename, &errorMessage);
+  if (!output) {
+    llvm::errs() << errorMessage << "\n";
+    return failure();
+  }
+
+  // Load configuration
+  if (!configFilename.empty()) {
+    std::string configFile = configFilename.getValue();
+    auto config = openInputFile(configFile, &errorMessage);
+    if (!config) {
+      llvm::errs() << errorMessage << "\n";
+      return failure();
+    }
+
+    // TODO: Load config file and setup configuration
+  }
+
+  // Load dialects
   MLIRContext ctx(registry);
   ctx.loadAllAvailableDialects();
 
   GeneratorOpBuilder builder(&ctx);
   Location loc = builder.getUnknownLoc();
 
-  // Create top-level module & func
+  // Create top-level module and main function.
   OperationState moduleState(loc, ModuleOp::getOperationName());
   ModuleOp::build(builder, moduleState);
   ModuleOp module = cast<ModuleOp>(builder.create(moduleState));
@@ -44,10 +81,13 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   func::FuncOp funcOp = cast<func::FuncOp>(builder.create(funcState));
   builder.setInsertionPointToStart(funcOp.addEntryBlock());
 
+  // Generate main function body.
   if (builder.generateRegion(/*requiresTerminator=*/true).failed())
     return failure();
 
-  // Print result
-  module.print(llvm::outs());
+  module.print(output->os());
+
+  // Keep the output file if the generation was successful.
+  output->keep();
   return success();
 }
