@@ -35,7 +35,7 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
       cl::init("-"), cl::cat(mlirSmithCategory));
 
   static cl::opt<std::string> configFilename(
-      "c", cl::desc("Config filename"), cl::value_desc("filename"),
+      "f", cl::desc("Config filename"), cl::value_desc("filename"),
       cl::Optional, cl::cat(mlirSmithCategory));
 
   cl::HideUnrelatedOptions(mlirSmithCategory);
@@ -51,22 +51,23 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   }
 
   // Load configuration
+  GeneratorOpBuilderConfig config;
   if (!configFilename.empty()) {
-    std::string configFile = configFilename.getValue();
-    auto config = openInputFile(configFile, &errorMessage);
-    if (!config) {
+    auto configFile = openInputFile(configFilename.getValue(), &errorMessage);
+    if (!configFile) {
       llvm::errs() << errorMessage << "\n";
       return failure();
     }
 
     // TODO: Load config file and setup configuration
+    config.loadFromFile();
   }
 
   // Load dialects
   MLIRContext ctx(registry);
   ctx.loadAllAvailableDialects();
 
-  GeneratorOpBuilder builder(&ctx);
+  GeneratorOpBuilder builder(&ctx, config);
   Location loc = builder.getUnknownLoc();
 
   // Create top-level module and main function.

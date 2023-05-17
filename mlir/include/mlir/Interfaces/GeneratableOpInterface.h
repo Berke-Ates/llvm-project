@@ -24,6 +24,9 @@ namespace mlir {
 
 struct GeneratorOpBuilderConfig {
   // TODO: Implement config struct
+
+  void loadFromFile() {}
+  void dumpConfig(raw_ostream &os) {}
 };
 
 //===----------------------------------------------------------------------===//
@@ -39,7 +42,8 @@ struct GeneratorOpBuilderImpl;
 /// structures and to sample from a configured distribution.
 class GeneratorOpBuilder final : public OpBuilder {
 public:
-  explicit GeneratorOpBuilder(MLIRContext *ctxt);
+  explicit GeneratorOpBuilder(MLIRContext *ctxt,
+                              GeneratorOpBuilderConfig generatorConfig);
   ~GeneratorOpBuilder();
 
   /// Returns a random number between 0 and max (inclusive) using uniform
