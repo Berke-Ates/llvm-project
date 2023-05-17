@@ -34,8 +34,11 @@ public:
   explicit GeneratorOpBuilder(MLIRContext *ctxt);
   ~GeneratorOpBuilder();
 
-  // TODO: Add other utilities
   // TODO: Implement config class
+
+  /// Returns a random number between 0 and max (inclusive) using uniform
+  /// distribution.
+  unsigned sampleUniform(unsigned max);
 
   /// Returns a random boolean.
   bool sampleBool();
@@ -53,10 +56,10 @@ public:
   int64_t sampleNumberInt64();
 
   /// Returns a random number using a normal distribution around zero.
-  float_t sampleNumberFloat32();
+  float_t sampleNumberFloat();
 
   /// Returns a random number using a normal distribution around zero.
-  double_t sampleNumberFloat64();
+  double_t sampleNumberDouble();
 
   /// Randomly generates an operation.
   llvm::Optional<llvm::SmallVector<Value>> generateOperation();

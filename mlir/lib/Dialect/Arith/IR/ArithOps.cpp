@@ -204,16 +204,64 @@ void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
 LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
   OperationState state(builder.getUnknownLoc(),
                        arith::ConstantOp::getOperationName());
-  int64_t value = builder.sampleNumberInt64();
-  arith::ConstantOp::build(builder, state, builder.getI64Type(),
-                           builder.getI64IntegerAttr(value));
+  Type result;
+  TypedAttr value;
+
+  switch (builder.sampleUniform(8)) {
+  case 0:
+    result = builder.getI1Type();
+    value = builder.getBoolAttr(builder.sampleBool());
+    break;
+  case 1:
+    result = builder.getIndexType();
+    value = builder.getIndexAttr(builder.sampleNumberInt64());
+    break;
+  case 2:
+    result = builder.getI8Type();
+    value = builder.getI8IntegerAttr(builder.sampleNumberInt8());
+    break;
+  case 3:
+    result = builder.getI16Type();
+    value = builder.getI16IntegerAttr(builder.sampleNumberInt16());
+    break;
+  case 4:
+    result = builder.getI32Type();
+    value = builder.getI32IntegerAttr(builder.sampleNumberInt32());
+    break;
+  case 5:
+    result = builder.getI64Type();
+    value = builder.getI64IntegerAttr(builder.sampleNumberInt64());
+    break;
+  case 6:
+    result = builder.getF16Type();
+    value = builder.getF16FloatAttr(builder.sampleNumberFloat());
+    break;
+  case 7:
+    result = builder.getF32Type();
+    value = builder.getF32FloatAttr(builder.sampleNumberFloat());
+    break;
+  case 8:
+    result = builder.getF64Type();
+    value = builder.getF64FloatAttr(builder.sampleNumberDouble());
+    break;
+  default:
+    result = builder.getI64Type();
+    value = builder.getI64IntegerAttr(builder.sampleNumberInt64());
+    break;
+  }
+
+  arith::ConstantOp::build(builder, state, result, value);
   builder.create(state);
   return success();
 }
 
 llvm::SmallVector<Type>
 arith::ConstantOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IntegerType::get(ctx, 64)};
+  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
+          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
+          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64),
+          Float16Type::get(ctx),     Float32Type::get(ctx),
+          Float64Type::get(ctx)};
 }
 
 void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,

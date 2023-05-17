@@ -32,6 +32,10 @@ struct GeneratorOpBuilderImpl {
       available_types.append(op->getGeneratableTypes(ctx));
   }
 
+  /// Returns a random number between 0 and max (inclusive) using uniform
+  /// distribution.
+  unsigned sampleUniform(unsigned max);
+
   /// Samples from a vector of choices.
   template <typename T>
   llvm::Optional<T> sample(SmallVector<T> choices);
@@ -71,6 +75,13 @@ struct GeneratorOpBuilderImpl {
 };
 } // namespace detail
 } // namespace mlir
+
+unsigned GeneratorOpBuilderImpl::sampleUniform(unsigned max) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<unsigned> dist(0, max);
+  return dist(gen);
+}
 
 template <typename T>
 llvm::Optional<T> GeneratorOpBuilderImpl::sample(SmallVector<T> choices) {
@@ -226,6 +237,10 @@ GeneratorOpBuilder::GeneratorOpBuilder(MLIRContext *ctx)
 
 GeneratorOpBuilder::~GeneratorOpBuilder() = default;
 
+unsigned GeneratorOpBuilder::sampleUniform(unsigned max) {
+  return impl->sampleUniform(max);
+}
+
 bool GeneratorOpBuilder::sampleBool() { return impl->sampleBool(); }
 
 int8_t GeneratorOpBuilder::sampleNumberInt8() {
@@ -244,11 +259,11 @@ int64_t GeneratorOpBuilder::sampleNumberInt64() {
   return impl->sampleNumber<int64_t>();
 }
 
-float_t GeneratorOpBuilder::sampleNumberFloat32() {
+float_t GeneratorOpBuilder::sampleNumberFloat() {
   return impl->sampleNumber<float_t>();
 }
 
-double_t GeneratorOpBuilder::sampleNumberFloat64() {
+double_t GeneratorOpBuilder::sampleNumberDouble() {
   return impl->sampleNumber<double_t>();
 }
 
