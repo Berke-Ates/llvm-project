@@ -38,6 +38,10 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
       "f", cl::desc("Config filename"), cl::value_desc("filename"),
       cl::Optional, cl::cat(mlirSmithCategory));
 
+  static cl::opt<bool> shouldDumpConfig("d", cl::desc("Dump config"),
+                                        cl::init(false),
+                                        cl::cat(mlirSmithCategory));
+
   cl::HideUnrelatedOptions(mlirSmithCategory);
   InitLLVM y(argc, argv);
   cl::ParseCommandLineOptions(argc, argv, "MLIR generation tool");
@@ -59,8 +63,18 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
       return failure();
     }
 
-    // TODO: Load config file and setup configuration
-    config.loadFromFile();
+    if (config.loadFromFileContent(configFile->getBuffer(), &errorMessage)
+            .failed()) {
+      llvm::errs() << errorMessage << "\n";
+      return failure();
+    }
+  }
+
+  // Dump config
+  if (shouldDumpConfig) {
+    config.dumpConfig(output->os());
+    output->keep();
+    return success();
   }
 
   // Load dialects

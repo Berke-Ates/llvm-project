@@ -25,7 +25,33 @@ namespace mlir {
 struct GeneratorOpBuilderConfig {
   // TODO: Implement config struct
 
-  void loadFromFile() {}
+  LogicalResult
+  loadFromFileContent(StringRef configFileContent,
+                      std::string *errorMessage = (std::string *)nullptr) {
+    std::istringstream input(configFileContent.str());
+    std::unordered_map<std::string, int> keyValuePairs;
+    std::string line;
+    unsigned lineNr = 0;
+
+    while (std::getline(input, line)) {
+      std::istringstream lineStream(line);
+      std::string key;
+      char equalsSign;
+      int value;
+      lineNr++;
+
+      if (lineStream >> key >> equalsSign >> value && equalsSign == '=') {
+        keyValuePairs[key] = value;
+      } else {
+        if (errorMessage)
+          *errorMessage =
+              "failed to parse config file at line " + std::to_string(lineNr);
+        return failure();
+      }
+    }
+
+    return success();
+  }
   void dumpConfig(raw_ostream &os) {}
 };
 
