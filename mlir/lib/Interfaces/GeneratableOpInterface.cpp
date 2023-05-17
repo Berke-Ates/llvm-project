@@ -30,6 +30,10 @@ struct GeneratorOpBuilderImpl {
     // Collect all generatable types
     for (auto op : available_ops)
       available_types.append(op->getGeneratableTypes(ctx));
+
+    // Setup random number generator
+    std::random_device random_device;
+    rng_gen = std::mt19937(random_device());
   }
 
   /// Returns a random number between 0 and max (inclusive) using uniform
@@ -63,6 +67,9 @@ struct GeneratorOpBuilderImpl {
   /// Generates a region until a terminator is generated (if required).
   LogicalResult generateRegion(bool requiresTerminator);
 
+  /// Random number generator.
+  std::mt19937 rng_gen;
+
   /// A reference to the builder to pass to the generation functions.
   GeneratorOpBuilder &builder;
 
@@ -77,10 +84,8 @@ struct GeneratorOpBuilderImpl {
 } // namespace mlir
 
 unsigned GeneratorOpBuilderImpl::sampleUniform(unsigned max) {
-  std::random_device rd;
-  std::mt19937 gen(rd());
   std::uniform_int_distribution<unsigned> dist(0, max);
-  return dist(gen);
+  return dist(rng_gen);
 }
 
 template <typename T>
@@ -88,35 +93,26 @@ llvm::Optional<T> GeneratorOpBuilderImpl::sample(SmallVector<T> choices) {
   if (choices.size() == 0)
     return std::nullopt;
 
-  std::random_device rd;
-  std::mt19937 gen(rd());
-
   std::uniform_int_distribution<int> dist(0, choices.size() - 1);
-  return choices[dist(gen)];
+  return choices[dist(rng_gen)];
 }
 
 bool GeneratorOpBuilderImpl::sampleBool() {
-  std::random_device rd;
-  std::mt19937 gen(rd());
   // 0.5 is the probability for generating true.
   std::bernoulli_distribution dist(0.5);
-  return dist(gen);
+  return dist(rng_gen);
 }
 
 template <typename T>
 T GeneratorOpBuilderImpl::sampleNumber() {
   static_assert(std::is_arithmetic<T>::value, "Numeric type required");
-
-  std::random_device rd;
-  std::mt19937 gen(rd());
-
   // Normal distribution, mean=0, stddev=1
   std::normal_distribution<> dist(0, 1);
 
   if constexpr (std::is_integral<T>::value) {
-    return static_cast<T>(std::round(dist(gen)));
+    return static_cast<T>(std::round(dist(rng_gen)));
   } else if constexpr (std::is_floating_point<T>::value) {
-    return static_cast<T>(dist(gen));
+    return static_cast<T>(dist(rng_gen));
   }
 }
 
@@ -138,12 +134,9 @@ TypeRange GeneratorOpBuilderImpl::sampleTypeRange() {
   if (available_types.empty())
     return {};
 
-  std::random_device rd;
-  std::mt19937 gen(rd());
-
   // Geometric distribution, p=0.5
   std::geometric_distribution<> dist(0.5);
-  int length = dist(gen);
+  int length = dist(rng_gen);
 
   SmallVector<Type> types;
   for (int i = 0; i < length; ++i)
@@ -209,15 +202,13 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
 }
 
 LogicalResult GeneratorOpBuilderImpl::generateRegion(bool requiresTerminator) {
-  std::random_device rd;
-  std::mt19937 gen(rd());
   // 0.5 is the probability for generating true.
   std::bernoulli_distribution dist(0.5);
 
   Operation *lastOp = nullptr;
   while (lastOp == nullptr ||
          (requiresTerminator && !lastOp->hasTrait<OpTrait::IsTerminator>()) ||
-         (!requiresTerminator && dist(gen))) {
+         (!requiresTerminator && dist(rng_gen))) {
     llvm::Optional<SmallVector<Value>> values = generateOperation();
     if (!values.has_value())
       return failure();
