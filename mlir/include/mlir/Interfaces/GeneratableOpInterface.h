@@ -43,6 +43,9 @@ public:
   LogicalResult
   loadFromFileContent(StringRef configFileContent,
                       std::string *errorMessage = (std::string *)nullptr) {
+    // Clear previous default values
+    OpProbs = {};
+
     std::istringstream input(configFileContent.str());
     std::string line;
     unsigned lineNr = 0;
@@ -82,7 +85,7 @@ public:
 
     for (RegisteredOperationName ron : ctx->getRegisteredOperations())
       if (ron.hasInterface<GeneratableOpInterface>())
-        OpProbs[ron.getStringRef()] = 1;
+        OpProbs[ron.getStringRef()] = DefaultProb;
   }
 
   void dumpConfig(raw_ostream &os) {
