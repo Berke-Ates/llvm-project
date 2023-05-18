@@ -332,7 +332,7 @@ LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
   Type resultType;
 
   // Sample output type and sample/generate types
-  switch (builder.sampleUniform(8)) {
+  switch (builder.sampleUniform(5)) {
   case 0:
     resultType = builder.getI1Type();
     break;
@@ -350,15 +350,6 @@ LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
     break;
   case 5:
     resultType = builder.getI64Type();
-    break;
-  case 6:
-    resultType = builder.getF16Type();
-    break;
-  case 7:
-    resultType = builder.getF32Type();
-    break;
-  case 8:
-    resultType = builder.getF64Type();
     break;
   default:
     resultType = builder.getI64Type();
@@ -379,9 +370,7 @@ LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type> arith::AddIOp::getGeneratableTypes(MLIRContext *ctx) {
   return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
           IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64),
-          Float16Type::get(ctx),     Float32Type::get(ctx),
-          Float64Type::get(ctx)};
+          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
 }
 
 void arith::AddIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
