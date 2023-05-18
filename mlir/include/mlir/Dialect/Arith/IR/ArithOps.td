@@ -230,6 +230,7 @@ def Arith_AddIOp : Arith_TotalIntBinaryOp<"addi", [Commutative,
 //===----------------------------------------------------------------------===//
 
 def Arith_AddUIExtendedOp : Arith_Op<"addui_extended", [Pure, Commutative,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>,
     AllTypesMatch<["lhs", "rhs", "sum"]>]> {
   let summary = [{
     extended unsigned integer addition operation returning sum and overflow bit
@@ -280,7 +281,8 @@ def Arith_AddUIExtendedOp : Arith_Op<"addui_extended", [Pure, Commutative,
 // SubIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_SubIOp : Arith_TotalIntBinaryOp<"subi"> {
+def Arith_SubIOp : Arith_TotalIntBinaryOp<"subi", 
+  [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer subtraction operation";
   let hasFolder = 1;
   let hasCanonicalizer = 1;
@@ -290,7 +292,8 @@ def Arith_SubIOp : Arith_TotalIntBinaryOp<"subi"> {
 // MulIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_MulIOp : Arith_TotalIntBinaryOp<"muli", [Commutative]> {
+def Arith_MulIOp : Arith_TotalIntBinaryOp<"muli", [Commutative,
+  DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer multiplication operation";
   let hasFolder = 1;
 }

@@ -432,6 +432,53 @@ arith::AddUIExtendedOp::fold(FoldAdaptor adaptor,
   return failure();
 }
 
+LogicalResult arith::AddUIExtendedOp::generate(GeneratorOpBuilder &builder) {
+  OperationState state(builder.getUnknownLoc(),
+                       arith::AddUIExtendedOp::getOperationName());
+  Type resultType;
+
+  // Sample output type and sample/generate types
+  switch (builder.sampleUniform(5)) {
+  case 0:
+    resultType = builder.getI1Type();
+    break;
+  case 1:
+    resultType = builder.getIndexType();
+    break;
+  case 2:
+    resultType = builder.getI8Type();
+    break;
+  case 3:
+    resultType = builder.getI16Type();
+    break;
+  case 4:
+    resultType = builder.getI32Type();
+    break;
+  case 5:
+    resultType = builder.getI64Type();
+    break;
+  default:
+    resultType = builder.getI64Type();
+    break;
+  }
+
+  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+
+  if (!lhs.has_value() || !rhs.has_value())
+    return failure();
+
+  arith::AddUIExtendedOp::build(builder, state, lhs.value(), rhs.value());
+  builder.create(state);
+  return success();
+}
+
+llvm::SmallVector<Type> arith::AddUIExtendedOp::getGeneratableTypes(MLIRContext *ctx) {
+  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
+          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
+          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+}
+
 void arith::AddUIExtendedOp::getCanonicalizationPatterns(
     RewritePatternSet &patterns, MLIRContext *context) {
   patterns.add<AddUIExtendedToAddI>(context);
@@ -463,6 +510,53 @@ OpFoldResult arith::SubIOp::fold(FoldAdaptor adaptor) {
       [](APInt a, const APInt &b) { return std::move(a) - b; });
 }
 
+LogicalResult arith::SubIOp::generate(GeneratorOpBuilder &builder) {
+  OperationState state(builder.getUnknownLoc(),
+                       arith::SubIOp::getOperationName());
+  Type resultType;
+
+  // Sample output type and sample/generate types
+  switch (builder.sampleUniform(5)) {
+  case 0:
+    resultType = builder.getI1Type();
+    break;
+  case 1:
+    resultType = builder.getIndexType();
+    break;
+  case 2:
+    resultType = builder.getI8Type();
+    break;
+  case 3:
+    resultType = builder.getI16Type();
+    break;
+  case 4:
+    resultType = builder.getI32Type();
+    break;
+  case 5:
+    resultType = builder.getI64Type();
+    break;
+  default:
+    resultType = builder.getI64Type();
+    break;
+  }
+
+  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+
+  if (!lhs.has_value() || !rhs.has_value())
+    return failure();
+
+  arith::SubIOp::build(builder, state, lhs.value(), rhs.value());
+  builder.create(state);
+  return success();
+}
+
+llvm::SmallVector<Type> arith::SubIOp::getGeneratableTypes(MLIRContext *ctx) {
+  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
+          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
+          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+}
+
 void arith::SubIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
                                                 MLIRContext *context) {
   patterns.add<SubIRHSAddConstant, SubILHSAddConstant, SubIRHSSubConstantRHS,
@@ -487,6 +581,53 @@ OpFoldResult arith::MulIOp::fold(FoldAdaptor adaptor) {
   return constFoldBinaryOp<IntegerAttr>(
       adaptor.getOperands(),
       [](const APInt &a, const APInt &b) { return a * b; });
+}
+
+LogicalResult arith::MulIOp::generate(GeneratorOpBuilder &builder) {
+  OperationState state(builder.getUnknownLoc(),
+                       arith::MulIOp::getOperationName());
+  Type resultType;
+
+  // Sample output type and sample/generate types
+  switch (builder.sampleUniform(5)) {
+  case 0:
+    resultType = builder.getI1Type();
+    break;
+  case 1:
+    resultType = builder.getIndexType();
+    break;
+  case 2:
+    resultType = builder.getI8Type();
+    break;
+  case 3:
+    resultType = builder.getI16Type();
+    break;
+  case 4:
+    resultType = builder.getI32Type();
+    break;
+  case 5:
+    resultType = builder.getI64Type();
+    break;
+  default:
+    resultType = builder.getI64Type();
+    break;
+  }
+
+  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+
+  if (!lhs.has_value() || !rhs.has_value())
+    return failure();
+
+  arith::MulIOp::build(builder, state, lhs.value(), rhs.value());
+  builder.create(state);
+  return success();
+}
+
+llvm::SmallVector<Type> arith::MulIOp::getGeneratableTypes(MLIRContext *ctx) {
+  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
+          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
+          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
 }
 
 //===----------------------------------------------------------------------===//
