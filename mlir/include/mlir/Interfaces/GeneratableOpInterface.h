@@ -23,13 +23,14 @@ namespace mlir {
 //===----------------------------------------------------------------------===//
 
 struct GeneratorOpBuilderConfig {
-  // TODO: Implement config struct
+  int seed = time(0);
+  int regionDepth = 5;
+  llvm::StringMap<int> opSettings = {};
 
   LogicalResult
   loadFromFileContent(StringRef configFileContent,
                       std::string *errorMessage = (std::string *)nullptr) {
     std::istringstream input(configFileContent.str());
-    std::unordered_map<std::string, int> keyValuePairs;
     std::string line;
     unsigned lineNr = 0;
 
@@ -41,7 +42,12 @@ struct GeneratorOpBuilderConfig {
       lineNr++;
 
       if (lineStream >> key >> equalsSign >> value && equalsSign == '=') {
-        keyValuePairs[key] = value;
+        if (key == "seed")
+          seed = value;
+        else if (key == "regionDepth")
+          regionDepth = value;
+        else
+          opSettings[key] = value;
       } else {
         if (errorMessage)
           *errorMessage =
@@ -52,7 +58,14 @@ struct GeneratorOpBuilderConfig {
 
     return success();
   }
-  void dumpConfig(raw_ostream &os) {}
+
+  void dumpConfig(raw_ostream &os) {
+    os << "seed = " << seed << "\n";
+    os << "regionDepth = " << regionDepth << "\n";
+
+    for (StringRef key : opSettings.keys())
+      os << key << " = " << opSettings[key] << "\n";
+  }
 };
 
 //===----------------------------------------------------------------------===//

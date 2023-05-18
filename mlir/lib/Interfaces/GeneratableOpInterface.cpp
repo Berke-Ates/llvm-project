@@ -34,8 +34,7 @@ struct GeneratorOpBuilderImpl {
       availableTypes.append(op->getGeneratableTypes(ctx));
 
     // Setup random number generator
-    std::random_device random_device;
-    rngGen = std::mt19937(random_device());
+    rngGen = std::mt19937(generatorConfig.seed);
   }
 
   /// Returns a random number between 0 and max (inclusive) using uniform
