@@ -126,6 +126,10 @@ public:
   /// Randomly generates an operation with the given return type, if possible.
   llvm::Optional<Value> generateValueOfType(Type t);
 
+  /// Randomly tries to choose generated value of the given type, if one exists.
+  /// If this fails, randomly generates an operation with the given return type, if possible.
+  llvm::Optional<Value> sampleOrGenerateValueOfType(Type t);
+
   /// Generates a region until a terminator is generated (if required).
   LogicalResult generateRegion(bool requiresTerminator);
 

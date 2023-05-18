@@ -65,6 +65,10 @@ struct GeneratorOpBuilderImpl {
   /// Randomly generates an operation with the given return type, if possible.
   llvm::Optional<Value> generateValueOfType(Type t);
 
+  /// Randomly tries to choose generated value of the given type, if one exists.
+  /// If this fails, randomly generates an operation with the given return type, if possible.
+  llvm::Optional<Value> sampleOrGenerateValueOfType(Type t);
+
   /// Generates a region until a terminator is generated (if required).
   LogicalResult generateRegion(bool requiresTerminator);
 
@@ -205,6 +209,20 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
   return std::nullopt;
 }
 
+llvm::Optional<Value> GeneratorOpBuilderImpl::sampleOrGenerateValueOfType(Type t) {
+  // First try to sample
+  llvm::Optional<Value> outputValue = sampleValueOfType(t);
+   if (!outputValue.has_value()) {
+    // If sampling fails, try to generate
+    outputValue = generateValueOfType(t);
+    if (!outputValue.has_value()) {
+      return std::nullopt;
+    }
+  }
+  return outputValue;
+}
+
+
 LogicalResult GeneratorOpBuilderImpl::generateRegion(bool requiresTerminator) {
   // 0.5 is the probability for generating true.
   std::bernoulli_distribution dist(0.5);
@@ -279,6 +297,10 @@ llvm::Optional<Value> GeneratorOpBuilder::sampleValueOfType(Type t) {
 
 llvm::Optional<Value> GeneratorOpBuilder::generateValueOfType(Type t) {
   return impl->generateValueOfType(t);
+}
+
+llvm::Optional<Value> GeneratorOpBuilder::sampleOrGenerateValueOfType(Type t) {
+  return impl->sampleOrGenerateValueOfType(t);
 }
 
 LogicalResult GeneratorOpBuilder::generateRegion(bool requiresTerminator) {

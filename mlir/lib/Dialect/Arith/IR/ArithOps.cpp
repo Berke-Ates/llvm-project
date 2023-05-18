@@ -326,6 +326,69 @@ OpFoldResult arith::AddIOp::fold(FoldAdaptor adaptor) {
       [](APInt a, const APInt &b) { return std::move(a) + b; });
 }
 
+LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
+  OperationState state(builder.getUnknownLoc(),
+                       arith::AddIOp::getOperationName());
+  Type resultType;
+  llvm::Optional<Value> sample_lhs, sample_rhs;
+  Value lhs, rhs;
+
+  // Sample output type and sample/generate types
+  switch (builder.sampleUniform(8)) {
+  case 0:
+    resultType = builder.getI1Type();
+    break;
+  case 1:
+    resultType = builder.getIndexType();
+    break;
+  case 2:
+    resultType = builder.getI8Type();
+    break;
+  case 3:
+    resultType = builder.getI16Type();
+    break;
+  case 4:
+    resultType = builder.getI32Type();
+    break;
+  case 5:
+    resultType = builder.getI64Type();
+    break;
+  case 6:
+    resultType = builder.getF16Type();
+    break;
+  case 7:
+    resultType = builder.getF32Type();
+    break;
+  case 8:
+    resultType = builder.getF64Type();
+    break;
+  default:
+    resultType = builder.getI64Type();
+    break;
+  }
+
+  sample_lhs  = builder.sampleOrGenerateValueOfType(resultType);
+  sample_rhs  = builder.sampleOrGenerateValueOfType(resultType);
+
+  if(!sample_lhs.has_value() || !sample_rhs.has_value()){
+    return failure();
+  }
+
+  lhs = sample_lhs.value();
+  rhs = sample_rhs.value();
+  builder.create<arith::AddIOp>(builder.getUnknownLoc(), lhs, rhs);
+  return success();
+}
+
+llvm::SmallVector<Type>
+arith::AddIOp::getGeneratableTypes(MLIRContext *ctx) {
+  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
+          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
+          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64),
+          Float16Type::get(ctx),     Float32Type::get(ctx),
+          Float64Type::get(ctx)};
+}
+
 void arith::AddIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
                                                 MLIRContext *context) {
   patterns.add<AddIAddConstant, AddISubConstantRHS, AddISubConstantLHS,

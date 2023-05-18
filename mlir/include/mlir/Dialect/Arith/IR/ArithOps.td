@@ -200,7 +200,7 @@ def Arith_ConstantOp : Op<Arith_Dialect, "constant",
 // AddIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_AddIOp : Arith_TotalIntBinaryOp<"addi", [Commutative]> {
+def Arith_AddIOp : Arith_TotalIntBinaryOp<"addi", [Commutative, DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer addition operation";
   let description = [{
     The `addi` operation takes two operands and returns one result, each of
