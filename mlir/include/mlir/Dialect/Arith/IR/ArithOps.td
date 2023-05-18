@@ -148,12 +148,11 @@ class Arith_CompareOpOfAnyRank<string mnemonic, list<Trait> traits = []> :
 // ConstantOp
 //===----------------------------------------------------------------------===//
 
-def Arith_ConstantOp : Op<Arith_Dialect, "constant",
-    [ConstantLike, Pure,
-     DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>,
-     AllTypesMatch<["value", "result"]>,
-     DeclareOpInterfaceMethods<InferIntRangeInterface>,
-     DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
+def Arith_ConstantOp : Op<Arith_Dialect, "constant", [ConstantLike, Pure,
+    DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>,
+    AllTypesMatch<["value", "result"]>,
+    DeclareOpInterfaceMethods<InferIntRangeInterface>,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer or floating point constant";
   let description = [{
     The `constant` operation produces an SSA value equal to some integer or
@@ -200,7 +199,8 @@ def Arith_ConstantOp : Op<Arith_Dialect, "constant",
 // AddIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_AddIOp : Arith_TotalIntBinaryOp<"addi", [Commutative, DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
+def Arith_AddIOp : Arith_TotalIntBinaryOp<"addi", [Commutative,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer addition operation";
   let description = [{
     The `addi` operation takes two operands and returns one result, each of

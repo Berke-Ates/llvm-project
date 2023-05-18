@@ -330,8 +330,6 @@ LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
   OperationState state(builder.getUnknownLoc(),
                        arith::AddIOp::getOperationName());
   Type resultType;
-  llvm::Optional<Value> sample_lhs, sample_rhs;
-  Value lhs, rhs;
 
   // Sample output type and sample/generate types
   switch (builder.sampleUniform(8)) {
@@ -367,21 +365,18 @@ LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
     break;
   }
 
-  sample_lhs  = builder.sampleOrGenerateValueOfType(resultType);
-  sample_rhs  = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
 
-  if(!sample_lhs.has_value() || !sample_rhs.has_value()){
+  if (!lhs.has_value() || !rhs.has_value())
     return failure();
-  }
 
-  lhs = sample_lhs.value();
-  rhs = sample_rhs.value();
-  builder.create<arith::AddIOp>(builder.getUnknownLoc(), lhs, rhs);
+  arith::AddIOp::build(builder, state, lhs.value(), rhs.value());
+  builder.create(state);
   return success();
 }
 
-llvm::SmallVector<Type>
-arith::AddIOp::getGeneratableTypes(MLIRContext *ctx) {
+llvm::SmallVector<Type> arith::AddIOp::getGeneratableTypes(MLIRContext *ctx) {
   return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
           IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
           IntegerType::get(ctx, 32), IntegerType::get(ctx, 64),
