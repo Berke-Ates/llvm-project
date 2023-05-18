@@ -25,6 +25,7 @@ namespace mlir {
 struct GeneratorOpBuilderConfig {
   int seed = time(0);
   int regionDepth = 5;
+  int defaultProb = 1;
   llvm::StringMap<int> opSettings = {};
 
   LogicalResult
@@ -46,6 +47,8 @@ struct GeneratorOpBuilderConfig {
           seed = value;
         else if (key == "regionDepth")
           regionDepth = value;
+        else if (key == "defaultProb")
+          defaultProb = value;
         else
           opSettings[key] = value;
       } else {
@@ -62,6 +65,7 @@ struct GeneratorOpBuilderConfig {
   void dumpConfig(raw_ostream &os) {
     os << "seed = " << seed << "\n";
     os << "regionDepth = " << regionDepth << "\n";
+    os << "defaultProb = " << defaultProb << "\n";
 
     for (StringRef key : opSettings.keys())
       os << key << " = " << opSettings[key] << "\n";
