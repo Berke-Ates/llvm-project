@@ -17,16 +17,28 @@
 #include "mlir/IR/PatternMatch.h"
 
 namespace mlir {
+class GeneratableOpInterface;
 
 //===----------------------------------------------------------------------===//
 // Configuration options for the generator
 //===----------------------------------------------------------------------===//
 
 struct GeneratorOpBuilderConfig {
-  int seed = time(0);
-  int regionDepth = 5;
-  int defaultProb = 1;
-  llvm::StringMap<int> opSettings = {};
+private:
+  unsigned Seed;
+  unsigned RegionDepth;
+  unsigned DefaultProb;
+  llvm::StringMap<unsigned> OpProbs;
+
+public:
+  /// Initial seed of the random number generator.
+  unsigned seed() { return Seed; }
+  /// Maximal depth of nested regions.
+  unsigned regionDepth() { return RegionDepth; }
+  /// Default probability of generating an operation.
+  unsigned defaultProb() { return DefaultProb; }
+  /// Probabilities of generating operations.
+  llvm::StringMap<unsigned> opProbs() { return OpProbs; }
 
   LogicalResult
   loadFromFileContent(StringRef configFileContent,
@@ -39,18 +51,18 @@ struct GeneratorOpBuilderConfig {
       std::istringstream lineStream(line);
       std::string key;
       char equalsSign;
-      int value;
+      unsigned value;
       lineNr++;
 
       if (lineStream >> key >> equalsSign >> value && equalsSign == '=') {
         if (key == "seed")
-          seed = value;
+          Seed = value;
         else if (key == "regionDepth")
-          regionDepth = value;
+          RegionDepth = value;
         else if (key == "defaultProb")
-          defaultProb = value;
+          DefaultProb = value;
         else
-          opSettings[key] = value;
+          OpProbs[key] = value;
       } else {
         if (errorMessage)
           *errorMessage =
@@ -62,13 +74,24 @@ struct GeneratorOpBuilderConfig {
     return success();
   }
 
-  void dumpConfig(raw_ostream &os) {
-    os << "seed = " << seed << "\n";
-    os << "regionDepth = " << regionDepth << "\n";
-    os << "defaultProb = " << defaultProb << "\n";
+  void loadDefaultValues(MLIRContext *ctx) {
+    Seed = time(0);
+    RegionDepth = 5;
+    DefaultProb = 1;
+    OpProbs = {};
 
-    for (StringRef key : opSettings.keys())
-      os << key << " = " << opSettings[key] << "\n";
+    for (RegisteredOperationName ron : ctx->getRegisteredOperations())
+      if (ron.hasInterface<GeneratableOpInterface>())
+        OpProbs[ron.getStringRef()] = 1;
+  }
+
+  void dumpConfig(raw_ostream &os) {
+    os << "seed = " << Seed << "\n";
+    os << "regionDepth = " << RegionDepth << "\n";
+    os << "defaultProb = " << DefaultProb << "\n";
+
+    for (StringRef key : OpProbs.keys())
+      os << key << " = " << OpProbs[key] << "\n";
   }
 };
 

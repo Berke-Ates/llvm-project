@@ -24,26 +24,29 @@ struct GeneratorOpBuilderImpl {
                                   GeneratorOpBuilderConfig generatorConfig,
                                   GeneratorOpBuilder &builder)
       : generatorConfig(generatorConfig), builder(builder) {
-    // Collect all operations usable for generation
+    // Collect all operations usable for generation.
     for (RegisteredOperationName ron : ctx->getRegisteredOperations())
       if (ron.hasInterface<GeneratableOpInterface>())
-        availableOps.push_back(ron.getInterface<GeneratableOpInterface>());
+        availableOps.push_back(ron);
 
-    // Collect all generatable types
+    // Collect all generatable types.
     for (auto op : availableOps)
-      availableTypes.append(op->getGeneratableTypes(ctx));
+      availableTypes.append(
+          op.getInterface<GeneratableOpInterface>()->getGeneratableTypes(ctx));
 
-    // Setup random number generator
-    rngGen = std::mt19937(generatorConfig.seed);
+    // Setup random number generator.
+    rngGen = std::mt19937(generatorConfig.seed());
   }
 
   /// Returns a random number between 0 and max (inclusive) using uniform
   /// distribution.
   unsigned sampleUniform(unsigned max);
 
-  /// Samples from a vector of choices.
+  /// Samples from a vector of choices. If no probability vector is provided, it
+  /// samples using a uniform distribution.
   template <typename T>
-  llvm::Optional<T> sample(SmallVector<T> choices);
+  llvm::Optional<T> sample(SmallVector<T> choices,
+                           SmallVector<unsigned> probs = {});
 
   /// Returns a random boolean.
   bool sampleBool();
@@ -83,8 +86,7 @@ struct GeneratorOpBuilderImpl {
   GeneratorOpBuilder &builder;
 
   /// All operations that can be generated.
-  llvm::SmallVector<detail::GeneratableOpInterfaceInterfaceTraits::Concept *>
-      availableOps;
+  llvm::SmallVector<RegisteredOperationName> availableOps;
 
   /// All types that can be produced by a generatable operation.
   llvm::SmallVector<Type> availableTypes;
@@ -98,12 +100,30 @@ unsigned GeneratorOpBuilderImpl::sampleUniform(unsigned max) {
 }
 
 template <typename T>
-llvm::Optional<T> GeneratorOpBuilderImpl::sample(SmallVector<T> choices) {
-  if (choices.size() == 0)
+llvm::Optional<T> GeneratorOpBuilderImpl::sample(SmallVector<T> choices,
+                                                 SmallVector<unsigned> probs) {
+  if (choices.empty())
     return std::nullopt;
 
-  std::uniform_int_distribution<int> dist(0, choices.size() - 1);
-  return choices[dist(rngGen)];
+  if (!probs.empty() && probs.size() != choices.size())
+    return std::nullopt;
+
+  // Fill up with ones if probs is empty.
+  while (probs.size() < choices.size())
+    probs.push_back(1);
+
+  // Probability based sampling.
+  for (unsigned i = 1; i < probs.size(); ++i)
+    probs[i] += probs[i - 1];
+
+  std::uniform_int_distribution<unsigned> dist(1, probs[probs.size() - 1]);
+
+  unsigned rngNum = dist(rngGen);
+  unsigned idx = 0;
+  while (rngNum > probs[idx])
+    idx++;
+
+  return choices[idx];
 }
 
 bool GeneratorOpBuilderImpl::sampleBool() {
@@ -130,12 +150,23 @@ GeneratorOpBuilderImpl::generateOperation() {
   if (availableOps.empty())
     return std::nullopt;
 
+  // Lookup probabilities.
+  SmallVector<unsigned> probs;
+
+  for (RegisteredOperationName op : availableOps)
+    probs.push_back(generatorConfig.opProbs().contains(op.getStringRef())
+                        ? generatorConfig.opProbs()[op.getStringRef()]
+                        : generatorConfig.defaultProb());
+
   LogicalResult logicalResult = failure();
 
   while (logicalResult.failed())
-    logicalResult = sample(availableOps).value()->generate(builder);
+    logicalResult = sample(availableOps, probs)
+                        .value()
+                        .getInterface<GeneratableOpInterface>()
+                        ->generate(builder);
 
-  // Results of the last inserted operation
+  // Results of the last inserted operation.
   return builder.getBlock()->back().getResults();
 }
 
@@ -161,13 +192,13 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
   Block *block = builder.getBlock();
 
   while (block != nullptr) {
-    // Add all operations in the block of type t
+    // Add all operations in the block of type t.
     for (Operation &op : block->getOperations())
       for (OpResult res : op.getResults())
         if (res.getType() == t)
           possibleValues.push_back(res);
 
-    // Move up the hierarchy
+    // Move up the hierarchy.
     Operation *parent = block->getParentOp();
     block = nullptr;
 
@@ -212,11 +243,11 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
 
 llvm::Optional<Value>
 GeneratorOpBuilderImpl::sampleOrGenerateValueOfType(Type t) {
-  // First try to sample
+  // First try to sample.
   llvm::Optional<Value> outputValue = sampleValueOfType(t);
   if (outputValue.has_value())
     return outputValue;
-  // If sampling fails, try to generate
+  // If sampling fails, try to generate.
   return generateValueOfType(t);
 }
 

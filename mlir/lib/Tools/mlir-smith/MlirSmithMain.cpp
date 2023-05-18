@@ -54,8 +54,13 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
     return failure();
   }
 
-  // Load configuration
+  // Load configuration.
+  MLIRContext ctx(registry);
+  ctx.loadAllAvailableDialects();
+
   GeneratorOpBuilderConfig config;
+  config.loadDefaultValues(&ctx);
+
   if (!configFilename.empty()) {
     auto configFile = openInputFile(configFilename.getValue(), &errorMessage);
     if (!configFile) {
@@ -70,16 +75,14 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
     }
   }
 
-  // Dump config
+  // Dump config.
   if (shouldDumpConfig) {
     config.dumpConfig(output->os());
     output->keep();
     return success();
   }
 
-  // Load dialects
-  MLIRContext ctx(registry);
-  ctx.loadAllAvailableDialects();
+  // Start generation.
 
   GeneratorOpBuilder builder(&ctx, config);
   Location loc = builder.getUnknownLoc();
