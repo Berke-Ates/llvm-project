@@ -99,7 +99,8 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   OperationState funcState(loc, func::FuncOp::getOperationName());
   FunctionType retType = builder.getFunctionType({}, builder.sampleTypeRange());
   func::FuncOp::build(builder, funcState, "main", retType);
-  Operation *funcOp = builder.create(moduleState);
+  Operation *funcOp = builder.create(funcState);
+
   if (funcOp != nullptr) {
     func::FuncOp funcOp = cast<func::FuncOp>(funcOp);
     builder.setInsertionPointToStart(funcOp.addEntryBlock());
