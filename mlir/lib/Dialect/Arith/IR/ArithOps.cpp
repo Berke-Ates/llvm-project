@@ -251,8 +251,7 @@ LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
   }
 
   arith::ConstantOp::build(builder, state, result, value);
-  builder.create(state);
-  return success();
+  return success(builder.create(state) != nullptr);
 }
 
 llvm::SmallVector<Type>
@@ -363,8 +362,7 @@ LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
     return failure();
 
   arith::AddIOp::build(builder, state, lhs.value(), rhs.value());
-  builder.create(state);
-  return success();
+  return success(builder.create(state) != nullptr);
 }
 
 llvm::SmallVector<Type> arith::AddIOp::getGeneratableTypes(MLIRContext *ctx) {
@@ -469,8 +467,7 @@ LogicalResult arith::AddUIExtendedOp::generate(GeneratorOpBuilder &builder) {
     return failure();
 
   arith::AddUIExtendedOp::build(builder, state, lhs.value(), rhs.value());
-  builder.create(state);
-  return success();
+  return success(builder.create(state) != nullptr);
 }
 
 llvm::SmallVector<Type>
@@ -548,8 +545,7 @@ LogicalResult arith::SubIOp::generate(GeneratorOpBuilder &builder) {
     return failure();
 
   arith::SubIOp::build(builder, state, lhs.value(), rhs.value());
-  builder.create(state);
-  return success();
+  return success(builder.create(state) != nullptr);
 }
 
 llvm::SmallVector<Type> arith::SubIOp::getGeneratableTypes(MLIRContext *ctx) {
@@ -621,8 +617,7 @@ LogicalResult arith::MulIOp::generate(GeneratorOpBuilder &builder) {
     return failure();
 
   arith::MulIOp::build(builder, state, lhs.value(), rhs.value());
-  builder.create(state);
-  return success();
+  return success(builder.create(state) != nullptr);
 }
 
 llvm::SmallVector<Type> arith::MulIOp::getGeneratableTypes(MLIRContext *ctx) {

@@ -383,10 +383,8 @@ LogicalResult ReturnOp::generate(GeneratorOpBuilder &builder) {
   }
 
   OperationState state(builder.getUnknownLoc(), ReturnOp::getOperationName());
-
   ReturnOp::build(builder, state, results);
-  builder.create(state);
-  return success();
+  return success(builder.create(state) != nullptr);
 }
 
 llvm::SmallVector<Type> ReturnOp::getGeneratableTypes(MLIRContext *ctx) {

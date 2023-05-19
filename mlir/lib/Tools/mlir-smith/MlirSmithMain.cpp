@@ -83,26 +83,33 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   }
 
   // Start generation.
-
   GeneratorOpBuilder builder(&ctx, config);
   Location loc = builder.getUnknownLoc();
 
   // Create top-level module and main function.
   OperationState moduleState(loc, ModuleOp::getOperationName());
   ModuleOp::build(builder, moduleState);
-  ModuleOp module = cast<ModuleOp>(builder.create(moduleState));
+  Operation *moduleOp = builder.create(moduleState);
+  if (moduleOp == nullptr)
+    return failure();
+
+  ModuleOp module = cast<ModuleOp>(moduleOp);
   builder.setInsertionPointToStart(module.getBody());
 
   OperationState funcState(loc, func::FuncOp::getOperationName());
   FunctionType retType = builder.getFunctionType({}, builder.sampleTypeRange());
   func::FuncOp::build(builder, funcState, "main", retType);
-  func::FuncOp funcOp = cast<func::FuncOp>(builder.create(funcState));
-  builder.setInsertionPointToStart(funcOp.addEntryBlock());
+  Operation *funcOp = builder.create(moduleState);
+  if (funcOp != nullptr) {
+    func::FuncOp funcOp = cast<func::FuncOp>(funcOp);
+    builder.setInsertionPointToStart(funcOp.addEntryBlock());
 
-  // Generate main function body.
-  if (builder.generateBlock(/*requiresTerminator=*/true).failed())
-    return failure();
+    // Generate main function body.
+    if (builder.generateBlock(/*requiresTerminator=*/true).failed())
+      return failure();
+  }
 
+  // Output the result.
   module.print(output->os());
 
   // Keep the output file if the generation was successful.

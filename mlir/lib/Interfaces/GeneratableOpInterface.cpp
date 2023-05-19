@@ -59,6 +59,9 @@ struct GeneratorOpBuilderImpl {
   template <typename T>
   T sampleNumber();
 
+  /// Return true if this operation adheres to the imposed limits.
+  bool canCreate(const OperationState &state);
+
   /// Randomly generates an operation.
   llvm::Optional<llvm::SmallVector<Value>> generateOperation();
 
@@ -152,6 +155,10 @@ T GeneratorOpBuilderImpl::sampleNumber() {
   }
 }
 
+bool GeneratorOpBuilderImpl::canCreate(const OperationState &state) {
+  return true;
+}
+
 llvm::Optional<llvm::SmallVector<Value>>
 GeneratorOpBuilderImpl::generateOperation() {
   if (availableOps.empty())
@@ -165,11 +172,14 @@ GeneratorOpBuilderImpl::generateOperation() {
 
   LogicalResult logicalResult = failure();
 
-  while (logicalResult.failed())
-    logicalResult = sample(availableOps, probs)
-                        .value()
-                        .getInterface<GeneratableOpInterface>()
-                        ->generate(builder);
+  while (logicalResult.failed()) {
+    Optional<RegisteredOperationName> op = sample(availableOps, probs);
+    if (!op.has_value())
+      return std::nullopt;
+
+    logicalResult =
+        op.value().getInterface<GeneratableOpInterface>()->generate(builder);
+  }
 
   // Results of the last inserted operation.
   return builder.getBlock()->back().getResults();
@@ -195,8 +205,11 @@ GeneratorOpBuilderImpl::generateTerminator() {
   LogicalResult logicalResult = failure();
 
   while (logicalResult.failed() && !terminatorOps.empty()) {
-    RegisteredOperationName op = sample(terminatorOps, probs).value();
+    Optional<RegisteredOperationName> opOpt = sample(terminatorOps, probs);
+    if (!opOpt.has_value())
+      return std::nullopt;
 
+    RegisteredOperationName op = opOpt.value();
     logicalResult =
         op.getInterface<GeneratableOpInterface>()->generate(builder);
 
@@ -226,8 +239,13 @@ TypeRange GeneratorOpBuilderImpl::sampleTypeRange() {
   int length = dist(rngGen);
 
   SmallVector<Type> types;
-  for (int i = 0; i < length; ++i)
-    types.push_back(sample(availableTypes).value());
+  for (int i = 0; i < length; ++i) {
+    Optional<Type> type = sample(availableTypes);
+    if (!type.has_value())
+      return {};
+
+    types.push_back(type.value());
+  }
 
   return types;
 }
@@ -270,7 +288,7 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
     return std::nullopt;
 
   while (true) {
-    llvm::Optional<SmallVector<Value>> values = generateOperation();
+    Optional<SmallVector<Value>> values = generateOperation();
     if (!values.has_value())
       return std::nullopt;
 
@@ -292,7 +310,7 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
 llvm::Optional<Value>
 GeneratorOpBuilderImpl::sampleOrGenerateValueOfType(Type t) {
   // First try to sample.
-  llvm::Optional<Value> outputValue = sampleValueOfType(t);
+  Optional<Value> outputValue = sampleValueOfType(t);
   if (outputValue.has_value())
     return outputValue;
   // If sampling fails, try to generate.
@@ -332,6 +350,12 @@ GeneratorOpBuilder::GeneratorOpBuilder(MLIRContext *ctx,
       impl(new detail::GeneratorOpBuilderImpl(ctx, generatorConfig, *this)) {}
 
 GeneratorOpBuilder::~GeneratorOpBuilder() = default;
+
+Operation *GeneratorOpBuilder::create(const OperationState &state) {
+  if (!impl->canCreate(state))
+    return nullptr;
+  return OpBuilder::create(state);
+}
 
 unsigned GeneratorOpBuilder::sampleUniform(unsigned max) {
   return impl->sampleUniform(max);

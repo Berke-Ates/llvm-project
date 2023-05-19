@@ -127,6 +127,10 @@ public:
                               GeneratorOpBuilderConfig generatorConfig);
   ~GeneratorOpBuilder();
 
+  /// Create a new Operation from operation state. Returns nullptr if the
+  /// creation would reach any defined limits.
+  Operation *create(const OperationState &state);
+
   /// Returns a random number between 0 and max (inclusive) using uniform
   /// distribution.
   unsigned sampleUniform(unsigned max);
