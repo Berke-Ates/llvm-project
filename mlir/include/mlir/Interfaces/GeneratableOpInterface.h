@@ -27,6 +27,7 @@ struct GeneratorOpBuilderConfig {
 private:
   unsigned Seed;
   unsigned RegionDepth;
+  unsigned BlockLengthLimit;
   unsigned DefaultProb;
   llvm::StringMap<unsigned> OpProbs;
 
@@ -35,10 +36,17 @@ public:
   unsigned seed() { return Seed; }
   /// Maximal depth of nested regions.
   unsigned regionDepth() { return RegionDepth; }
-  /// Default probability of generating an operation.
+  /// Limit for the number of operations in a block.
+  unsigned blockLengthLimit() { return BlockLengthLimit; }
+  /// Default probability for generating an operation.
   unsigned defaultProb() { return DefaultProb; }
-  /// Probabilities of generating operations.
+  /// Probabilities for generating operations.
   llvm::StringMap<unsigned> opProbs() { return OpProbs; }
+  /// Returns the probability of an operation if it's set, otherwise the default
+  /// probability.
+  unsigned getProb(StringRef name) {
+    return OpProbs.contains(name) ? OpProbs[name] : DefaultProb;
+  }
 
   LogicalResult
   loadFromFileContent(StringRef configFileContent,
@@ -62,6 +70,8 @@ public:
           Seed = value;
         else if (key == "regionDepth")
           RegionDepth = value;
+        else if (key == "blockLengthLimit")
+          BlockLengthLimit = value;
         else if (key == "defaultProb")
           DefaultProb = value;
         else
@@ -80,6 +90,7 @@ public:
   void loadDefaultValues(MLIRContext *ctx) {
     Seed = time(0);
     RegionDepth = 5;
+    BlockLengthLimit = 20;
     DefaultProb = 1;
     OpProbs = {};
 
@@ -157,8 +168,9 @@ public:
   /// if possible.
   llvm::Optional<Value> sampleOrGenerateValueOfType(Type t);
 
-  /// Generates a region until a terminator is generated (if required).
-  LogicalResult generateRegion(bool requiresTerminator);
+  /// Generates a block until a terminator is generated (if required) or the
+  /// blockLimit is reached.
+  LogicalResult generateBlock(bool requiresTerminator);
 
 private:
   std::unique_ptr<detail::GeneratorOpBuilderImpl> impl;

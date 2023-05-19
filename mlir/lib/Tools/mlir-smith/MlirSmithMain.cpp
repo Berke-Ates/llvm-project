@@ -100,7 +100,7 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   builder.setInsertionPointToStart(funcOp.addEntryBlock());
 
   // Generate main function body.
-  if (builder.generateRegion(/*requiresTerminator=*/true).failed())
+  if (builder.generateBlock(/*requiresTerminator=*/true).failed())
     return failure();
 
   module.print(output->os());

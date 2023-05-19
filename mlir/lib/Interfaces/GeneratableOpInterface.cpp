@@ -26,7 +26,8 @@ struct GeneratorOpBuilderImpl {
       : generatorConfig(generatorConfig), builder(builder) {
     // Collect all operations usable for generation.
     for (RegisteredOperationName ron : ctx->getRegisteredOperations())
-      if (ron.hasInterface<GeneratableOpInterface>())
+      if (ron.hasInterface<GeneratableOpInterface>() &&
+          generatorConfig.getProb(ron.getStringRef()) > 0)
         availableOps.push_back(ron);
 
     // Collect all generatable types.
@@ -73,8 +74,9 @@ struct GeneratorOpBuilderImpl {
   /// if possible.
   llvm::Optional<Value> sampleOrGenerateValueOfType(Type t);
 
-  /// Generates a region until a terminator is generated (if required).
-  LogicalResult generateRegion(bool requiresTerminator);
+  /// Generates a block until a terminator is generated (if required) or the
+  /// blockLimit is reached.
+  LogicalResult generateBlock(bool requiresTerminator);
 
   /// Random number generator.
   std::mt19937 rngGen;
@@ -154,9 +156,7 @@ GeneratorOpBuilderImpl::generateOperation() {
   SmallVector<unsigned> probs;
 
   for (RegisteredOperationName op : availableOps)
-    probs.push_back(generatorConfig.opProbs().contains(op.getStringRef())
-                        ? generatorConfig.opProbs()[op.getStringRef()]
-                        : generatorConfig.defaultProb());
+    probs.push_back(generatorConfig.getProb(op.getStringRef()));
 
   LogicalResult logicalResult = failure();
 
@@ -223,6 +223,7 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
       availableTypes.end())
     return std::nullopt;
 
+  // FIXME: Remove operations that don't have the correct type
   while (true) {
     llvm::Optional<SmallVector<Value>> values = generateOperation();
     if (!values.has_value())
@@ -251,10 +252,10 @@ GeneratorOpBuilderImpl::sampleOrGenerateValueOfType(Type t) {
   return generateValueOfType(t);
 }
 
-LogicalResult GeneratorOpBuilderImpl::generateRegion(bool requiresTerminator) {
+LogicalResult GeneratorOpBuilderImpl::generateBlock(bool requiresTerminator) {
   // 0.5 is the probability for generating true.
   std::bernoulli_distribution dist(0.5);
-
+  // FIXME: Respect block limit
   Operation *lastOp = nullptr;
   while (lastOp == nullptr ||
          (requiresTerminator && !lastOp->hasTrait<OpTrait::IsTerminator>()) ||
@@ -331,8 +332,8 @@ llvm::Optional<Value> GeneratorOpBuilder::sampleOrGenerateValueOfType(Type t) {
   return impl->sampleOrGenerateValueOfType(t);
 }
 
-LogicalResult GeneratorOpBuilder::generateRegion(bool requiresTerminator) {
-  return impl->generateRegion(requiresTerminator);
+LogicalResult GeneratorOpBuilder::generateBlock(bool requiresTerminator) {
+  return impl->generateBlock(requiresTerminator);
 }
 
 //===----------------------------------------------------------------------===//
