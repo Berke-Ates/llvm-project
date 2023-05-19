@@ -156,6 +156,14 @@ T GeneratorOpBuilderImpl::sampleNumber() {
 }
 
 bool GeneratorOpBuilderImpl::canCreate(const OperationState &state) {
+  // Check block limit.
+  // Block *block = builder.getBlock();
+  // if (block != nullptr &&
+  //     block->getOperations().size() >= generatorConfig.blockLengthLimit())
+  //   return false;
+
+  // Check region depth.
+
   return true;
 }
 
@@ -182,7 +190,11 @@ GeneratorOpBuilderImpl::generateOperation() {
   }
 
   // Results of the last inserted operation.
-  return builder.getBlock()->back().getResults();
+  Block *block = builder.getBlock();
+  if (block != nullptr)
+    return block->back().getResults();
+
+  return {};
 }
 
 llvm::Optional<llvm::SmallVector<Value>>
@@ -227,7 +239,11 @@ GeneratorOpBuilderImpl::generateTerminator() {
     return std::nullopt;
 
   // Results of the last inserted operation.
-  return builder.getBlock()->back().getResults();
+  Block *block = builder.getBlock();
+  if (block != nullptr)
+    return block->back().getResults();
+
+  return {};
 }
 
 TypeRange GeneratorOpBuilderImpl::sampleTypeRange() {
@@ -301,7 +317,9 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
     if (!possible_values.empty())
       return sample(possible_values);
 
-    builder.getBlock()->back().erase();
+    Block *block = builder.getBlock();
+    if (block != nullptr)
+      block->back().erase();
   }
 
   return std::nullopt;
@@ -321,19 +339,21 @@ LogicalResult GeneratorOpBuilderImpl::generateBlock(bool requiresTerminator) {
   // 0.5 is the probability for generating true.
   std::bernoulli_distribution dist(0.5);
 
-  Operation *lastOp;
+  Operation *lastOp = nullptr;
+  Block *block = builder.getBlock();
 
   do {
     if (!generateOperation().has_value())
-      return failure();
+      break;
 
-    lastOp = &builder.getBlock()->back();
-  } while (builder.getBlock()->getOperations().size() <
-               generatorConfig.blockLengthLimit() &&
-           !lastOp->hasTrait<OpTrait::IsTerminator>() && dist(rngGen));
+    if (block != nullptr)
+      lastOp = &block->back();
+  } while ((lastOp == nullptr || !lastOp->hasTrait<OpTrait::IsTerminator>()) &&
+           dist(rngGen));
 
-  // Reached limit but still requires a terminator.
-  if (requiresTerminator && !lastOp->hasTrait<OpTrait::IsTerminator>())
+  // If required, generate a terminator.
+  if (requiresTerminator &&
+      (lastOp == nullptr || !lastOp->hasTrait<OpTrait::IsTerminator>()))
     if (!generateTerminator().has_value())
       return failure();
 
