@@ -375,7 +375,7 @@ LogicalResult ReturnOp::generate(GeneratorOpBuilder &builder) {
 
   SmallVector<Value> results;
   for (Type t : funcOp.getFunctionType().getResults()) {
-    Optional<Value> sampleValue = builder.sampleValueOfType(t);
+    Optional<Value> sampleValue = builder.sampleOrGenerateValueOfType(t);
     if (!sampleValue.has_value())
       return failure();
 
