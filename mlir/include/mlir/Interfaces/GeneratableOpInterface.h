@@ -102,6 +102,7 @@ public:
   void dumpConfig(raw_ostream &os) {
     os << "seed = " << Seed << "\n";
     os << "regionDepth = " << RegionDepth << "\n";
+    os << "blockLengthLimit = " << BlockLengthLimit << "\n";
     os << "defaultProb = " << DefaultProb << "\n";
 
     for (StringRef key : OpProbs.keys())
@@ -153,6 +154,9 @@ public:
 
   /// Randomly generates an operation.
   llvm::Optional<llvm::SmallVector<Value>> generateOperation();
+
+  /// Randomly generates an operation.
+  llvm::Optional<llvm::SmallVector<Value>> generateTerminator();
 
   /// Samples from a geometric distribution of types.
   TypeRange sampleTypeRange();
