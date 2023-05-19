@@ -473,7 +473,8 @@ LogicalResult arith::AddUIExtendedOp::generate(GeneratorOpBuilder &builder) {
   return success();
 }
 
-llvm::SmallVector<Type> arith::AddUIExtendedOp::getGeneratableTypes(MLIRContext *ctx) {
+llvm::SmallVector<Type>
+arith::AddUIExtendedOp::getGeneratableTypes(MLIRContext *ctx) {
   return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
           IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
           IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};

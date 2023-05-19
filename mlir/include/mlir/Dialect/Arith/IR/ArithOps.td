@@ -281,8 +281,8 @@ def Arith_AddUIExtendedOp : Arith_Op<"addui_extended", [Pure, Commutative,
 // SubIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_SubIOp : Arith_TotalIntBinaryOp<"subi", 
-  [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
+def Arith_SubIOp : Arith_TotalIntBinaryOp<"subi",
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer subtraction operation";
   let hasFolder = 1;
   let hasCanonicalizer = 1;
@@ -293,7 +293,7 @@ def Arith_SubIOp : Arith_TotalIntBinaryOp<"subi",
 //===----------------------------------------------------------------------===//
 
 def Arith_MulIOp : Arith_TotalIntBinaryOp<"muli", [Commutative,
-  DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer multiplication operation";
   let hasFolder = 1;
 }
