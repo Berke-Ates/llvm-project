@@ -86,6 +86,7 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   GeneratorOpBuilder builder(&ctx, config);
   Location loc = builder.getUnknownLoc();
 
+  // IDEA: Could move this to the operations themselves
   // Create top-level module and main function.
   OperationState moduleState(loc, ModuleOp::getOperationName());
   ModuleOp::build(builder, moduleState);
