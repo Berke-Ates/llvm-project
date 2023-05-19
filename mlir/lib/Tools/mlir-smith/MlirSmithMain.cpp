@@ -102,8 +102,8 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   Operation *funcOp = builder.create(funcState);
 
   if (funcOp != nullptr) {
-    func::FuncOp funcOp = cast<func::FuncOp>(funcOp);
-    builder.setInsertionPointToStart(funcOp.addEntryBlock());
+    func::FuncOp func = cast<func::FuncOp>(funcOp);
+    builder.setInsertionPointToStart(func.addEntryBlock());
 
     // Generate main function body.
     if (builder.generateBlock(/*requiresTerminator=*/true).failed())
