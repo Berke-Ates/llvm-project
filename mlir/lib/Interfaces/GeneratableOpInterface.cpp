@@ -369,6 +369,7 @@ GeneratorOpBuilder::GeneratorOpBuilder(MLIRContext *ctx,
     : OpBuilder(ctx),
       impl(new detail::GeneratorOpBuilderImpl(ctx, generatorConfig, *this)) {}
 
+// XXX: Might need to destruct impl
 GeneratorOpBuilder::~GeneratorOpBuilder() = default;
 
 Operation *GeneratorOpBuilder::create(const OperationState &state) {
