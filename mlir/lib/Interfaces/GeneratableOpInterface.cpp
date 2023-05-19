@@ -304,18 +304,17 @@ LogicalResult GeneratorOpBuilderImpl::generateBlock(bool requiresTerminator) {
   std::bernoulli_distribution dist(0.5);
 
   Operation *lastOp;
-  unsigned blockLength = builder.getBlock()->getOperations().size();
 
   do {
     if (!generateOperation().has_value())
       return failure();
 
     lastOp = &builder.getBlock()->back();
-    blockLength++;
-  } while (blockLength < generatorConfig.blockLengthLimit() &&
+  } while (builder.getBlock()->getOperations().size() <
+               generatorConfig.blockLengthLimit() &&
            !lastOp->hasTrait<OpTrait::IsTerminator>() && dist(rngGen));
 
-  // Reached limit but still require a terminator
+  // Reached limit but still requires a terminator.
   if (requiresTerminator && !lastOp->hasTrait<OpTrait::IsTerminator>())
     if (!generateTerminator().has_value())
       return failure();
