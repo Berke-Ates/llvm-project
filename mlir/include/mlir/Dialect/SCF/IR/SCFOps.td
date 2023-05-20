@@ -17,6 +17,7 @@ include "mlir/Interfaces/ControlFlowInterfaces.td"
 include "mlir/Interfaces/LoopLikeInterface.td"
 include "mlir/IR/RegionKindInterface.td"
 include "mlir/Dialect/SCF/IR/DeviceMappingInterface.td"
+include "mlir/Interfaces/GeneratableOpInterface.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/ParallelCombiningOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
@@ -125,7 +126,8 @@ def ForOp : SCF_Op<"for",
        ConditionallySpeculatable,
        DeclareOpInterfaceMethods<RegionBranchOpInterface>,
        SingleBlockImplicitTerminator<"scf::YieldOp">,
-       RecursiveMemoryEffects]> {
+       RecursiveMemoryEffects,
+       DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "for operation";
   let description = [{
     The `scf.for` operation represents a loop taking 3 SSA value as operands
@@ -711,7 +713,7 @@ def IfOp : SCF_Op<"if", [DeclareOpInterfaceMethods<RegionBranchOpInterface, [
     "getNumRegionInvocations", "getRegionInvocationBounds"]>,
     DeclareOpInterfaceMethods<InferTypeOpInterface>,
     SingleBlockImplicitTerminator<"scf::YieldOp">, RecursiveMemoryEffects,
-    NoRegionArguments]> {
+    NoRegionArguments, DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "if-then-else operation";
   let description = [{
     The `scf.if` operation represents an if-then-else construct for
@@ -975,6 +977,7 @@ def ReduceReturnOp :
 
 def WhileOp : SCF_Op<"while",
     [DeclareOpInterfaceMethods<RegionBranchOpInterface>,
+     DeclareOpInterfaceMethods<GeneratableOpInterface>,
      RecursiveMemoryEffects]> {
   let summary = "a generic 'while' loop";
   let description = [{

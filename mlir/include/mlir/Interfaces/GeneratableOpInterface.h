@@ -127,10 +127,6 @@ public:
                               GeneratorOpBuilderConfig generatorConfig);
   ~GeneratorOpBuilder();
 
-  /// Create a new Operation from operation state. Returns nullptr if the
-  /// creation would reach any defined limits.
-  Operation *create(const OperationState &state);
-
   /// Returns a random number between 0 and max (inclusive) using uniform
   /// distribution.
   unsigned sampleUniform(unsigned max);
@@ -159,7 +155,7 @@ public:
   /// Randomly generates an operation.
   llvm::Optional<llvm::SmallVector<Value>> generateOperation();
 
-  /// Randomly generates an operation.
+  /// Randomly generates a terminator operation.
   llvm::Optional<llvm::SmallVector<Value>> generateTerminator();
 
   /// Samples from a geometric distribution of types.
@@ -176,9 +172,9 @@ public:
   /// if possible.
   llvm::Optional<Value> sampleOrGenerateValueOfType(Type t);
 
-  /// Generates a block until a terminator is generated (if required) or the
-  /// blockLimit is reached.
-  LogicalResult generateBlock(bool requiresTerminator);
+  /// Generates a block until a terminator is generated or the blockLimit is
+  /// reached.
+  LogicalResult generateBlock();
 
 private:
   std::unique_ptr<detail::GeneratorOpBuilderImpl> impl;

@@ -254,13 +254,18 @@ LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type>
-arith::ConstantOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64),
-          Float16Type::get(ctx),     Float32Type::get(ctx),
-          Float64Type::get(ctx)};
+void arith::ConstantOp::getGeneratableTypes(MLIRContext *ctx,
+                                            SmallVector<Type> &types) {
+  SmallVector<Type> genTypes = {
+      IndexType::get(ctx),       IntegerType::get(ctx, 1),
+      IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
+      IntegerType::get(ctx, 32), IntegerType::get(ctx, 64),
+      Float16Type::get(ctx),     Float32Type::get(ctx),
+      Float64Type::get(ctx)};
+
+  for (Type t : genTypes)
+    if (llvm::find(types, t) == types.end())
+      types.push_back(t);
 }
 
 void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
@@ -365,10 +370,9 @@ LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::AddIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+void arith::AddIOp::getGeneratableTypes(MLIRContext *ctx,
+                                        SmallVector<Type> &types) {
+  return;
 }
 
 void arith::AddIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -470,11 +474,9 @@ LogicalResult arith::AddUIExtendedOp::generate(GeneratorOpBuilder &builder) {
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type>
-arith::AddUIExtendedOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+void arith::AddUIExtendedOp::getGeneratableTypes(MLIRContext *ctx,
+                                                 SmallVector<Type> &types) {
+  return;
 }
 
 void arith::AddUIExtendedOp::getCanonicalizationPatterns(
@@ -548,10 +550,9 @@ LogicalResult arith::SubIOp::generate(GeneratorOpBuilder &builder) {
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::SubIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+void arith::SubIOp::getGeneratableTypes(MLIRContext *ctx,
+                                        SmallVector<Type> &types) {
+  return;
 }
 
 void arith::SubIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -620,10 +621,9 @@ LogicalResult arith::MulIOp::generate(GeneratorOpBuilder &builder) {
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::MulIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+void arith::MulIOp::getGeneratableTypes(MLIRContext *ctx,
+                                        SmallVector<Type> &types) {
+  return;
 }
 
 //===----------------------------------------------------------------------===//

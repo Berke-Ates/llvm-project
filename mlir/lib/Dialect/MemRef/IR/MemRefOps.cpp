@@ -32,23 +32,17 @@ namespace {
 namespace saturated_arith {
 struct Wrapper {
   static Wrapper stride(int64_t v) {
-    return (ShapedType::isDynamic(v)) ? Wrapper{true, 0}
-                                                    : Wrapper{false, v};
+    return (ShapedType::isDynamic(v)) ? Wrapper{true, 0} : Wrapper{false, v};
   }
   static Wrapper offset(int64_t v) {
-    return (ShapedType::isDynamic(v)) ? Wrapper{true, 0}
-                                                    : Wrapper{false, v};
+    return (ShapedType::isDynamic(v)) ? Wrapper{true, 0} : Wrapper{false, v};
   }
   static Wrapper size(int64_t v) {
     return (ShapedType::isDynamic(v)) ? Wrapper{true, 0} : Wrapper{false, v};
   }
-  int64_t asOffset() {
-    return saturated ? ShapedType::kDynamic : v;
-  }
+  int64_t asOffset() { return saturated ? ShapedType::kDynamic : v; }
   int64_t asSize() { return saturated ? ShapedType::kDynamic : v; }
-  int64_t asStride() {
-    return saturated ? ShapedType::kDynamic : v;
-  }
+  int64_t asStride() { return saturated ? ShapedType::kDynamic : v; }
   bool operator==(Wrapper other) {
     return (saturated && other.saturated) ||
            (!saturated && !other.saturated && v == other.v);
@@ -371,6 +365,24 @@ void AllocaOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                            MLIRContext *context) {
   results.add<SimplifyAllocConst<AllocaOp>, SimplifyDeadAlloc<AllocaOp>>(
       context);
+}
+
+LogicalResult AllocOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: Generate this op
+  return failure();
+}
+
+LogicalResult AllocaOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: Generate this op
+  return failure();
+}
+
+void AllocOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
+  return;
+}
+
+void AllocaOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
+  return;
 }
 
 //===----------------------------------------------------------------------===//
@@ -731,8 +743,7 @@ bool CastOp::canFoldIntoConsumerOp(CastOp castOp) {
   for (auto it : llvm::zip(sourceStrides, resultStrides)) {
     auto ss = std::get<0>(it), st = std::get<1>(it);
     if (ss != st)
-      if (ShapedType::isDynamic(ss) &&
-          !ShapedType::isDynamic(st))
+      if (ShapedType::isDynamic(ss) && !ShapedType::isDynamic(st))
         return false;
   }
 
@@ -765,8 +776,7 @@ bool CastOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
       // same. They are also compatible if either one is dynamic (see
       // description of MemRefCastOp for details).
       auto checkCompatible = [](int64_t a, int64_t b) {
-        return (ShapedType::isDynamic(a) ||
-                ShapedType::isDynamic(b) || a == b);
+        return (ShapedType::isDynamic(a) || ShapedType::isDynamic(b) || a == b);
       };
       if (!checkCompatible(aOffset, bOffset))
         return false;
@@ -812,6 +822,15 @@ bool CastOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
 
 OpFoldResult CastOp::fold(FoldAdaptor adaptor) {
   return succeeded(foldMemRefCast(*this)) ? getResult() : Value();
+}
+
+LogicalResult CastOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: Generate this op
+  return failure();
+}
+
+void CastOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
+  return;
 }
 
 //===----------------------------------------------------------------------===//
@@ -900,6 +919,15 @@ LogicalResult CopyOp::fold(FoldAdaptor adaptor,
   return success(folded);
 }
 
+LogicalResult CopyOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: Generate this op
+  return failure();
+}
+
+void CopyOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
+  return;
+}
+
 //===----------------------------------------------------------------------===//
 // DeallocOp
 //===----------------------------------------------------------------------===//
@@ -908,6 +936,16 @@ LogicalResult DeallocOp::fold(FoldAdaptor adaptor,
                               SmallVectorImpl<OpFoldResult> &results) {
   /// dealloc(memrefcast) -> dealloc
   return foldMemRefCast(*this);
+}
+
+LogicalResult DeallocOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: Generate this op
+  return failure();
+}
+
+void DeallocOp::getGeneratableTypes(MLIRContext *ctx,
+                                    SmallVector<Type> &types) {
+  return;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1674,6 +1712,15 @@ OpFoldResult LoadOp::fold(FoldAdaptor adaptor) {
   return OpFoldResult();
 }
 
+LogicalResult LoadOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: Generate this op
+  return failure();
+}
+
+void LoadOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
+  return;
+}
+
 //===----------------------------------------------------------------------===//
 // MemorySpaceCastOp
 //===----------------------------------------------------------------------===//
@@ -1892,8 +1939,7 @@ LogicalResult ReinterpretCastOp::verify() {
   // Match offset in result memref type and in static_offsets attribute.
   int64_t expectedOffset = getStaticOffsets().front();
   if (!ShapedType::isDynamic(resultOffset) &&
-      !ShapedType::isDynamic(expectedOffset) &&
-      resultOffset != expectedOffset)
+      !ShapedType::isDynamic(expectedOffset) && resultOffset != expectedOffset)
     return emitError("expected result type with offset = ")
            << expectedOffset << " instead of " << resultOffset;
 
@@ -2558,6 +2604,15 @@ LogicalResult StoreOp::fold(FoldAdaptor adaptor,
                             SmallVectorImpl<OpFoldResult> &results) {
   /// store(memrefcast) -> store
   return foldMemRefCast(*this, getValueToStore());
+}
+
+LogicalResult StoreOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: Generate this op
+  return failure();
+}
+
+void StoreOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
+  return;
 }
 
 //===----------------------------------------------------------------------===//

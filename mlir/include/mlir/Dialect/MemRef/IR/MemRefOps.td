@@ -14,6 +14,7 @@ include "mlir/Dialect/MemRef/IR/MemRefBase.td"
 include "mlir/Interfaces/CastInterfaces.td"
 include "mlir/Interfaces/ControlFlowInterfaces.td"
 include "mlir/Interfaces/CopyOpInterface.td"
+include "mlir/Interfaces/GeneratableOpInterface.td"
 include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/ShapedOpInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
@@ -152,7 +153,8 @@ def AssumeAlignmentOp : MemRef_Op<"assume_alignment"> {
 //===----------------------------------------------------------------------===//
 
 def MemRef_AllocOp : AllocLikeOp<"alloc", DefaultResource, [
-    DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>]> {
+    DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "memory allocation operation";
   let description = [{
     The `alloc` operation allocates a region of memory, as specified by its
@@ -298,7 +300,8 @@ def MemRef_ReallocOp : MemRef_Op<"realloc"> {
 //===----------------------------------------------------------------------===//
 
 def MemRef_AllocaOp : AllocLikeOp<"alloca", AutomaticAllocationScopeResource,[
-    DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>]> {
+    DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "stack memory allocation operation";
   let description = [{
     The `alloca` operation allocates memory on the stack, to be automatically
@@ -422,6 +425,7 @@ def MemRef_AllocaScopeReturnOp : MemRef_Op<"alloca_scope.return",
 def MemRef_CastOp : MemRef_Op<"cast", [
       DeclareOpInterfaceMethods<CastOpInterface>,
       DeclareOpInterfaceMethods<OpAsmOpInterface, ["getAsmResultNames"]>,
+      DeclareOpInterfaceMethods<GeneratableOpInterface>,
       MemRefsNormalizable,
       Pure,
       SameOperandsAndResultShape,
@@ -502,7 +506,7 @@ def MemRef_CastOp : MemRef_Op<"cast", [
 //===----------------------------------------------------------------------===//
 
 def CopyOp : MemRef_Op<"copy", [CopyOpInterface, SameOperandsElementType,
-    SameOperandsShape]> {
+    SameOperandsShape, DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
 
   let description = [{
     Copies the data from the source to the destination memref.
@@ -534,7 +538,8 @@ def CopyOp : MemRef_Op<"copy", [CopyOpInterface, SameOperandsElementType,
 // DeallocOp
 //===----------------------------------------------------------------------===//
 
-def MemRef_DeallocOp : MemRef_Op<"dealloc", [MemRefsNormalizable]> {
+def MemRef_DeallocOp : MemRef_Op<"dealloc", [MemRefsNormalizable,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "memory deallocation operation";
   let description = [{
     The `dealloc` operation frees the region of memory referenced by a memref
@@ -1148,7 +1153,8 @@ def LoadOp : MemRef_Op<"load",
      [TypesMatchWith<"result type matches element type of 'memref'",
                      "memref", "result",
                      "$_self.cast<MemRefType>().getElementType()">,
-                     MemRefsNormalizable]> {
+                     MemRefsNormalizable, 
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "load operation";
   let description = [{
     The `load` op reads an element from a memref specified by an index list. The
@@ -1737,7 +1743,8 @@ def MemRef_StoreOp : MemRef_Op<"store",
      [TypesMatchWith<"type of 'value' matches element type of 'memref'",
                      "memref", "value",
                      "$_self.cast<MemRefType>().getElementType()">,
-                     MemRefsNormalizable]> {
+                     MemRefsNormalizable,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "store operation";
   let description = [{
     Store a value to a memref location given by indices. The value stored should

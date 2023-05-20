@@ -31,11 +31,23 @@ struct GeneratorOpBuilderImpl {
         availableOps.push_back(ron);
 
     // Collect all generatable types.
-    for (auto op : availableOps)
-      for (auto t :
-           op.getInterface<GeneratableOpInterface>()->getGeneratableTypes(ctx))
-        if (llvm::find(availableTypes, t) == availableTypes.end())
-          availableTypes.push_back(t);
+    bool addedTypes = true;
+
+    while (addedTypes) {
+      addedTypes = false;
+      size_t size = availableTypes.size();
+
+      for (auto op : availableOps) {
+        op.getInterface<GeneratableOpInterface>()->getGeneratableTypes(
+            ctx, availableTypes);
+
+        addedTypes = availableTypes.size() > size;
+
+        if (availableTypes.size() < size)
+          emitError(builder.getUnknownLoc())
+              << op.getStringRef() << " should not remove types";
+      }
+    }
 
     // Setup random number generator.
     rngGen = std::mt19937(generatorConfig.seed());
@@ -59,13 +71,10 @@ struct GeneratorOpBuilderImpl {
   template <typename T>
   T sampleNumber();
 
-  /// Return true if this operation adheres to the imposed limits.
-  bool canCreate(const OperationState &state);
-
   /// Randomly generates an operation.
   llvm::Optional<llvm::SmallVector<Value>> generateOperation();
 
-  /// Randomly generates a terminator.
+  /// Randomly generates a terminator operation.
   llvm::Optional<llvm::SmallVector<Value>> generateTerminator();
 
   /// Samples from a geometric distribution of types.
@@ -82,9 +91,9 @@ struct GeneratorOpBuilderImpl {
   /// if possible.
   llvm::Optional<Value> sampleOrGenerateValueOfType(Type t);
 
-  /// Generates a block until a terminator is generated (if required) or the
-  /// blockLimit is reached.
-  LogicalResult generateBlock(bool requiresTerminator);
+  /// Generates a block until a terminator is generated or the blockLimit is
+  /// reached.
+  LogicalResult generateBlock();
 
   /// Random number generator.
   std::mt19937 rngGen;
@@ -155,18 +164,6 @@ T GeneratorOpBuilderImpl::sampleNumber() {
   }
 }
 
-bool GeneratorOpBuilderImpl::canCreate(const OperationState &state) {
-  // Check block limit.
-  // Block *block = builder.getBlock();
-  // if (block != nullptr &&
-  //     block->getOperations().size() >= generatorConfig.blockLengthLimit())
-  //   return false;
-
-  // Check region depth.
-
-  return true;
-}
-
 llvm::Optional<llvm::SmallVector<Value>>
 GeneratorOpBuilderImpl::generateOperation() {
   if (availableOps.empty())
@@ -225,7 +222,6 @@ GeneratorOpBuilderImpl::generateTerminator() {
     logicalResult =
         op.getInterface<GeneratableOpInterface>()->generate(builder);
 
-    // NOTE: This is untested
     if (logicalResult.failed()) {
       // terminatorOps.erase(&op);
       auto it = llvm::find(terminatorOps, op);
@@ -335,27 +331,25 @@ GeneratorOpBuilderImpl::sampleOrGenerateValueOfType(Type t) {
   return generateValueOfType(t);
 }
 
-LogicalResult GeneratorOpBuilderImpl::generateBlock(bool requiresTerminator) {
+LogicalResult GeneratorOpBuilderImpl::generateBlock() {
   // 0.5 is the probability for generating true.
   std::bernoulli_distribution dist(0.5);
 
   Operation *lastOp = nullptr;
   Block *block = builder.getBlock();
+  if (block == nullptr)
+    return failure();
+
+  size_t blockSize = block->getOperations().size();
 
   do {
     if (!generateOperation().has_value())
       break;
 
-    if (block != nullptr)
-      lastOp = &block->back();
+    lastOp = &block->back();
+    blockSize++;
   } while ((lastOp == nullptr || !lastOp->hasTrait<OpTrait::IsTerminator>()) &&
-           dist(rngGen));
-
-  // If required, generate a terminator.
-  if (requiresTerminator &&
-      (lastOp == nullptr || !lastOp->hasTrait<OpTrait::IsTerminator>()))
-    if (!generateTerminator().has_value())
-      return failure();
+           dist(rngGen) && blockSize < generatorConfig.blockLengthLimit());
 
   return success();
 }
@@ -371,12 +365,6 @@ GeneratorOpBuilder::GeneratorOpBuilder(MLIRContext *ctx,
 
 // XXX: Might need to destruct impl
 GeneratorOpBuilder::~GeneratorOpBuilder() = default;
-
-Operation *GeneratorOpBuilder::create(const OperationState &state) {
-  if (!impl->canCreate(state))
-    return nullptr;
-  return OpBuilder::create(state);
-}
 
 unsigned GeneratorOpBuilder::sampleUniform(unsigned max) {
   return impl->sampleUniform(max);
@@ -434,8 +422,8 @@ llvm::Optional<Value> GeneratorOpBuilder::sampleOrGenerateValueOfType(Type t) {
   return impl->sampleOrGenerateValueOfType(t);
 }
 
-LogicalResult GeneratorOpBuilder::generateBlock(bool requiresTerminator) {
-  return impl->generateBlock(requiresTerminator);
+LogicalResult GeneratorOpBuilder::generateBlock() {
+  return impl->generateBlock();
 }
 
 //===----------------------------------------------------------------------===//

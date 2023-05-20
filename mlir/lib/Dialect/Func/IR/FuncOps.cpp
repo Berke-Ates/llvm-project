@@ -387,8 +387,8 @@ LogicalResult ReturnOp::generate(GeneratorOpBuilder &builder) {
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> ReturnOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {};
+void ReturnOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
+  return;
 }
 
 //===----------------------------------------------------------------------===//

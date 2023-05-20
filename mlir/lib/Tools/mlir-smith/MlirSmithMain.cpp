@@ -87,7 +87,7 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   Location loc = builder.getUnknownLoc();
 
   // IDEA: Could move this to the operations themselves
-  // Create top-level module and main function.
+  // Create top-level module.
   OperationState moduleState(loc, ModuleOp::getOperationName());
   ModuleOp::build(builder, moduleState);
   Operation *moduleOp = builder.create(moduleState);
@@ -97,6 +97,7 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   ModuleOp module = cast<ModuleOp>(moduleOp);
   builder.setInsertionPointToStart(module.getBody());
 
+  // Create main function.
   OperationState funcState(loc, func::FuncOp::getOperationName());
   FunctionType retType = builder.getFunctionType({}, builder.sampleTypeRange());
   func::FuncOp::build(builder, funcState, "main", retType);
@@ -107,8 +108,13 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
     builder.setInsertionPointToStart(func.addEntryBlock());
 
     // Generate main function body.
-    if (builder.generateBlock(/*requiresTerminator=*/true).failed())
+    if (builder.generateBlock().failed())
       return failure();
+
+    // Ensure return operation.
+    if (!func.getBody().back().back().hasTrait<OpTrait::IsTerminator>())
+      if (func::ReturnOp::generate(builder).failed())
+        return failure();
   }
 
   // Output the result.

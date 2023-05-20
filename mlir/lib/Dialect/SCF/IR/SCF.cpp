@@ -1162,6 +1162,15 @@ Speculation::Speculatability ForOp::getSpeculatability() {
   return Speculation::NotSpeculatable;
 }
 
+LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: Generate this op
+  return failure();
+}
+
+void ForOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
+  return;
+}
+
 //===----------------------------------------------------------------------===//
 // ForallOp
 //===----------------------------------------------------------------------===//
@@ -2615,6 +2624,15 @@ Block *IfOp::elseBlock() {
 }
 YieldOp IfOp::elseYield() { return cast<YieldOp>(&elseBlock()->back()); }
 
+LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: Generate this op
+  return failure();
+}
+
+void IfOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
+  return;
+}
+
 //===----------------------------------------------------------------------===//
 // ParallelOp
 //===----------------------------------------------------------------------===//
@@ -3861,6 +3879,15 @@ void WhileOp::getCanonicalizationPatterns(RewritePatternSet &results,
               RemoveLoopInvariantValueYielded, WhileConditionTruth,
               WhileCmpCond, WhileUnusedResult, WhileRemoveDuplicatedResults,
               WhileRemoveUnusedArgs>(context);
+}
+
+LogicalResult WhileOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: Generate this op
+  return failure();
+}
+
+void WhileOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
+  return;
 }
 
 //===----------------------------------------------------------------------===//
