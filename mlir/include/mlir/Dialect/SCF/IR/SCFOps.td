@@ -40,6 +40,7 @@ class SCF_Op<string mnemonic, list<Trait> traits = []> :
 def ConditionOp : SCF_Op<"condition", [
   HasParent<"WhileOp">,
   DeclareOpInterfaceMethods<RegionBranchTerminatorOpInterface>,
+  DeclareOpInterfaceMethods<GeneratableOpInterface>,
   Pure,
   Terminator
 ]> {
@@ -1189,7 +1190,8 @@ def IndexSwitchOp : SCF_Op<"index_switch", [RecursiveMemoryEffects,
 
 def YieldOp : SCF_Op<"yield", [Pure, ReturnLike, Terminator,
     ParentOneOf<["ExecuteRegionOp, ForOp", "IfOp", "IndexSwitchOp",
-                 "ParallelOp", "WhileOp"]>]> {
+                 "ParallelOp", "WhileOp"]>,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>,]> {
   let summary = "loop yield and termination operation";
   let description = [{
     "scf.yield" yields an SSA value from the SCF dialect op region and

@@ -288,6 +288,16 @@ ConditionOp::getMutableSuccessorOperands(std::optional<unsigned> index) {
   return getArgsMutable();
 }
 
+LogicalResult ConditionOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: Generate this op
+  return failure();
+}
+
+void ConditionOp::getGeneratableTypes(MLIRContext *ctx,
+                                      SmallVector<Type> &types) {
+  return;
+}
+
 //===----------------------------------------------------------------------===//
 // ForOp
 //===----------------------------------------------------------------------===//
@@ -4021,6 +4031,19 @@ void IndexSwitchOp::getRegionInvocationBounds(
     liveIndex = std::distance(getCases().begin(), it);
   for (unsigned i = 0, e = getNumRegions(); i < e; ++i)
     bounds.emplace_back(/*lb=*/0, /*ub=*/i == liveIndex);
+}
+
+//===----------------------------------------------------------------------===//
+// YieldOp
+//===----------------------------------------------------------------------===//
+
+LogicalResult YieldOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: Generate this op
+  return failure();
+}
+
+void YieldOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
+  return;
 }
 
 //===----------------------------------------------------------------------===//
