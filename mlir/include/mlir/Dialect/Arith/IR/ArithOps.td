@@ -600,7 +600,8 @@ def Arith_RemSIOp : Arith_TotalIntBinaryOp<"remsi"> {
 // AndIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_AndIOp : Arith_TotalIntBinaryOp<"andi", [Commutative, Idempotent]> {
+def Arith_AndIOp : Arith_TotalIntBinaryOp<"andi", [Commutative, Idempotent,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer binary and";
   let description = [{
     The `andi` operation takes two operands and returns one result, each of
@@ -629,7 +630,8 @@ def Arith_AndIOp : Arith_TotalIntBinaryOp<"andi", [Commutative, Idempotent]> {
 // OrIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_OrIOp : Arith_TotalIntBinaryOp<"ori", [Commutative, Idempotent]> {
+def Arith_OrIOp : Arith_TotalIntBinaryOp<"ori", [Commutative, Idempotent,
+  DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer binary or";
   let description = [{
     The `ori` operation takes two operands and returns one result, each of these
@@ -658,7 +660,8 @@ def Arith_OrIOp : Arith_TotalIntBinaryOp<"ori", [Commutative, Idempotent]> {
 // XOrIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_XOrIOp : Arith_TotalIntBinaryOp<"xori", [Commutative]> {
+def Arith_XOrIOp : Arith_TotalIntBinaryOp<"xori", [Commutative,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer binary xor";
   let description = [{
     The `xori` operation takes two operands and returns one result, each of
