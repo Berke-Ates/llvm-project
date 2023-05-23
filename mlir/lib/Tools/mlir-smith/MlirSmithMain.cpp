@@ -99,8 +99,9 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
 
   // Create main function.
   OperationState funcState(loc, func::FuncOp::getOperationName());
-  FunctionType retType = builder.getFunctionType({}, builder.sampleTypeRange());
-  func::FuncOp::build(builder, funcState, "main", retType);
+  TypeRange retTypes = builder.sampleTypeRange();
+  FunctionType funcType = builder.getFunctionType({}, retTypes);
+  func::FuncOp::build(builder, funcState, "main", funcType);
   Operation *funcOp = builder.create(funcState);
 
   if (funcOp != nullptr) {
@@ -108,13 +109,11 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
     builder.setInsertionPointToStart(func.addEntryBlock());
 
     // Generate main function body.
-    if (builder.generateBlock().failed())
+    if (builder
+            .generateBlock(/*ensureTerminator=*/true,
+                           /*requiredTypes=*/retTypes)
+            .failed())
       return failure();
-
-    // Ensure return operation.
-    if (!func.getBody().back().back().hasTrait<OpTrait::IsTerminator>())
-      if (func::ReturnOp::generate(builder).failed())
-        return failure();
   }
 
   // Output the result.

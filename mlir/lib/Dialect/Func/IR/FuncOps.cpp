@@ -375,7 +375,7 @@ LogicalResult ReturnOp::generate(GeneratorOpBuilder &builder) {
 
   SmallVector<Value> results;
   for (Type t : funcOp.getFunctionType().getResults()) {
-    Optional<Value> sampleValue = builder.sampleOrGenerateValueOfType(t);
+    Optional<Value> sampleValue = builder.sampleValueOfType(t);
     if (!sampleValue.has_value())
       return failure();
 
@@ -387,8 +387,9 @@ LogicalResult ReturnOp::generate(GeneratorOpBuilder &builder) {
   return success(builder.create(state) != nullptr);
 }
 
-void ReturnOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type>
+ReturnOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//

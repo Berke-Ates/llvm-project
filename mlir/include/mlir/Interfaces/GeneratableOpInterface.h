@@ -105,8 +105,20 @@ public:
     os << "blockLengthLimit = " << BlockLengthLimit << "\n";
     os << "defaultProb = " << DefaultProb << "\n";
 
-    for (StringRef key : OpProbs.keys())
-      os << key << " = " << OpProbs[key] << "\n";
+    // Sort OpProbs for nicer print.
+    std::vector<llvm::StringMapEntry<unsigned> *> vec;
+    vec.reserve(OpProbs.size());
+    for (auto &pair : OpProbs)
+      vec.push_back(&pair);
+
+    std::sort(vec.begin(), vec.end(),
+              [](const llvm::StringMapEntry<unsigned> *a,
+                 const llvm::StringMapEntry<unsigned> *b) {
+                return a->getKey().compare(b->getKey()) < 0;
+              });
+
+    for (auto *entry : vec)
+      os << entry->getKey() << " = " << entry->getValue() << "\n";
   }
 };
 
@@ -119,8 +131,8 @@ struct GeneratorOpBuilderImpl;
 } // namespace detail
 
 /// This class implements a builder for use in generation functions. It
-/// extends the base OpBuilder and provides utility functions to generate common
-/// structures and to sample from a configured distribution.
+/// extends the base OpBuilder and provides utility functions to generate
+/// common structures and to sample from a configured distribution.
 class GeneratorOpBuilder final : public OpBuilder {
 public:
   explicit GeneratorOpBuilder(MLIRContext *ctxt,
@@ -129,7 +141,7 @@ public:
 
   /// Returns a random number between 0 and max (inclusive) using uniform
   /// distribution.
-  unsigned sampleUniform(unsigned max);
+  unsigned sampleUniform(int32_t max);
 
   /// Returns a random boolean.
   bool sampleBool();
@@ -152,14 +164,20 @@ public:
   /// Returns a random number using a normal distribution around zero.
   double_t sampleNumberDouble();
 
-  /// Randomly generates an operation.
+  /// Randomly generates an operation in the current position. Returns the
+  /// generated Values if successful.
   llvm::Optional<llvm::SmallVector<Value>> generateOperation();
 
-  /// Randomly generates a terminator operation.
+  /// Randomly generates a terminator operation in the current position. Returns
+  /// the generated Values if successful.
   llvm::Optional<llvm::SmallVector<Value>> generateTerminator();
 
-  /// Samples from a geometric distribution of types.
+  /// Samples from a geometric distribution of available types in the current
+  /// position.
   TypeRange sampleTypeRange();
+
+  /// Checks if a value of the given type is available in the current position.
+  bool hasValueOfType(Type t);
 
   /// Randomly chooses a generated value of the given type, if one exists.
   llvm::Optional<Value> sampleValueOfType(Type t);
@@ -167,14 +185,16 @@ public:
   /// Randomly generates an operation with the given return type, if possible.
   llvm::Optional<Value> generateValueOfType(Type t);
 
-  /// Randomly tries to choose generated value of the given type, if one exists.
-  /// If this fails, randomly generates an operation with the given return type,
-  /// if possible.
+  /// Randomly tries to chooses a generated value of the given type, if one
+  /// exists. If this fails, randomly generates an operation with the given
+  /// return type, if possible.
   llvm::Optional<Value> sampleOrGenerateValueOfType(Type t);
 
-  /// Generates a block until a terminator is generated or the blockLimit is
-  /// reached.
-  LogicalResult generateBlock();
+  /// Fills the current block with operations until the required types are
+  /// generated. Additionally generates operations using a geometric
+  /// distribution.
+  LogicalResult generateBlock(bool ensureTerminator = false,
+                              llvm::SmallVector<Type> requiredTypes = {});
 
 private:
   std::unique_ptr<detail::GeneratorOpBuilderImpl> impl;

@@ -377,12 +377,14 @@ LogicalResult AllocaOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-void AllocOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type>
+AllocOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
-void AllocaOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type>
+AllocaOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -829,8 +831,9 @@ LogicalResult CastOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-void CastOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type>
+CastOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -924,8 +927,9 @@ LogicalResult CopyOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-void CopyOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type>
+CopyOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -943,9 +947,9 @@ LogicalResult DeallocOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-void DeallocOp::getGeneratableTypes(MLIRContext *ctx,
-                                    SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type>
+DeallocOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -1717,8 +1721,9 @@ LogicalResult LoadOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-void LoadOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type>
+LoadOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -2611,8 +2616,9 @@ LogicalResult StoreOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-void StoreOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type>
+StoreOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//

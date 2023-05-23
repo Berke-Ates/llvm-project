@@ -293,9 +293,9 @@ LogicalResult ConditionOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-void ConditionOp::getGeneratableTypes(MLIRContext *ctx,
-                                      SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type>
+ConditionOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -1177,8 +1177,9 @@ LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-void ForOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type>
+ForOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -2635,12 +2636,48 @@ Block *IfOp::elseBlock() {
 YieldOp IfOp::elseYield() { return cast<YieldOp>(&elseBlock()->back()); }
 
 LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
-  // TODO: Generate this op
-  return failure();
+  OperationState state(builder.getUnknownLoc(), IfOp::getOperationName());
+
+  llvm::Optional<Value> cond = builder.sampleValueOfType(builder.getI1Type());
+
+  if (!cond.has_value())
+    return failure();
+
+  bool hasElse = builder.sampleUniform(1) == 1;
+
+  IfOp::build(builder, state, cond.value(), hasElse);
+  Operation *op = builder.create(state);
+  if (op == nullptr)
+    return failure();
+
+  IfOp ifOp = cast<IfOp>(op);
+
+  OpBuilder::InsertPoint ip = builder.saveInsertionPoint();
+  builder.setInsertionPointToStart(ifOp.thenBlock());
+
+  if (builder.generateBlock().failed()) {
+    builder.restoreInsertionPoint(ip);
+    ifOp.erase();
+    return failure();
+  }
+
+  if (!hasElse)
+    return success();
+
+  builder.setInsertionPointToStart(ifOp.elseBlock());
+
+  if (builder.generateBlock().failed()) {
+    builder.restoreInsertionPoint(ip);
+    ifOp.erase();
+    return failure();
+  }
+
+  builder.setInsertionPointAfter(op);
+  return success();
 }
 
-void IfOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type> IfOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -3896,8 +3933,9 @@ LogicalResult WhileOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-void WhileOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type>
+WhileOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -4042,8 +4080,9 @@ LogicalResult YieldOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-void YieldOp::getGeneratableTypes(MLIRContext *ctx, SmallVector<Type> &types) {
-  return;
+llvm::SmallVector<Type>
+YieldOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
