@@ -303,7 +303,7 @@ def Arith_MulIOp : Arith_TotalIntBinaryOp<"muli", [Commutative,
 //===----------------------------------------------------------------------===//
 
 def Arith_MulSIExtendedOp : Arith_Op<"mulsi_extended", [Pure, Commutative,
-    AllTypesMatch<["lhs", "rhs", "low", "high"]>]> {
+    AllTypesMatch<["lhs", "rhs", "low", "high"]>, DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = [{
     extended signed integer multiplication operation
   }];
@@ -346,7 +346,7 @@ def Arith_MulSIExtendedOp : Arith_Op<"mulsi_extended", [Pure, Commutative,
 //===----------------------------------------------------------------------===//
 
 def Arith_MulUIExtendedOp : Arith_Op<"mului_extended", [Pure, Commutative,
-    AllTypesMatch<["lhs", "rhs", "low", "high"]>]> {
+    AllTypesMatch<["lhs", "rhs", "low", "high"]>, DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = [{
     extended unsigned integer multiplication operation
   }];
@@ -388,7 +388,8 @@ def Arith_MulUIExtendedOp : Arith_Op<"mului_extended", [Pure, Commutative,
 // DivUIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_DivUIOp : Arith_IntBinaryOp<"divui", [ConditionallySpeculatable]> {
+def Arith_DivUIOp : Arith_IntBinaryOp<"divui", [ConditionallySpeculatable, 
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "unsigned integer division operation";
   let description = [{
     Unsigned integer division. Rounds towards zero. Treats the leading bit as
@@ -424,7 +425,8 @@ def Arith_DivUIOp : Arith_IntBinaryOp<"divui", [ConditionallySpeculatable]> {
 // DivSIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_DivSIOp : Arith_IntBinaryOp<"divsi", [ConditionallySpeculatable]> {
+def Arith_DivSIOp : Arith_IntBinaryOp<"divsi", [ConditionallySpeculatable,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "signed integer division operation";
   let description = [{
     Signed integer division. Rounds towards zero. Treats the leading bit as
@@ -460,7 +462,8 @@ def Arith_DivSIOp : Arith_IntBinaryOp<"divsi", [ConditionallySpeculatable]> {
 //===----------------------------------------------------------------------===//
 
 def Arith_CeilDivUIOp : Arith_IntBinaryOp<"ceildivui",
-                                          [ConditionallySpeculatable]> {
+                                          [ConditionallySpeculatable, 
+                                            DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "unsigned ceil integer division operation";
   let description = [{
     Unsigned integer division. Rounds towards positive infinity. Treats the
@@ -491,7 +494,8 @@ def Arith_CeilDivUIOp : Arith_IntBinaryOp<"ceildivui",
 //===----------------------------------------------------------------------===//
 
 def Arith_CeilDivSIOp : Arith_IntBinaryOp<"ceildivsi",
-                                          [ConditionallySpeculatable]> {
+                                          [ConditionallySpeculatable,
+                                            DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "signed ceil integer division operation";
   let description = [{
     Signed integer division. Rounds towards positive infinity, i.e. `7 / -2 = -3`.
@@ -519,7 +523,8 @@ def Arith_CeilDivSIOp : Arith_IntBinaryOp<"ceildivsi",
 // FloorDivSIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_FloorDivSIOp : Arith_TotalIntBinaryOp<"floordivsi"> {
+def Arith_FloorDivSIOp : Arith_TotalIntBinaryOp<"floordivsi",
+                                                  [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "signed floor integer division operation";
   let description = [{
     Signed integer division. Rounds towards negative infinity, i.e. `5 / -2 = -3`.
@@ -542,7 +547,8 @@ def Arith_FloorDivSIOp : Arith_TotalIntBinaryOp<"floordivsi"> {
 // RemUIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_RemUIOp : Arith_TotalIntBinaryOp<"remui"> {
+def Arith_RemUIOp : Arith_TotalIntBinaryOp<"remui", 
+                                            [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "unsigned integer division remainder operation";
   let description = [{
     Unsigned integer division remainder. Treats the leading bit as the most
@@ -571,7 +577,8 @@ def Arith_RemUIOp : Arith_TotalIntBinaryOp<"remui"> {
 // RemSIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_RemSIOp : Arith_TotalIntBinaryOp<"remsi"> {
+def Arith_RemSIOp : Arith_TotalIntBinaryOp<"remsi", 
+                                            [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "signed integer division remainder operation";
   let description = [{
     Signed integer division remainder. Treats the leading bit as sign, i.e. `6 %
@@ -631,7 +638,7 @@ def Arith_AndIOp : Arith_TotalIntBinaryOp<"andi", [Commutative, Idempotent,
 //===----------------------------------------------------------------------===//
 
 def Arith_OrIOp : Arith_TotalIntBinaryOp<"ori", [Commutative, Idempotent,
-  DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer binary or";
   let description = [{
     The `ori` operation takes two operands and returns one result, each of these
@@ -874,7 +881,8 @@ def Arith_MaxFOp : Arith_FloatBinaryOp<"maxf", [Commutative]> {
 // MaxSIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_MaxSIOp : Arith_TotalIntBinaryOp<"maxsi", [Commutative]> {
+def Arith_MaxSIOp : Arith_TotalIntBinaryOp<"maxsi", [Commutative,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "signed integer maximum operation";
   let hasFolder = 1;
 }
@@ -883,7 +891,8 @@ def Arith_MaxSIOp : Arith_TotalIntBinaryOp<"maxsi", [Commutative]> {
 // MaxUIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_MaxUIOp : Arith_TotalIntBinaryOp<"maxui", [Commutative]> {
+def Arith_MaxUIOp : Arith_TotalIntBinaryOp<"maxui", [Commutative,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "unsigned integer maximum operation";
   let hasFolder = 1;
 }
@@ -918,7 +927,8 @@ def Arith_MinFOp : Arith_FloatBinaryOp<"minf", [Commutative]> {
 // MinSIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_MinSIOp : Arith_TotalIntBinaryOp<"minsi", [Commutative]> {
+def Arith_MinSIOp : Arith_TotalIntBinaryOp<"minsi", [Commutative, 
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "signed integer minimum operation";
   let hasFolder = 1;
 }
@@ -927,7 +937,8 @@ def Arith_MinSIOp : Arith_TotalIntBinaryOp<"minsi", [Commutative]> {
 // MinUIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_MinUIOp : Arith_TotalIntBinaryOp<"minui", [Commutative]> {
+def Arith_MinUIOp : Arith_TotalIntBinaryOp<"minui", [Commutative,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "unsigned integer minimum operation";
   let hasFolder = 1;
 }
