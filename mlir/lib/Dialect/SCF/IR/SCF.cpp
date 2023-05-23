@@ -2652,11 +2652,9 @@ LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
 
   IfOp ifOp = cast<IfOp>(op);
 
-  OpBuilder::InsertPoint ip = builder.saveInsertionPoint();
   builder.setInsertionPointToStart(ifOp.thenBlock());
 
   if (builder.generateBlock().failed()) {
-    builder.restoreInsertionPoint(ip);
     ifOp.erase();
     return failure();
   }
@@ -2667,12 +2665,10 @@ LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
   builder.setInsertionPointToStart(ifOp.elseBlock());
 
   if (builder.generateBlock().failed()) {
-    builder.restoreInsertionPoint(ip);
     ifOp.erase();
     return failure();
   }
 
-  builder.setInsertionPointAfter(op);
   return success();
 }
 

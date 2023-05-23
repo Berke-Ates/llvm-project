@@ -250,8 +250,13 @@ GeneratorOpBuilderImpl::generateOperation(
 
   LogicalResult logicalResult = failure();
   Optional<RegisteredOperationName> op;
+  OpBuilder::InsertPoint ip = builder.saveInsertionPoint();
 
+  // TODO: GeneratorOpBuilder should be extended to keep track of changes and
+  // rollback on failure
   while (logicalResult.failed()) {
+    builder.restoreInsertionPoint(ip);
+
     op = sample(ops, probs);
     if (!op.has_value()) {
       LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateOperation "
@@ -577,6 +582,7 @@ GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator,
 
   // If required, continue until a terminator has been generated.
   if (!ensureTerminator) {
+    builder.setInsertionPointAfter(block->getParentOp());
     LLVM_DEBUG(llvm::dbgs()
                << "GeneratorOpBuilderImpl::generateBlock "
                   "successfully generated block without terminator\n");
@@ -590,6 +596,7 @@ GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator,
     return failure();
   }
 
+  builder.setInsertionPointAfter(block->getParentOp());
   LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock "
                              "successfully generated block with terminator\n");
   return success();
