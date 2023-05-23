@@ -206,25 +206,33 @@ LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
   if (possibleTypes.empty())
     return failure();
 
-  // IDEA: Refactor this to the GeneratorOpBuilder
-  SmallVector<TypedAttr> possibleAttrs = {
-      builder.getBoolAttr(builder.sampleBool()),
-      builder.getIndexAttr(builder.sampleNumberInt64()),
-      builder.getI8IntegerAttr(builder.sampleNumberInt8()),
-      builder.getI16IntegerAttr(builder.sampleNumberInt16()),
-      builder.getI32IntegerAttr(builder.sampleNumberInt32()),
-      builder.getI64IntegerAttr(builder.sampleNumberInt64()),
-      builder.getF16FloatAttr(builder.sampleNumberFloat()),
-      builder.getF32FloatAttr(builder.sampleNumberFloat()),
-      builder.getF64FloatAttr(builder.sampleNumberDouble()),
+  DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getI1Type(), builder.getBoolAttr(builder.sampleBool())},
+      {builder.getIndexType(),
+       builder.getIndexAttr(builder.sampleNumberInt64())},
+      {builder.getI8Type(),
+       builder.getI8IntegerAttr(builder.sampleNumberInt8())},
+      {builder.getI16Type(),
+       builder.getI16IntegerAttr(builder.sampleNumberInt16())},
+      {builder.getI32Type(),
+       builder.getI32IntegerAttr(builder.sampleNumberInt32())},
+      {builder.getI64Type(),
+       builder.getI64IntegerAttr(builder.sampleNumberInt64())},
+      {builder.getF16Type(),
+       builder.getF16FloatAttr(builder.sampleNumberFloat())},
+      {builder.getF32Type(),
+       builder.getF32FloatAttr(builder.sampleNumberFloat())},
+      {builder.getF64Type(),
+       builder.getF64FloatAttr(builder.sampleNumberDouble())},
   };
 
   unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type type = possibleTypes[idx];
+  TypedAttr attr = attrMap[type];
 
   OperationState state(builder.getUnknownLoc(),
                        arith::ConstantOp::getOperationName());
-  arith::ConstantOp::build(builder, state, possibleTypes[idx],
-                           possibleAttrs[idx]);
+  arith::ConstantOp::build(builder, state, type, attr);
   return success(builder.create(state) != nullptr);
 }
 
@@ -302,12 +310,12 @@ OpFoldResult arith::AddIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes();
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
   if (possibleTypes.empty())
     return failure();
 
   unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes()[idx];
+  Type resultType = possibleTypes[idx];
 
   llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
   llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
@@ -396,12 +404,12 @@ arith::AddUIExtendedOp::fold(FoldAdaptor adaptor,
 }
 
 LogicalResult arith::AddUIExtendedOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes();
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
   if (possibleTypes.empty())
     return failure();
 
   unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes()[idx];
+  Type resultType = possibleTypes[idx];
 
   llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
   llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
@@ -462,12 +470,12 @@ OpFoldResult arith::SubIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::SubIOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes();
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
   if (possibleTypes.empty())
     return failure();
 
   unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes()[idx];
+  Type resultType = possibleTypes[idx];
 
   llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
   llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
@@ -523,12 +531,12 @@ OpFoldResult arith::MulIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::MulIOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes();
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
   if (possibleTypes.empty())
     return failure();
 
   unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes()[idx];
+  Type resultType = possibleTypes[idx];
 
   llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
   llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
