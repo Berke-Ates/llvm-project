@@ -174,7 +174,7 @@ public:
 
   /// Samples from a geometric distribution of available types in the current
   /// position.
-  TypeRange sampleTypeRange();
+  llvm::SmallVector<Type> sampleTypes();
 
   /// Checks if a value of the given type is available in the current position.
   bool hasValueOfType(Type t);
