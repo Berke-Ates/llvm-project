@@ -609,49 +609,38 @@ arith::MulSIExtendedOp::fold(FoldAdaptor adaptor,
 }
 
 LogicalResult arith::MulSIExtendedOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MulSIExtendedOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::MulSIExtendedOp::getOperationName());
   arith::MulSIExtendedOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::MulSIExtendedOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::MulSIExtendedOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 void arith::MulSIExtendedOp::getCanonicalizationPatterns(
@@ -712,49 +701,38 @@ arith::MulUIExtendedOp::fold(FoldAdaptor adaptor,
 }
 
 LogicalResult arith::MulUIExtendedOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MulUIExtendedOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::MulUIExtendedOp::getOperationName());
   arith::MulUIExtendedOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::MulUIExtendedOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::MulUIExtendedOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 void arith::MulUIExtendedOp::getCanonicalizationPatterns(
@@ -792,49 +770,38 @@ Speculation::Speculatability arith::DivUIOp::getSpeculatability() {
 }
 
 LogicalResult arith::DivUIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::DivUIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::DivUIOp::getOperationName());
   arith::DivUIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::DivUIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::DivUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -873,49 +840,38 @@ Speculation::Speculatability arith::DivSIOp::getSpeculatability() {
 }
 
 LogicalResult arith::DivSIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::DivSIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::DivSIOp::getOperationName());
   arith::DivSIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::DivSIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::DivSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -963,49 +919,38 @@ Speculation::Speculatability arith::CeilDivUIOp::getSpeculatability() {
 }
 
 LogicalResult arith::CeilDivUIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::CeilDivUIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::CeilDivUIOp::getOperationName());
   arith::CeilDivUIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::CeilDivUIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::CeilDivUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1070,49 +1015,38 @@ Speculation::Speculatability arith::CeilDivSIOp::getSpeculatability() {
 }
 
 LogicalResult arith::CeilDivSIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::CeilDivSIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::CeilDivSIOp::getOperationName());
   arith::CeilDivSIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::CeilDivSIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::CeilDivSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1165,49 +1099,38 @@ OpFoldResult arith::FloorDivSIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::FloorDivSIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::FloorDivSIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::FloorDivSIOp::getOperationName());
   arith::FloorDivSIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::FloorDivSIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::FloorDivSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1234,49 +1157,38 @@ OpFoldResult arith::RemUIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::RemUIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::RemUIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::RemUIOp::getOperationName());
   arith::RemUIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::RemUIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::RemUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1303,49 +1215,38 @@ OpFoldResult arith::RemSIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::RemSIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::RemSIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::RemSIOp::getOperationName());
   arith::RemSIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::RemSIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::RemSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1398,50 +1299,38 @@ OpFoldResult arith::AndIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::AndIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::AndIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::AndIOp::getOperationName());
   arith::AndIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
 llvm::SmallVector<Type>
-arith::AndIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+arith::AndIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1463,50 +1352,38 @@ OpFoldResult arith::OrIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::OrIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::OrIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::OrIOp::getOperationName());
   arith::OrIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
 llvm::SmallVector<Type>
-arith::OrIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+arith::OrIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1543,50 +1420,38 @@ OpFoldResult arith::XOrIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::XOrIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::XOrIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::XOrIOp::getOperationName());
   arith::XOrIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
 llvm::SmallVector<Type>
-arith::XOrIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+arith::XOrIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 void arith::XOrIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -1679,49 +1544,38 @@ OpFoldResult MaxSIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::MaxSIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MaxSIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::MaxSIOp::getOperationName());
   arith::MaxSIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::MaxSIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::MaxSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1749,49 +1603,38 @@ OpFoldResult MaxUIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::MaxUIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MaxUIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::MaxUIOp::getOperationName());
   arith::MaxUIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::MaxUIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::MaxUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1839,49 +1682,38 @@ OpFoldResult MinSIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::MinSIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MinSIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::MinSIOp::getOperationName());
   arith::MinSIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::MinSIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::MinSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1909,49 +1741,38 @@ OpFoldResult MinUIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::MinUIOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MinUIOp::getOperationName());
-  Type resultType;
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
 
-  // Sample output type and sample/generate types
-  switch (builder.sampleUniform(5)) {
-  case 0:
-    resultType = builder.getI1Type();
-    break;
-  case 1:
-    resultType = builder.getIndexType();
-    break;
-  case 2:
-    resultType = builder.getI8Type();
-    break;
-  case 3:
-    resultType = builder.getI16Type();
-    break;
-  case 4:
-    resultType = builder.getI32Type();
-    break;
-  case 5:
-    resultType = builder.getI64Type();
-    break;
-  default:
-    resultType = builder.getI64Type();
-    break;
-  }
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleOrGenerateValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleOrGenerateValueOfType(resultType);
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
   if (!lhs.has_value() || !rhs.has_value())
     return failure();
 
+  OperationState state(builder.getUnknownLoc(),
+                       arith::MinUIOp::getOperationName());
   arith::MinUIOp::build(builder, state, lhs.value(), rhs.value());
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type> arith::MinUIOp::getGeneratableTypes(MLIRContext *ctx) {
-  return {IndexType::get(ctx),       IntegerType::get(ctx, 1),
-          IntegerType::get(ctx, 8),  IntegerType::get(ctx, 16),
-          IntegerType::get(ctx, 32), IntegerType::get(ctx, 64)};
+llvm::SmallVector<Type>
+arith::MinUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
