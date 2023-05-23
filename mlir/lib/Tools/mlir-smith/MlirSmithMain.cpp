@@ -91,15 +91,17 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   OperationState moduleState(loc, ModuleOp::getOperationName());
   ModuleOp::build(builder, moduleState);
   Operation *moduleOp = builder.create(moduleState);
-  if (moduleOp == nullptr)
+  if (moduleOp == nullptr) {
+    llvm::errs() << "failed to generate top-level module operation\n";
     return failure();
+  }
 
   ModuleOp module = cast<ModuleOp>(moduleOp);
   builder.setInsertionPointToStart(module.getBody());
 
   // Create main function.
   OperationState funcState(loc, func::FuncOp::getOperationName());
-  TypeRange retTypes = builder.sampleTypeRange();
+  SmallVector<Type> retTypes = builder.sampleTypes();
   FunctionType funcType = builder.getFunctionType({}, retTypes);
   func::FuncOp::build(builder, funcState, "main", funcType);
   Operation *funcOp = builder.create(funcState);
@@ -109,12 +111,15 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
     builder.setInsertionPointToStart(func.addEntryBlock());
 
     // Generate main function body.
-    if (builder
-            .generateBlock(/*ensureTerminator=*/true,
-                           /*requiredTypes=*/retTypes)
-            .failed())
-      return failure();
+    LogicalResult funcBodyRes =
+        builder.generateBlock(/*ensureTerminator=*/true,
+                              /*requiredTypes=*/retTypes);
+    if (funcBodyRes.failed())
+      llvm::errs() << "failed to generate main function body\n";
   }
+
+  if (module.verify().failed())
+    llvm::errs() << "top-level module failed to verify\n";
 
   // Output the result.
   module.print(output->os());
