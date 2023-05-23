@@ -249,9 +249,10 @@ GeneratorOpBuilderImpl::generateOperation(
     probs.push_back(generatorConfig.getProb(op.getStringRef()));
 
   LogicalResult logicalResult = failure();
+  Optional<RegisteredOperationName> op;
 
   while (logicalResult.failed()) {
-    Optional<RegisteredOperationName> op = sample(ops, probs);
+    op = sample(ops, probs);
     if (!op.has_value()) {
       LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateOperation "
                                  "failed to sample an operation\n");
@@ -266,12 +267,21 @@ GeneratorOpBuilderImpl::generateOperation(
     logicalResult = generate(op.value());
   }
 
+  LLVM_DEBUG(
+      llvm::dbgs()
+      << "GeneratorOpBuilderImpl::generateOperation successfully generated "
+      << op.value() << "\n");
+
   // Results of the last inserted operation.
   return block->back().getResults();
 }
 
 llvm::Optional<llvm::SmallVector<Value>>
 GeneratorOpBuilderImpl::generateTerminator() {
+  LLVM_DEBUG(
+      llvm::dbgs()
+      << "GeneratorOpBuilderImpl::generateTerminator started generating\n");
+
   Block *block = builder.getBlock();
   if (block == nullptr) {
     LLVM_DEBUG(
@@ -335,6 +345,8 @@ llvm::SmallVector<Type> GeneratorOpBuilderImpl::sampleTypes() {
     types.push_back(type.value());
   }
 
+  LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::sampleTypes generated {"
+                          << types << "}\n");
   return types;
 }
 
@@ -412,7 +424,20 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
     return std::nullopt;
   }
 
-  return sample(possibleValues);
+  Optional<Value> value = sample(possibleValues);
+  if (!value.has_value()) {
+    LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::sampleValueOfType "
+                               "failed to sample a value of type "
+                            << t << "\n");
+    return std::nullopt;
+  }
+
+  LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::sampleValueOfType "
+                             "sampled value "
+                          << value.value().getDefiningOp()->getName()
+                          << " of type " << t << "\n");
+
+  return value;
 }
 
 llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
@@ -500,6 +525,26 @@ GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator,
     return failure();
   }
 
+  // Check region depth
+  unsigned depth = 0;
+  Block *depthBlock = builder.getBlock();
+
+  while (depthBlock != nullptr) {
+    depth++;
+    // Move up the hierarchy.
+    Operation *parent = depthBlock->getParentOp();
+    depthBlock = nullptr;
+
+    if (parent != nullptr)
+      depthBlock = parent->getBlock();
+  }
+
+  if (depth > generatorConfig.regionDepthLimit()) {
+    LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock reached "
+                               "region depth limit\n");
+    return failure();
+  }
+
   // Generate until all required types are generated.
   for (Type t : requiredTypes)
     if (!generateValueOfType(t).has_value()) {
@@ -508,6 +553,9 @@ GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator,
                               << t << "\n");
       return failure();
     }
+
+  LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock "
+                             "successfully generated required types\n");
 
   // Randomly continue generating.
 
@@ -524,24 +572,26 @@ GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator,
   for (int i = 0; i < length; ++i)
     generateOperation(possibleOps);
 
+  LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock "
+                             "successfully generated additional operations\n");
+
   // If required, continue until a terminator has been generated.
-  if (!ensureTerminator)
+  if (!ensureTerminator) {
+    LLVM_DEBUG(llvm::dbgs()
+               << "GeneratorOpBuilderImpl::generateBlock "
+                  "successfully generated block without terminator\n");
     return success();
-
-  Operation *lastOp = &block->back();
-  while (!lastOp->hasTrait<OpTrait::IsTerminator>()) {
-    auto values = generateOperation(availableOps);
-
-    // Failed to generate.
-    if (!values.has_value()) {
-      LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock failed "
-                                 "to generate terminator\n");
-      return failure();
-    }
-
-    lastOp = &block->back();
   }
 
+  // Try to generate terminator.
+  if (!generateTerminator().has_value()) {
+    LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock failed "
+                               "to generate terminator\n");
+    return failure();
+  }
+
+  LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock "
+                             "successfully generated block with terminator\n");
   return success();
 }
 
