@@ -38,9 +38,13 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
       "f", cl::desc("Config filename"), cl::value_desc("filename"),
       cl::Optional, cl::cat(mlirSmithCategory));
 
-  static cl::opt<bool> shouldDumpConfig("d", cl::desc("Dump config"),
+  static cl::opt<bool> shouldDumpConfig("dump", cl::desc("Dump config"),
                                         cl::init(false),
                                         cl::cat(mlirSmithCategory));
+
+  static cl::opt<unsigned> seedOpt(
+      "seed", cl::desc("Random number generator seed"), cl::value_desc("seed"),
+      cl::Optional, cl::cat(mlirSmithCategory));
 
   cl::HideUnrelatedOptions(mlirSmithCategory);
   InitLLVM y(argc, argv);
@@ -74,6 +78,10 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
       return failure();
     }
   }
+
+  // Override configuration values with CLI values
+  if (seedOpt.getNumOccurrences() > 0)
+    config.Seed = seedOpt.getValue();
 
   // Dump config.
   if (shouldDumpConfig) {

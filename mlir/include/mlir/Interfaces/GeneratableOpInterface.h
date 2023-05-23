@@ -15,6 +15,7 @@
 
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/PatternMatch.h"
+#include "mlir/Tools/mlir-smith/MlirSmithMain.h"
 
 namespace mlir {
 class GeneratableOpInterface;
@@ -24,6 +25,9 @@ class GeneratableOpInterface;
 //===----------------------------------------------------------------------===//
 
 struct GeneratorOpBuilderConfig {
+  friend LogicalResult mlir::mlirSmithMain(int argc, char **argv,
+                                           DialectRegistry &registry);
+
 private:
   unsigned Seed;
   unsigned RegionDepth;
