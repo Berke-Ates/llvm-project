@@ -143,6 +143,18 @@ public:
                               GeneratorOpBuilderConfig generatorConfig);
   ~GeneratorOpBuilder();
 
+  /// Creates an operation given the fields represented as an OperationState and
+  /// enforces generator constraints.
+  Operation *create(const OperationState &state);
+
+  /// Creates an operation with the given fields and enforces generator
+  /// constraints.
+  Operation *create(Location loc, StringAttr opName, ValueRange operands,
+                    TypeRange types = {},
+                    ArrayRef<NamedAttribute> attributes = {},
+                    BlockRange successors = {},
+                    MutableArrayRef<std::unique_ptr<Region>> regions = {});
+
   /// Returns a random number between 0 and max (inclusive) using uniform
   /// distribution.
   unsigned sampleUniform(int32_t max);

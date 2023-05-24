@@ -71,6 +71,9 @@ struct GeneratorOpBuilderImpl {
     rngGen = std::mt19937(generatorConfig.seed());
   }
 
+  /// Checks if the given OperationState adheres to the generator constraints.
+  bool canCreate(const OperationState &state);
+
   /// Returns a random number between 0 and max (inclusive) using uniform
   /// distribution.
   unsigned sampleUniform(int32_t max);
@@ -153,9 +156,53 @@ struct GeneratorOpBuilderImpl {
 
   /// All operations that can be generated.
   llvm::SmallVector<RegisteredOperationName> availableOps;
+
+  /// If set, forces operations to have the specified return type.
+  llvm::Optional<Type> requiredReturnType;
+
+  /// Allows bypassing the block length limit to ensure that terminators can be
+  /// generated.
+  bool bypassBlockLengthLimit;
 };
 } // namespace detail
 } // namespace mlir
+
+bool GeneratorOpBuilderImpl::canCreate(const OperationState &state) {
+  // Enforce return type if needed.
+  if (requiredReturnType.has_value())
+    if (llvm::find(state.types, requiredReturnType.value()) ==
+        state.types.end())
+      return false;
+
+  // Enforce nested region limit.
+  unsigned depth = 0;
+  Block *block = builder.getBlock();
+
+  while (block != nullptr) {
+    depth++;
+    // Move up the hierarchy.
+    Operation *parent = block->getParentOp();
+    block = nullptr;
+
+    if (parent != nullptr)
+      block = parent->getBlock();
+  }
+
+  if (depth > generatorConfig.regionDepthLimit()) {
+    LLVM_DEBUG(
+        llvm::dbgs()
+        << "GeneratorOpBuilderImpl::canCreate reached region depth limit\n");
+    return false;
+  }
+
+  // Enforce block length limit.
+  block = builder.getBlock();
+  if (!bypassBlockLengthLimit && block != nullptr)
+    if (block->getOperations().size() >= generatorConfig.blockLengthLimit())
+      return false;
+
+  return true;
+}
 
 unsigned GeneratorOpBuilderImpl::sampleUniform(int32_t max) {
   if (max < 0)
@@ -246,11 +293,6 @@ GeneratorOpBuilderImpl::generateOperation(
   if (ops.empty())
     ops = availableOps;
 
-  // Lookup probabilities.
-  llvm::SmallVector<unsigned> probs;
-  for (RegisteredOperationName op : ops)
-    probs.push_back(generatorConfig.getProb(op.getStringRef()));
-
   LogicalResult logicalResult = failure();
   llvm::Optional<RegisteredOperationName> op;
   OpBuilder::InsertPoint ip = builder.saveInsertionPoint();
@@ -259,7 +301,11 @@ GeneratorOpBuilderImpl::generateOperation(
   while (logicalResult.failed()) {
     builder.restoreInsertionPoint(ip);
 
-    // IDEA: Remove op after X tries or after op signal to guarantee termination
+    // Lookup probabilities.
+    llvm::SmallVector<unsigned> probs;
+    for (RegisteredOperationName op : ops)
+      probs.push_back(generatorConfig.getProb(op.getStringRef()));
+
     op = sample(ops, probs);
     if (!op.has_value()) {
       LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateOperation "
@@ -273,6 +319,10 @@ GeneratorOpBuilderImpl::generateOperation(
         << op.value() << "\n");
 
     logicalResult = generate(op.value());
+
+    RegisteredOperationName *it = llvm::find(ops, op);
+    if (it != ops.end())
+      ops.erase(it);
   }
 
   LLVM_DEBUG(
@@ -281,6 +331,7 @@ GeneratorOpBuilderImpl::generateOperation(
       << op.value() << "\n");
 
   // Results of the last inserted operation.
+  // FIXME: GeneratorOpBuilder should track the last inserted op
   return block->back().getResults();
 }
 
@@ -318,6 +369,7 @@ GeneratorOpBuilderImpl::generateTerminator() {
   }
 
   // Results of the last inserted operation.
+  // FIXME: GeneratorOpBuilder should track the last inserted op
   return block->back().getResults();
 }
 
@@ -492,32 +544,29 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
     return std::nullopt;
   }
 
-  while (!possibleOps.empty()) {
-    llvm::Optional<llvm::SmallVector<Value>> values =
-        generateOperation(possibleOps);
+  requiredReturnType = t;
+  llvm::Optional<llvm::SmallVector<Value>> values =
+      generateOperation(possibleOps);
+  requiredReturnType = std::nullopt;
 
-    // Failed to generate.
-    if (!values.has_value()) {
-      LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateValueOfType "
-                                 "failed to generate operation for type "
-                              << t << "\n");
-      return std::nullopt;
-    }
-
-    llvm::SmallVector<Value> possible_values;
-
-    for (Value value : values.value())
-      if (value.getType() == t)
-        possible_values.push_back(value);
-
-    if (!possible_values.empty())
-      return sample(possible_values);
-
-    block->back().erase();
+  // Failed to generate.
+  if (!values.has_value()) {
+    LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateValueOfType "
+                               "failed to generate operation for type "
+                            << t << "\n");
+    return std::nullopt;
   }
 
+  llvm::SmallVector<Value> possible_values;
+  for (Value value : values.value())
+    if (value.getType() == t)
+      possible_values.push_back(value);
+
+  if (!possible_values.empty())
+    return sample(possible_values);
+
   LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateValueOfType "
-                             "exhausted all options for type "
+                             "generated operation without the requested type "
                           << t << "\n");
   return std::nullopt;
 }
@@ -545,40 +594,7 @@ GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator,
     return failure();
   }
 
-  // Check region depth
-  unsigned depth = 0;
-  Block *depthBlock = builder.getBlock();
-
-  while (depthBlock != nullptr) {
-    depth++;
-    // Move up the hierarchy.
-    Operation *parent = depthBlock->getParentOp();
-    depthBlock = nullptr;
-
-    if (parent != nullptr)
-      depthBlock = parent->getBlock();
-  }
-
-  if (depth > generatorConfig.regionDepthLimit()) {
-    LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock reached "
-                               "region depth limit\n");
-    return failure();
-  }
-
-  // Generate until all required types are generated.
-  for (Type t : requiredTypes)
-    if (!generateValueOfType(t).has_value()) {
-      LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock failed "
-                                 "to generate value of type "
-                              << t << "\n");
-      return failure();
-    }
-
-  LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock "
-                             "successfully generated required types\n");
-
-  // Randomly continue generating.
-
+  // Randomly generate operations.
   // Geometric distribution, p=0.5
   std::geometric_distribution<> dist(0.5);
   int length = dist(rngGen);
@@ -595,8 +611,22 @@ GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator,
   LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock "
                              "successfully generated additional operations\n");
 
+  bypassBlockLengthLimit = true;
+  // Generate until all required types are generated.
+  for (Type t : requiredTypes)
+    if (!generateValueOfType(t).has_value()) {
+      LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock failed "
+                                 "to generate value of type "
+                              << t << "\n");
+      return failure();
+    }
+
+  LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock "
+                             "successfully generated required types\n");
+
   // If required, continue until a terminator has been generated.
   if (!ensureTerminator) {
+    bypassBlockLengthLimit = false;
     builder.setInsertionPointAfter(block->getParentOp());
     LLVM_DEBUG(llvm::dbgs()
                << "GeneratorOpBuilderImpl::generateBlock "
@@ -611,6 +641,7 @@ GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator,
     return failure();
   }
 
+  bypassBlockLengthLimit = false;
   builder.setInsertionPointAfter(block->getParentOp());
   LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock "
                              "successfully generated block with terminator\n");
@@ -628,6 +659,22 @@ GeneratorOpBuilder::GeneratorOpBuilder(MLIRContext *ctx,
 
 // XXX: Might need to destruct impl
 GeneratorOpBuilder::~GeneratorOpBuilder() = default;
+
+Operation *GeneratorOpBuilder::create(const OperationState &state) {
+  if (impl->canCreate(state))
+    return OpBuilder::create(state);
+  return nullptr;
+}
+
+Operation *
+GeneratorOpBuilder::create(Location loc, StringAttr opName, ValueRange operands,
+                           TypeRange types, ArrayRef<NamedAttribute> attributes,
+                           BlockRange successors,
+                           MutableArrayRef<std::unique_ptr<Region>> regions) {
+  OperationState state(loc, opName, operands, types, attributes, successors,
+                       regions);
+  return create(state);
+}
 
 unsigned GeneratorOpBuilder::sampleUniform(int32_t max) {
   return impl->sampleUniform(max);

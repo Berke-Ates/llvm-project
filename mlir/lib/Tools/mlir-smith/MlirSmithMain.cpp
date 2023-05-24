@@ -35,7 +35,7 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
       cl::init("-"), cl::cat(mlirSmithCategory));
 
   static cl::opt<std::string> configFilename(
-      "f", cl::desc("Config filename"), cl::value_desc("filename"),
+      "c", cl::desc("Config filename"), cl::value_desc("filename"),
       cl::Optional, cl::cat(mlirSmithCategory));
 
   static cl::opt<bool> shouldDumpConfig("dump", cl::desc("Dump config"),

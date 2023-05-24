@@ -202,10 +202,6 @@ void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
 }
 
 LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
-  SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
-
   DenseMap<Type, TypedAttr> attrMap = {
       {builder.getI1Type(), builder.getBoolAttr(builder.sampleBool())},
       {builder.getIndexType(),
@@ -226,14 +222,25 @@ LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
        builder.getF64FloatAttr(builder.sampleNumberDouble())},
   };
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type type = possibleTypes[idx];
-  TypedAttr attr = attrMap[type];
+  SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::ConstantOp::getOperationName());
-  arith::ConstantOp::build(builder, state, type, attr);
-  return success(builder.create(state) != nullptr);
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type type = possibleTypes[idx];
+    TypedAttr attr = attrMap[type];
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::ConstantOp::getOperationName());
+    arith::ConstantOp::build(builder, state, type, attr);
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, type);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -311,22 +318,33 @@ OpFoldResult arith::AddIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::AddIOp::getOperationName());
-  arith::AddIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::AddIOp::getOperationName());
+    arith::AddIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -405,22 +423,33 @@ arith::AddUIExtendedOp::fold(FoldAdaptor adaptor,
 
 LogicalResult arith::AddUIExtendedOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::AddUIExtendedOp::getOperationName());
-  arith::AddUIExtendedOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::AddUIExtendedOp::getOperationName());
+    arith::AddUIExtendedOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -471,22 +500,33 @@ OpFoldResult arith::SubIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::SubIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::SubIOp::getOperationName());
-  arith::SubIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::SubIOp::getOperationName());
+    arith::SubIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -532,22 +572,33 @@ OpFoldResult arith::MulIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::MulIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MulIOp::getOperationName());
-  arith::MulIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::MulIOp::getOperationName());
+    arith::MulIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -610,22 +661,33 @@ arith::MulSIExtendedOp::fold(FoldAdaptor adaptor,
 
 LogicalResult arith::MulSIExtendedOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MulSIExtendedOp::getOperationName());
-  arith::MulSIExtendedOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::MulSIExtendedOp::getOperationName());
+    arith::MulSIExtendedOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -702,22 +764,33 @@ arith::MulUIExtendedOp::fold(FoldAdaptor adaptor,
 
 LogicalResult arith::MulUIExtendedOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MulUIExtendedOp::getOperationName());
-  arith::MulUIExtendedOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::MulUIExtendedOp::getOperationName());
+    arith::MulUIExtendedOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -771,22 +844,33 @@ Speculation::Speculatability arith::DivUIOp::getSpeculatability() {
 
 LogicalResult arith::DivUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::DivUIOp::getOperationName());
-  arith::DivUIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::DivUIOp::getOperationName());
+    arith::DivUIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -841,22 +925,33 @@ Speculation::Speculatability arith::DivSIOp::getSpeculatability() {
 
 LogicalResult arith::DivSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::DivSIOp::getOperationName());
-  arith::DivSIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::DivSIOp::getOperationName());
+    arith::DivSIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -920,22 +1015,33 @@ Speculation::Speculatability arith::CeilDivUIOp::getSpeculatability() {
 
 LogicalResult arith::CeilDivUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::CeilDivUIOp::getOperationName());
-  arith::CeilDivUIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::CeilDivUIOp::getOperationName());
+    arith::CeilDivUIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1016,22 +1122,33 @@ Speculation::Speculatability arith::CeilDivSIOp::getSpeculatability() {
 
 LogicalResult arith::CeilDivSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::CeilDivSIOp::getOperationName());
-  arith::CeilDivSIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::CeilDivSIOp::getOperationName());
+    arith::CeilDivSIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1100,22 +1217,33 @@ OpFoldResult arith::FloorDivSIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::FloorDivSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::FloorDivSIOp::getOperationName());
-  arith::FloorDivSIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::FloorDivSIOp::getOperationName());
+    arith::FloorDivSIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1158,22 +1286,33 @@ OpFoldResult arith::RemUIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::RemUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::RemUIOp::getOperationName());
-  arith::RemUIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::RemUIOp::getOperationName());
+    arith::RemUIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1216,22 +1355,33 @@ OpFoldResult arith::RemSIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::RemSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::RemSIOp::getOperationName());
-  arith::RemSIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::RemSIOp::getOperationName());
+    arith::RemSIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1300,22 +1450,33 @@ OpFoldResult arith::AndIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::AndIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::AndIOp::getOperationName());
-  arith::AndIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::AndIOp::getOperationName());
+    arith::AndIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1353,22 +1514,33 @@ OpFoldResult arith::OrIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::OrIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::OrIOp::getOperationName());
-  arith::OrIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::OrIOp::getOperationName());
+    arith::OrIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1421,22 +1593,33 @@ OpFoldResult arith::XOrIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::XOrIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::XOrIOp::getOperationName());
-  arith::XOrIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::XOrIOp::getOperationName());
+    arith::XOrIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1473,21 +1656,32 @@ OpFoldResult arith::NegFOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::NegFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> operand_negf = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
-  if (!operand_negf.has_value())
-    return failure();
+    if (!lhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::NegFOp::getOperationName());
-  arith::NegFOp::build(builder, state, operand_negf.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::NegFOp::getOperationName());
+    arith::NegFOp::build(builder, state, lhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1522,22 +1716,33 @@ OpFoldResult arith::AddFOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::AddFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::AddFOp::getOperationName());
-  arith::AddFOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::AddFOp::getOperationName());
+    arith::AddFOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1572,22 +1777,33 @@ OpFoldResult arith::SubFOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::SubFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::SubFOp::getOperationName());
-  arith::SubFOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::SubFOp::getOperationName());
+    arith::SubFOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1626,22 +1842,33 @@ OpFoldResult arith::MaxFOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::MaxFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MaxFOp::getOperationName());
-  arith::MaxFOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::MaxFOp::getOperationName());
+    arith::MaxFOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1688,22 +1915,33 @@ OpFoldResult MaxSIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::MaxSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MaxSIOp::getOperationName());
-  arith::MaxSIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::MaxSIOp::getOperationName());
+    arith::MaxSIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1747,22 +1985,33 @@ OpFoldResult MaxUIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::MaxUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MaxUIOp::getOperationName());
-  arith::MaxUIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::MaxUIOp::getOperationName());
+    arith::MaxUIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1800,22 +2049,33 @@ OpFoldResult arith::MinFOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::MinFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MinFOp::getOperationName());
-  arith::MinFOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::MinFOp::getOperationName());
+    arith::MinFOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1862,22 +2122,33 @@ OpFoldResult MinSIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::MinSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MinSIOp::getOperationName());
-  arith::MinSIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::MinSIOp::getOperationName());
+    arith::MinSIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1921,22 +2192,32 @@ OpFoldResult MinUIOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::MinUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+    OperationState state(builder.getUnknownLoc(),
+                         arith::MinUIOp::getOperationName());
+    arith::MinUIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MinUIOp::getOperationName());
-  arith::MinUIOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -1970,22 +2251,33 @@ OpFoldResult arith::MulFOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::MulFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::MulFOp::getOperationName());
-  arith::MulFOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::MulFOp::getOperationName());
+    arith::MulFOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -2025,22 +2317,33 @@ OpFoldResult arith::DivFOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::DivFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::DivFOp::getOperationName());
-  arith::DivFOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::DivFOp::getOperationName());
+    arith::DivFOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -2079,22 +2382,33 @@ OpFoldResult arith::RemFOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult arith::RemFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  Type resultType = possibleTypes[idx];
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
 
-  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
-  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-  if (!lhs.has_value() || !rhs.has_value())
-    return failure();
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  OperationState state(builder.getUnknownLoc(),
-                       arith::RemFOp::getOperationName());
-  arith::RemFOp::build(builder, state, lhs.value(), rhs.value());
-  return success(builder.create(state) != nullptr);
+    OperationState state(builder.getUnknownLoc(),
+                         arith::RemFOp::getOperationName());
+    arith::RemFOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
 }
 
 llvm::SmallVector<Type>

@@ -1200,22 +1200,7 @@ Speculation::Speculatability ForOp::getSpeculatability() {
 }
 
 LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
-  SmallVector<Type> possibleTypes = {
-      builder.getIndexType(), builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(),   builder.getI64Type(),
-  };
-
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-  llvm::Optional<Value> lb = builder.sampleValueOfType(possibleTypes[idx]);
-  llvm::Optional<Value> ub = builder.sampleValueOfType(possibleTypes[idx]);
-  llvm::Optional<Value> step = builder.sampleValueOfType(possibleTypes[idx]);
-
-  if (!lb.has_value() || !ub.has_value() || !step.has_value())
-    return failure();
-
-  // Limit bounds.
-  // FIXME: ABS() would be better
-  DenseMap<Type, TypedAttr> attrMap = {
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
       {builder.getI8Type(), builder.getI8IntegerAttr(1)},
       {builder.getI16Type(), builder.getI16IntegerAttr(1)},
@@ -1223,56 +1208,85 @@ LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
       {builder.getI64Type(), builder.getI64IntegerAttr(1)},
   };
 
-  OperationState constState(builder.getUnknownLoc(),
-                            arith::ConstantOp::getOperationName());
-  arith::ConstantOp::build(builder, constState, possibleTypes[idx],
-                           attrMap[possibleTypes[idx]]);
-  Operation *constOp = builder.create(constState);
-  if (constOp == nullptr)
-    return failure();
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getIndexType(), builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(),   builder.getI64Type(),
+  };
 
-  OperationState minState(builder.getUnknownLoc(),
-                          arith::MinSIOp::getOperationName());
-  arith::MinSIOp::build(builder, minState, step.value(), constOp->getResult(0));
-  Operation *minOp = builder.create(minState);
-  if (minOp == nullptr) {
-    constOp->erase();
-    return failure();
-  }
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    llvm::Optional<Value> lb = builder.sampleValueOfType(possibleTypes[idx]);
+    llvm::Optional<Value> ub = builder.sampleValueOfType(possibleTypes[idx]);
+    llvm::Optional<Value> step = builder.sampleValueOfType(possibleTypes[idx]);
 
-  llvm::SmallVector<Type> iterTypes = builder.sampleTypes();
-  llvm::SmallVector<Value> iterArgs;
+    if (!lb.has_value() || !ub.has_value() || !step.has_value()) {
+      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  for (Type t : iterTypes) {
-    llvm::Optional<Value> val = builder.sampleValueOfType(t);
-    if (!val.has_value()) {
+    // Limit bounds.
+    // FIXME: ABS() would be better
+    OperationState constState(builder.getUnknownLoc(),
+                              arith::ConstantOp::getOperationName());
+    arith::ConstantOp::build(builder, constState, possibleTypes[idx],
+                             attrMap[possibleTypes[idx]]);
+    Operation *constOp = builder.create(constState);
+    if (constOp == nullptr) {
+      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    OperationState minState(builder.getUnknownLoc(),
+                            arith::MinSIOp::getOperationName());
+    arith::MinSIOp::build(builder, minState, step.value(),
+                          constOp->getResult(0));
+    Operation *minOp = builder.create(minState);
+    if (minOp == nullptr) {
+      constOp->erase();
+      return failure();
+    }
+
+    llvm::SmallVector<Type> iterTypes = builder.sampleTypes();
+    llvm::SmallVector<Value> iterArgs;
+
+    for (Type t : iterTypes) {
+      llvm::Optional<Value> val = builder.sampleValueOfType(t);
+      if (!val.has_value()) {
+        minOp->erase();
+        constOp->erase();
+        return failure();
+      }
+      iterArgs.push_back(val.value());
+    }
+
+    OperationState state(builder.getUnknownLoc(), ForOp::getOperationName());
+    ForOp::build(builder, state, lb.value(), ub.value(), minOp->getResult(0),
+                 iterArgs);
+    Operation *op = builder.create(state);
+    if (op == nullptr) {
       minOp->erase();
       constOp->erase();
       return failure();
     }
-    iterArgs.push_back(val.value());
+
+    ForOp forOp = cast<ForOp>(op);
+    builder.setInsertionPointToStart(forOp.getBody());
+    if (builder
+            .generateBlock(/*ensureTerminator=*/!iterTypes.empty(),
+                           /*requiredTypes=*/iterTypes)
+            .failed()) {
+      forOp.erase();
+      minOp->erase();
+      constOp->erase();
+      return failure();
+    }
   }
 
-  OperationState state(builder.getUnknownLoc(), ForOp::getOperationName());
-  ForOp::build(builder, state, lb.value(), ub.value(), minOp->getResult(0),
-               iterArgs);
-  Operation *op = builder.create(state);
-  if (op == nullptr)
-    return failure();
-
-  ForOp forOp = cast<ForOp>(op);
-  builder.setInsertionPointToStart(forOp.getBody());
-  if (builder
-          .generateBlock(/*ensureTerminator=*/!iterTypes.empty(),
-                         /*requiredTypes=*/iterTypes)
-          .failed()) {
-    forOp.erase();
-    minOp->erase();
-    constOp->erase();
-    return failure();
-  }
-
-  return success();
+  return failure();
 }
 
 llvm::SmallVector<Type>
@@ -2738,7 +2752,6 @@ YieldOp IfOp::elseYield() { return cast<YieldOp>(&elseBlock()->back()); }
 
 LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
   llvm::Optional<Value> cond = builder.sampleValueOfType(builder.getI1Type());
-
   if (!cond.has_value())
     return failure();
 
