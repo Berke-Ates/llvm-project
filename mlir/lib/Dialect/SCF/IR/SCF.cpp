@@ -2644,8 +2644,9 @@ LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
     return failure();
 
   bool hasElse = builder.sampleUniform(1) == 1;
+  llvm::SmallVector<Type> retTypes = builder.sampleTypes();
 
-  IfOp::build(builder, state, cond.value(), hasElse);
+  IfOp::build(builder, state, retTypes, cond.value(), hasElse);
   Operation *op = builder.create(state);
   if (op == nullptr)
     return failure();
@@ -2654,7 +2655,10 @@ LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
 
   builder.setInsertionPointToStart(ifOp.thenBlock());
 
-  if (builder.generateBlock().failed()) {
+  if (builder
+          .generateBlock(/*ensureTerminator=*/true,
+                         /*requiredTypes=*/retTypes)
+          .failed()) {
     ifOp.erase();
     return failure();
   }
@@ -2664,7 +2668,10 @@ LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
 
   builder.setInsertionPointToStart(ifOp.elseBlock());
 
-  if (builder.generateBlock().failed()) {
+  if (builder
+          .generateBlock(/*ensureTerminator=*/true,
+                         /*requiredTypes=*/retTypes)
+          .failed()) {
     ifOp.erase();
     return failure();
   }
@@ -4072,8 +4079,45 @@ void IndexSwitchOp::getRegionInvocationBounds(
 //===----------------------------------------------------------------------===//
 
 LogicalResult YieldOp::generate(GeneratorOpBuilder &builder) {
-  // TODO: Generate this op
-  return failure();
+  Block *block = builder.getBlock();
+  if (block == nullptr)
+    return failure();
+
+  Operation *parent = block->getParentOp();
+  if (parent == nullptr ||
+      !(isa<ExecuteRegionOp>(parent) || isa<ForOp>(parent) ||
+        isa<IfOp>(parent) || isa<IndexSwitchOp>(parent) ||
+        isa<ParallelOp>(parent) || isa<WhileOp>(parent)))
+    return failure();
+
+  // Get required types.
+  TypeRange retTypes;
+
+  if (ExecuteRegionOp op = dyn_cast<ExecuteRegionOp>(parent))
+    retTypes = op.getResultTypes();
+  else if (ForOp op = dyn_cast<ForOp>(parent))
+    retTypes = op.getResultTypes();
+  else if (IfOp op = dyn_cast<IfOp>(parent))
+    retTypes = op.getResultTypes();
+  else if (IndexSwitchOp op = dyn_cast<IndexSwitchOp>(parent))
+    retTypes = op.getResultTypes();
+  else if (ParallelOp op = dyn_cast<ParallelOp>(parent))
+    retTypes = op.getResultTypes();
+  else if (WhileOp op = dyn_cast<WhileOp>(parent))
+    retTypes = op.getResultTypes();
+
+  llvm::SmallVector<Value> results;
+  for (Type t : retTypes) {
+    llvm::Optional<Value> sampleValue = builder.sampleValueOfType(t);
+    if (!sampleValue.has_value())
+      return failure();
+
+    results.push_back(sampleValue.value());
+  }
+
+  OperationState state(builder.getUnknownLoc(), YieldOp::getOperationName());
+  YieldOp::build(builder, state, results);
+  return success(builder.create(state) != nullptr);
 }
 
 llvm::SmallVector<Type>

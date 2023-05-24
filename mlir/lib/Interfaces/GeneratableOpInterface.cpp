@@ -381,11 +381,10 @@ bool GeneratorOpBuilderImpl::hasValueOfType(Type t) {
     }
   }
 
-  // XXX: This might not work as intended.
   for (Value val : excludedValues) {
-    llvm::errs() << "ENTERING VALUE SAMPLING ERASURE\n";
-    if (llvm::find(possibleValues, val) != possibleValues.end())
-      possibleValues.erase(&val);
+    Value *it = llvm::find(possibleValues, val);
+    if (it != possibleValues.end())
+      possibleValues.erase(it);
   }
 
   return !possibleValues.empty();
@@ -416,11 +415,10 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
     }
   }
 
-  // XXX: This might not work as intended.
   for (Value val : excludedValues) {
-    llvm::errs() << "ENTERING VALUE SAMPLING ERASURE\n";
-    if (llvm::find(possibleValues, val) != possibleValues.end())
-      possibleValues.erase(&val);
+    Value *it = llvm::find(possibleValues, val);
+    if (it != possibleValues.end())
+      possibleValues.erase(it);
   }
 
   if (possibleValues.empty()) {
@@ -455,10 +453,6 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
 
   for (RegisteredOperationName op : availableOps) {
     llvm::SmallVector<Type> opTypes = getGeneratableTypes(op);
-    LLVM_DEBUG(llvm::dbgs()
-               << "GeneratorOpBuilderImpl::generateValueOfType received {"
-               << opTypes << "} from " << op << " for type " << t << "\n");
-
     if (llvm::find(opTypes, t) != opTypes.end())
       possibleOps.push_back(op);
   }
