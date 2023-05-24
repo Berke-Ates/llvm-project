@@ -1471,6 +1471,39 @@ OpFoldResult arith::NegFOp::fold(FoldAdaptor adaptor) {
                                      [](const APFloat &a) { return -a; });
 }
 
+LogicalResult arith::NegFOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
+
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
+
+  llvm::Optional<Value> operand_negf = builder.sampleValueOfType(resultType);
+
+  if (!operand_negf.has_value())
+    return failure();
+
+  OperationState state(builder.getUnknownLoc(),
+                       arith::NegFOp::getOperationName());
+  arith::NegFOp::build(builder, state, operand_negf.value());
+  return success(builder.create(state) != nullptr);
+}
+
+llvm::SmallVector<Type>
+arith::NegFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
+}
+
 //===----------------------------------------------------------------------===//
 // AddFOp
 //===----------------------------------------------------------------------===//
@@ -1485,6 +1518,40 @@ OpFoldResult arith::AddFOp::fold(FoldAdaptor adaptor) {
       [](const APFloat &a, const APFloat &b) { return a + b; });
 }
 
+LogicalResult arith::AddFOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
+
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
+
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+
+  if (!lhs.has_value() || !rhs.has_value())
+    return failure();
+
+  OperationState state(builder.getUnknownLoc(),
+                       arith::AddFOp::getOperationName());
+  arith::AddFOp::build(builder, state, lhs.value(), rhs.value());
+  return success(builder.create(state) != nullptr);
+}
+
+llvm::SmallVector<Type>
+arith::AddFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
+}
+
 //===----------------------------------------------------------------------===//
 // SubFOp
 //===----------------------------------------------------------------------===//
@@ -1497,6 +1564,40 @@ OpFoldResult arith::SubFOp::fold(FoldAdaptor adaptor) {
   return constFoldBinaryOp<FloatAttr>(
       adaptor.getOperands(),
       [](const APFloat &a, const APFloat &b) { return a - b; });
+}
+
+LogicalResult arith::SubFOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
+
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
+
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+
+  if (!lhs.has_value() || !rhs.has_value())
+    return failure();
+
+  OperationState state(builder.getUnknownLoc(),
+                       arith::SubFOp::getOperationName());
+  arith::SubFOp::build(builder, state, lhs.value(), rhs.value());
+  return success(builder.create(state) != nullptr);
+}
+
+llvm::SmallVector<Type>
+arith::SubFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1515,6 +1616,40 @@ OpFoldResult arith::MaxFOp::fold(FoldAdaptor adaptor) {
   return constFoldBinaryOp<FloatAttr>(
       adaptor.getOperands(),
       [](const APFloat &a, const APFloat &b) { return llvm::maximum(a, b); });
+}
+
+LogicalResult arith::MaxFOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
+
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
+
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+
+  if (!lhs.has_value() || !rhs.has_value())
+    return failure();
+
+  OperationState state(builder.getUnknownLoc(),
+                       arith::MaxFOp::getOperationName());
+  arith::MaxFOp::build(builder, state, lhs.value(), rhs.value());
+  return success(builder.create(state) != nullptr);
+}
+
+llvm::SmallVector<Type>
+arith::MaxFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1655,6 +1790,40 @@ OpFoldResult arith::MinFOp::fold(FoldAdaptor adaptor) {
       [](const APFloat &a, const APFloat &b) { return llvm::minimum(a, b); });
 }
 
+LogicalResult arith::MinFOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
+
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
+
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+
+  if (!lhs.has_value() || !rhs.has_value())
+    return failure();
+
+  OperationState state(builder.getUnknownLoc(),
+                       arith::MinFOp::getOperationName());
+  arith::MinFOp::build(builder, state, lhs.value(), rhs.value());
+  return success(builder.create(state) != nullptr);
+}
+
+llvm::SmallVector<Type>
+arith::MinFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
+}
+
 //===----------------------------------------------------------------------===//
 // MinSIOp
 //===----------------------------------------------------------------------===//
@@ -1789,6 +1958,40 @@ OpFoldResult arith::MulFOp::fold(FoldAdaptor adaptor) {
       [](const APFloat &a, const APFloat &b) { return a * b; });
 }
 
+LogicalResult arith::MulFOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
+
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
+
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+
+  if (!lhs.has_value() || !rhs.has_value())
+    return failure();
+
+  OperationState state(builder.getUnknownLoc(),
+                       arith::MulFOp::getOperationName());
+  arith::MulFOp::build(builder, state, lhs.value(), rhs.value());
+  return success(builder.create(state) != nullptr);
+}
+
+llvm::SmallVector<Type>
+arith::MulFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
+}
+
 void arith::MulFOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
                                                 MLIRContext *context) {
   patterns.add<MulFOfNegF>(context);
@@ -1808,6 +2011,40 @@ OpFoldResult arith::DivFOp::fold(FoldAdaptor adaptor) {
       [](const APFloat &a, const APFloat &b) { return a / b; });
 }
 
+LogicalResult arith::DivFOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
+
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
+
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+
+  if (!lhs.has_value() || !rhs.has_value())
+    return failure();
+
+  OperationState state(builder.getUnknownLoc(),
+                       arith::DivFOp::getOperationName());
+  arith::DivFOp::build(builder, state, lhs.value(), rhs.value());
+  return success(builder.create(state) != nullptr);
+}
+
+llvm::SmallVector<Type>
+arith::DivFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
+}
+
 void arith::DivFOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
                                                 MLIRContext *context) {
   patterns.add<DivFOfNegF>(context);
@@ -1824,6 +2061,40 @@ OpFoldResult arith::RemFOp::fold(FoldAdaptor adaptor) {
                                         (void)result.remainder(b);
                                         return result;
                                       });
+}
+
+LogicalResult arith::RemFOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
+
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type resultType = possibleTypes[idx];
+
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+
+  if (!lhs.has_value() || !rhs.has_value())
+    return failure();
+
+  OperationState state(builder.getUnknownLoc(),
+                       arith::RemFOp::getOperationName());
+  arith::RemFOp::build(builder, state, lhs.value(), rhs.value());
+  return success(builder.create(state) != nullptr);
+}
+
+llvm::SmallVector<Type>
+arith::RemFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//

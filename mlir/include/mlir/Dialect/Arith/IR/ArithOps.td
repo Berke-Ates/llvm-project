@@ -767,7 +767,8 @@ def Arith_ShRSIOp : Arith_TotalIntBinaryOp<"shrsi"> {
 // NegFOp
 //===----------------------------------------------------------------------===//
 
-def Arith_NegFOp : Arith_FloatUnaryOp<"negf"> {
+def Arith_NegFOp : Arith_FloatUnaryOp<"negf", 
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "floating point negation";
   let description = [{
     The `negf` operation computes the negation of a given value. It takes one
@@ -795,7 +796,8 @@ def Arith_NegFOp : Arith_FloatUnaryOp<"negf"> {
 // AddFOp
 //===----------------------------------------------------------------------===//
 
-def Arith_AddFOp : Arith_FloatBinaryOp<"addf", [Commutative]> {
+def Arith_AddFOp : Arith_FloatBinaryOp<"addf", [Commutative,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "floating point addition operation";
   let description = [{
     The `addf` operation takes two operands and returns one result, each of
@@ -826,7 +828,8 @@ def Arith_AddFOp : Arith_FloatBinaryOp<"addf", [Commutative]> {
 // SubFOp
 //===----------------------------------------------------------------------===//
 
-def Arith_SubFOp : Arith_FloatBinaryOp<"subf"> {
+def Arith_SubFOp : Arith_FloatBinaryOp<"subf", 
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "floating point subtraction operation";
   let description = [{
     The `subf` operation takes two operands and returns one result, each of
@@ -857,7 +860,8 @@ def Arith_SubFOp : Arith_FloatBinaryOp<"subf"> {
 // MaxFOp
 //===----------------------------------------------------------------------===//
 
-def Arith_MaxFOp : Arith_FloatBinaryOp<"maxf", [Commutative]> {
+def Arith_MaxFOp : Arith_FloatBinaryOp<"maxf", [Commutative,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "floating-point maximum operation";
   let description = [{
     Syntax:
@@ -903,7 +907,8 @@ def Arith_MaxUIOp : Arith_TotalIntBinaryOp<"maxui", [Commutative,
 // MinFOp
 //===----------------------------------------------------------------------===//
 
-def Arith_MinFOp : Arith_FloatBinaryOp<"minf", [Commutative]> {
+def Arith_MinFOp : Arith_FloatBinaryOp<"minf", [Commutative, 
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "floating-point minimum operation";
   let description = [{
     Syntax:
@@ -950,7 +955,8 @@ def Arith_MinUIOp : Arith_TotalIntBinaryOp<"minui", [Commutative,
 // MulFOp
 //===----------------------------------------------------------------------===//
 
-def Arith_MulFOp : Arith_FloatBinaryOp<"mulf", [Commutative]> {
+def Arith_MulFOp : Arith_FloatBinaryOp<"mulf", [Commutative,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "floating point multiplication operation";
   let description = [{
     The `mulf` operation takes two operands and returns one result, each of
@@ -982,7 +988,8 @@ def Arith_MulFOp : Arith_FloatBinaryOp<"mulf", [Commutative]> {
 // DivFOp
 //===----------------------------------------------------------------------===//
 
-def Arith_DivFOp : Arith_FloatBinaryOp<"divf"> {
+def Arith_DivFOp : Arith_FloatBinaryOp<"divf", 
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "floating point division operation";
   let hasFolder = 1;
   let hasCanonicalizer = 1;
@@ -992,7 +999,8 @@ def Arith_DivFOp : Arith_FloatBinaryOp<"divf"> {
 // RemFOp
 //===----------------------------------------------------------------------===//
 
-def Arith_RemFOp : Arith_FloatBinaryOp<"remf"> {
+def Arith_RemFOp : Arith_FloatBinaryOp<"remf", 
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "floating point division remainder operation";
   let hasFolder = 1;
 }
