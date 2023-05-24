@@ -1238,7 +1238,8 @@ def BitcastTypeConstraint : TypeConstraint<Or<[
     "signless-integer-or-float-like or memref of signless-integer or float">;
 
 def Arith_BitcastOp : Arith_CastOp<"bitcast", BitcastTypeConstraint,
-                                              BitcastTypeConstraint> {
+    BitcastTypeConstraint,
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "bitcast between values of equal bit width";
   let description = [{
     Bitcast an integer or floating point value to an integer or floating point
