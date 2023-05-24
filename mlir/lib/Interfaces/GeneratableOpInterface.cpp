@@ -76,8 +76,8 @@ struct GeneratorOpBuilderImpl {
   /// Samples from a vector of choices. If no probability vector is provided,
   /// it samples using a uniform distribution.
   template <typename T>
-  llvm::Optional<T> sample(SmallVector<T> choices,
-                           SmallVector<unsigned> probs = {});
+  llvm::Optional<T> sample(llvm::SmallVector<T> choices,
+                           llvm::SmallVector<unsigned> probs = {});
 
   /// Returns a random boolean.
   bool sampleBool();
@@ -164,8 +164,9 @@ unsigned GeneratorOpBuilderImpl::sampleUniform(int32_t max) {
 }
 
 template <typename T>
-llvm::Optional<T> GeneratorOpBuilderImpl::sample(SmallVector<T> choices,
-                                                 SmallVector<unsigned> probs) {
+llvm::Optional<T>
+GeneratorOpBuilderImpl::sample(llvm::SmallVector<T> choices,
+                               llvm::SmallVector<unsigned> probs) {
   if (choices.empty()) {
     LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::sample requires a "
                                "nonempty list of choices. Caller: "
@@ -244,12 +245,12 @@ GeneratorOpBuilderImpl::generateOperation(
     ops = availableOps;
 
   // Lookup probabilities.
-  SmallVector<unsigned> probs;
+  llvm::SmallVector<unsigned> probs;
   for (RegisteredOperationName op : ops)
     probs.push_back(generatorConfig.getProb(op.getStringRef()));
 
   LogicalResult logicalResult = failure();
-  Optional<RegisteredOperationName> op;
+  llvm::Optional<RegisteredOperationName> op;
   OpBuilder::InsertPoint ip = builder.saveInsertionPoint();
 
   // TODO: GeneratorOpBuilder should be extended to keep track of changes and
@@ -296,7 +297,7 @@ GeneratorOpBuilderImpl::generateTerminator() {
   }
 
   // Filter available ops.
-  SmallVector<mlir::RegisteredOperationName> terminatorOps;
+  llvm::SmallVector<mlir::RegisteredOperationName> terminatorOps;
   for (RegisteredOperationName op : availableOps)
     if (op.hasTrait<OpTrait::IsTerminator>())
       terminatorOps.push_back(op);
@@ -319,9 +320,9 @@ GeneratorOpBuilderImpl::generateTerminator() {
 }
 
 llvm::SmallVector<Type> GeneratorOpBuilderImpl::sampleTypes() {
-  SmallVector<Type> availableTypes;
+  llvm::SmallVector<Type> availableTypes;
 
-  for (auto op : availableOps)
+  for (RegisteredOperationName op : availableOps)
     availableTypes.append(getGeneratableTypes(op));
 
   // Nothing to sample from.
@@ -335,9 +336,9 @@ llvm::SmallVector<Type> GeneratorOpBuilderImpl::sampleTypes() {
   std::geometric_distribution<> dist(0.5);
   int length = dist(rngGen);
 
-  SmallVector<Type> types;
+  llvm::SmallVector<Type> types;
   for (int i = 0; i < length; ++i) {
-    Optional<Type> type = sample(availableTypes);
+    llvm::Optional<Type> type = sample(availableTypes);
 
     // Failed to sample.
     if (!type.has_value()) {
@@ -356,8 +357,8 @@ llvm::SmallVector<Type> GeneratorOpBuilderImpl::sampleTypes() {
 }
 
 bool GeneratorOpBuilderImpl::hasValueOfType(Type t) {
-  SmallVector<Value> possibleValues;
-  SmallVector<Value> excludedValues;
+  llvm::SmallVector<Value> possibleValues;
+  llvm::SmallVector<Value> excludedValues;
 
   Block *block = builder.getBlock();
 
@@ -391,8 +392,8 @@ bool GeneratorOpBuilderImpl::hasValueOfType(Type t) {
 }
 
 llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
-  SmallVector<Value> possibleValues;
-  SmallVector<Value> excludedValues;
+  llvm::SmallVector<Value> possibleValues;
+  llvm::SmallVector<Value> excludedValues;
 
   Block *block = builder.getBlock();
 
@@ -429,7 +430,7 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
     return std::nullopt;
   }
 
-  Optional<Value> value = sample(possibleValues);
+  llvm::Optional<Value> value = sample(possibleValues);
   if (!value.has_value()) {
     LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::sampleValueOfType "
                                "failed to sample a value of type "
@@ -450,10 +451,10 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
       llvm::dbgs()
       << "GeneratorOpBuilderImpl::generateValueOfType started generating\n");
 
-  SmallVector<RegisteredOperationName> possibleOps;
+  llvm::SmallVector<RegisteredOperationName> possibleOps;
 
-  for (auto op : availableOps) {
-    SmallVector<Type> opTypes = getGeneratableTypes(op);
+  for (RegisteredOperationName op : availableOps) {
+    llvm::SmallVector<Type> opTypes = getGeneratableTypes(op);
     LLVM_DEBUG(llvm::dbgs()
                << "GeneratorOpBuilderImpl::generateValueOfType received {"
                << opTypes << "} from " << op << " for type " << t << "\n");
@@ -479,7 +480,8 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
   }
 
   while (!possibleOps.empty()) {
-    auto values = generateOperation(possibleOps);
+    llvm::Optional<llvm::SmallVector<Value>> values =
+        generateOperation(possibleOps);
 
     // Failed to generate.
     if (!values.has_value()) {
@@ -489,7 +491,7 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
       return std::nullopt;
     }
 
-    SmallVector<Value> possible_values;
+    llvm::SmallVector<Value> possible_values;
 
     for (Value value : values.value())
       if (value.getType() == t)
@@ -510,7 +512,7 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
 llvm::Optional<Value>
 GeneratorOpBuilderImpl::sampleOrGenerateValueOfType(Type t) {
   // First try to sample.
-  Optional<Value> outputValue = sampleValueOfType(t);
+  llvm::Optional<Value> outputValue = sampleValueOfType(t);
   if (outputValue.has_value())
     return outputValue;
   // If sampling fails, try to generate.
@@ -569,7 +571,7 @@ GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator,
   int length = dist(rngGen);
 
   // Filter available ops.
-  SmallVector<mlir::RegisteredOperationName> possibleOps;
+  llvm::SmallVector<mlir::RegisteredOperationName> possibleOps;
   for (RegisteredOperationName op : availableOps)
     if (!op.hasTrait<OpTrait::IsTerminator>())
       possibleOps.push_back(op);

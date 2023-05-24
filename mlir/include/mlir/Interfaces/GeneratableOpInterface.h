@@ -103,7 +103,7 @@ public:
         OpProbs[ron.getStringRef()] = DefaultProb;
   }
 
-  void dumpConfig(raw_ostream &os) {
+  void dumpConfig(llvm::raw_ostream &os) {
     os << "seed = " << Seed << "\n";
     os << "regionDepthLimit = " << RegionDepthLimit << "\n";
     os << "blockLengthLimit = " << BlockLengthLimit << "\n";

@@ -373,9 +373,9 @@ LogicalResult ReturnOp::generate(GeneratorOpBuilder &builder) {
 
   FuncOp funcOp = cast<FuncOp>(parent);
 
-  SmallVector<Value> results;
+  llvm::SmallVector<Value> results;
   for (Type t : funcOp.getFunctionType().getResults()) {
-    Optional<Value> sampleValue = builder.sampleValueOfType(t);
+    llvm::Optional<Value> sampleValue = builder.sampleValueOfType(t);
     if (!sampleValue.has_value())
       return failure();
 
