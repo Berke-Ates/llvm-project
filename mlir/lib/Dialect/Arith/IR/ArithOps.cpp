@@ -1493,7 +1493,9 @@ LogicalResult arith::NegFOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::NegFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1541,7 +1543,9 @@ LogicalResult arith::AddFOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::AddFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1589,7 +1593,9 @@ LogicalResult arith::SubFOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::SubFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1641,7 +1647,9 @@ LogicalResult arith::MaxFOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::MaxFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1813,7 +1821,9 @@ LogicalResult arith::MinFOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::MinFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1981,7 +1991,9 @@ LogicalResult arith::MulFOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::MulFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -2034,7 +2046,9 @@ LogicalResult arith::DivFOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::DivFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -2086,7 +2100,9 @@ LogicalResult arith::RemFOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::RemFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
