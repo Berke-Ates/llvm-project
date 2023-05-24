@@ -368,23 +368,103 @@ void AllocaOp::getCanonicalizationPatterns(RewritePatternSet &results,
 }
 
 LogicalResult AllocOp::generate(GeneratorOpBuilder &builder) {
-  // TODO: Generate this op
-  return failure();
+  SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
+
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  if (!isa<MemRefType>(possibleTypes[idx]))
+    return failure();
+
+  MemRefType type = cast<MemRefType>(possibleTypes[idx]);
+
+  llvm::SmallVector<Value> dynamicSizes;
+  for (int64_t i = 0; i < type.getNumDynamicDims(); ++i) {
+    llvm::Optional<Value> sampleValue =
+        builder.sampleValueOfType(builder.getIndexType());
+    if (!sampleValue.has_value())
+      return failure();
+
+    dynamicSizes.push_back(sampleValue.value());
+  }
+
+  OperationState state(builder.getUnknownLoc(), AllocOp::getOperationName());
+  if (dynamicSizes.empty())
+    AllocOp::build(builder, state, type);
+  else
+    AllocOp::build(builder, state, type, dynamicSizes);
+  return success(builder.create(state) != nullptr);
 }
 
 LogicalResult AllocaOp::generate(GeneratorOpBuilder &builder) {
-  // TODO: Generate this op
-  return failure();
+  SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
+
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  if (!isa<MemRefType>(possibleTypes[idx]))
+    return failure();
+
+  MemRefType type = cast<MemRefType>(possibleTypes[idx]);
+
+  llvm::SmallVector<Value> dynamicSizes;
+  for (int64_t i = 0; i < type.getNumDynamicDims(); ++i) {
+    llvm::Optional<Value> sampleValue =
+        builder.sampleValueOfType(builder.getIndexType());
+    if (!sampleValue.has_value())
+      return failure();
+
+    dynamicSizes.push_back(sampleValue.value());
+  }
+
+  OperationState state(builder.getUnknownLoc(), AllocaOp::getOperationName());
+  if (dynamicSizes.empty())
+    AllocaOp::build(builder, state, type);
+  else
+    AllocaOp::build(builder, state, type, dynamicSizes);
+  return success(builder.create(state) != nullptr);
 }
 
 llvm::SmallVector<Type>
 AllocOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
+  llvm::SmallVector<Type> elementTypes = {
+      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
+      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
+      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+  };
+
+  llvm::SmallVector<llvm::SmallVector<int64_t, 1>> shapes1D = {
+      {}, {0}, {1}, {2}};
+  llvm::SmallVector<llvm::SmallVector<int64_t, 4>> shapes;
+
+  // Iterate over the 1D shapes and concatenate them to create 2D, 3D, and 4D
+  // shapes.
+  for (auto &shape1 : shapes1D) {
+    for (auto &shape2 : shapes1D) {
+      for (auto &shape3 : shapes1D) {
+        for (auto &shape4 : shapes1D) {
+          llvm::SmallVector<int64_t, 4> combinedShape;
+          combinedShape.append(shape1.begin(), shape1.end());
+          combinedShape.append(shape2.begin(), shape2.end());
+          combinedShape.append(shape3.begin(), shape3.end());
+          combinedShape.append(shape4.begin(), shape4.end());
+          shapes.push_back(combinedShape);
+        }
+      }
+    }
+  }
+
+  llvm::SmallVector<Type> genTypes;
+  for (llvm::ArrayRef shape : shapes)
+    for (Type t : elementTypes)
+      genTypes.push_back(MemRefType::get(shape, t));
+
+  return genTypes;
 }
 
 llvm::SmallVector<Type>
 AllocaOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
+  return AllocOp::getGeneratableTypes(builder);
 }
 
 //===----------------------------------------------------------------------===//

@@ -55,6 +55,8 @@ std::string getImmediateCaller() {
 namespace mlir {
 namespace detail {
 struct GeneratorOpBuilderImpl {
+  // TODO: GeneratorOpBuilder should track generated op stack for termination.
+
   explicit GeneratorOpBuilderImpl(MLIRContext *ctx,
                                   GeneratorOpBuilderConfig generatorConfig,
                                   GeneratorOpBuilder &builder)
@@ -253,11 +255,11 @@ GeneratorOpBuilderImpl::generateOperation(
   llvm::Optional<RegisteredOperationName> op;
   OpBuilder::InsertPoint ip = builder.saveInsertionPoint();
 
-  // TODO: GeneratorOpBuilder should be extended to keep track of changes and
-  // rollback on failure
+  // TODO: GeneratorOpBuilder should track changes and rollback on failure
   while (logicalResult.failed()) {
     builder.restoreInsertionPoint(ip);
 
+    // IDEA: Remove op after X tries or after op signal to guarantee termination
     op = sample(ops, probs);
     if (!op.has_value()) {
       LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateOperation "
