@@ -369,6 +369,11 @@ bool GeneratorOpBuilderImpl::hasValueOfType(Type t) {
         if (res.getType() == t)
           possibleValues.push_back(res);
 
+    // Add all arguments of the block of type t
+    for (BlockArgument bArg : block->getArguments())
+      if (bArg.getType() == t)
+        possibleValues.push_back(bArg);
+
     // Move up the hierarchy.
     Operation *parent = block->getParentOp();
     block = nullptr;
@@ -402,6 +407,11 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
       for (OpResult res : op.getResults())
         if (res.getType() == t)
           possibleValues.push_back(res);
+
+    // Add all arguments of the block of type t
+    for (BlockArgument bArg : block->getArguments())
+      if (bArg.getType() == t)
+        possibleValues.push_back(bArg);
 
     // Move up the hierarchy.
     Operation *parent = block->getParentOp();

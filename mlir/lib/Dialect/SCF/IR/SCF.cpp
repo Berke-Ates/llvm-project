@@ -1173,8 +1173,79 @@ Speculation::Speculatability ForOp::getSpeculatability() {
 }
 
 LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
-  // TODO: Generate this op
-  return failure();
+  SmallVector<Type> possibleTypes = {
+      builder.getIndexType(), builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(),   builder.getI64Type(),
+  };
+
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  llvm::Optional<Value> lb = builder.sampleValueOfType(possibleTypes[idx]);
+  llvm::Optional<Value> ub = builder.sampleValueOfType(possibleTypes[idx]);
+  llvm::Optional<Value> step = builder.sampleValueOfType(possibleTypes[idx]);
+
+  if (!lb.has_value() || !ub.has_value() || !step.has_value())
+    return failure();
+
+  // Limit bounds.
+  // FIXME: ABS() would be better
+  DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI8Type(), builder.getI8IntegerAttr(1)},
+      {builder.getI16Type(), builder.getI16IntegerAttr(1)},
+      {builder.getI32Type(), builder.getI32IntegerAttr(1)},
+      {builder.getI64Type(), builder.getI64IntegerAttr(1)},
+  };
+
+  OperationState constState(builder.getUnknownLoc(),
+                            arith::ConstantOp::getOperationName());
+  arith::ConstantOp::build(builder, constState, possibleTypes[idx],
+                           attrMap[possibleTypes[idx]]);
+  Operation *constOp = builder.create(constState);
+  if (constOp == nullptr)
+    return failure();
+
+  OperationState minState(builder.getUnknownLoc(),
+                          arith::MinSIOp::getOperationName());
+  arith::MinSIOp::build(builder, minState, step.value(), constOp->getResult(0));
+  Operation *minOp = builder.create(minState);
+  if (minOp == nullptr) {
+    constOp->erase();
+    return failure();
+  }
+
+  llvm::SmallVector<Type> iterTypes = builder.sampleTypes();
+  llvm::SmallVector<Value> iterArgs;
+
+  for (Type t : iterTypes) {
+    llvm::Optional<Value> val = builder.sampleValueOfType(t);
+    if (!val.has_value()) {
+      constOp->erase();
+      minOp->erase();
+      return failure();
+    }
+    iterArgs.push_back(val.value());
+  }
+
+  OperationState state(builder.getUnknownLoc(), ForOp::getOperationName());
+  ForOp::build(builder, state, lb.value(), ub.value(), minOp->getResult(0),
+               iterArgs);
+  Operation *op = builder.create(state);
+  if (op == nullptr)
+    return failure();
+
+  ForOp forOp = cast<ForOp>(op);
+  builder.setInsertionPointToStart(forOp.getBody());
+  if (builder
+          .generateBlock(/*ensureTerminator=*/!iterTypes.empty(),
+                         /*requiredTypes=*/iterTypes)
+          .failed()) {
+    constOp->erase();
+    minOp->erase();
+    forOp.erase();
+    return failure();
+  }
+
+  return success();
 }
 
 llvm::SmallVector<Type>
@@ -1194,7 +1265,8 @@ LogicalResult ForallOp::verify() {
            << getNumResults() << " results, but has only "
            << getOutputs().size() << " outputs";
 
-  // Check that the body defines block arguments for thread indices and outputs.
+  // Check that the body defines block arguments for thread indices and
+  // outputs.
   auto *body = getBody();
   if (body->getNumArguments() != numLoops + getOutputs().size())
     return emitOpError("region expects ") << numLoops << " arguments";
@@ -1269,8 +1341,9 @@ ParseResult ForallOp::parse(OpAsmParser &parser, OperationState &result) {
   auto indexType = b.getIndexType();
 
   // Parse an opening `(` followed by thread index variables followed by `)`
-  // TODO: when we can refer to such "induction variable"-like handles from the
-  // declarative assembly format, we can implement the parser as a custom hook.
+  // TODO: when we can refer to such "induction variable"-like handles from
+  // the declarative assembly format, we can implement the parser as a custom
+  // hook.
   SmallVector<OpAsmParser::Argument, 4> ivs;
   if (parser.parseArgumentList(ivs, OpAsmParser::Delimiter::Paren))
     return failure();
@@ -1575,7 +1648,8 @@ struct ForallOpSingleOrZeroIterationDimsFolder
           op, "no dimensions have 0 or 1 iterations");
     }
 
-    // All of the loop dimensions perform a single iteration. Inline loop body.
+    // All of the loop dimensions perform a single iteration. Inline loop
+    // body.
     if (newMixedLowerBounds.empty()) {
       promote(rewriter, op);
       return success();
@@ -2636,8 +2710,6 @@ Block *IfOp::elseBlock() {
 YieldOp IfOp::elseYield() { return cast<YieldOp>(&elseBlock()->back()); }
 
 LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
-  OperationState state(builder.getUnknownLoc(), IfOp::getOperationName());
-
   llvm::Optional<Value> cond = builder.sampleValueOfType(builder.getI1Type());
 
   if (!cond.has_value())
@@ -2646,15 +2718,14 @@ LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
   bool hasElse = builder.sampleUniform(1) == 1;
   llvm::SmallVector<Type> retTypes = builder.sampleTypes();
 
+  OperationState state(builder.getUnknownLoc(), IfOp::getOperationName());
   IfOp::build(builder, state, retTypes, cond.value(), hasElse);
   Operation *op = builder.create(state);
   if (op == nullptr)
     return failure();
 
   IfOp ifOp = cast<IfOp>(op);
-
   builder.setInsertionPointToStart(ifOp.thenBlock());
-
   if (builder
           .generateBlock(/*ensureTerminator=*/true,
                          /*requiredTypes=*/retTypes)
@@ -2667,7 +2738,6 @@ LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
     return success();
 
   builder.setInsertionPointToStart(ifOp.elseBlock());
-
   if (builder
           .generateBlock(/*ensureTerminator=*/true,
                          /*requiredTypes=*/retTypes)
@@ -2724,9 +2794,9 @@ void ParallelOp::build(
     OpBuilder &builder, OperationState &result, ValueRange lowerBounds,
     ValueRange upperBounds, ValueRange steps,
     function_ref<void(OpBuilder &, Location, ValueRange)> bodyBuilderFn) {
-  // Only pass a non-null wrapper if bodyBuilderFn is non-null itself. Make sure
-  // we don't capture a reference to a temporary by constructing the lambda at
-  // function level.
+  // Only pass a non-null wrapper if bodyBuilderFn is non-null itself. Make
+  // sure we don't capture a reference to a temporary by constructing the
+  // lambda at function level.
   auto wrappedBuilderFn = [&bodyBuilderFn](OpBuilder &nestedBuilder,
                                            Location nestedLoc, ValueRange ivs,
                                            ValueRange) {
@@ -2741,13 +2811,14 @@ void ParallelOp::build(
 }
 
 LogicalResult ParallelOp::verify() {
-  // Check that there is at least one value in lowerBound, upperBound and step.
-  // It is sufficient to test only step, because it is ensured already that the
-  // number of elements in lowerBound, upperBound and step are the same.
+  // Check that there is at least one value in lowerBound, upperBound and
+  // step. It is sufficient to test only step, because it is ensured already
+  // that the number of elements in lowerBound, upperBound and step are the
+  // same.
   Operation::operand_range stepValues = getStep();
   if (stepValues.empty())
-    return emitOpError(
-        "needs at least one tuple element for lowerBound, upperBound and step");
+    return emitOpError("needs at least one tuple element for lowerBound, "
+                       "upperBound and step");
 
   // Check whether all constant step values are positive.
   for (Value stepValue : stepValues)
@@ -2962,8 +3033,8 @@ struct ParallelOpSingleOrZeroIterationDimsFolder
     auto newOp =
         rewriter.create<ParallelOp>(op.getLoc(), newLowerBounds, newUpperBounds,
                                     newSteps, op.getInitVals(), nullptr);
-    // Clone the loop body and remap the block arguments of the collapsed loops
-    // (inlining does not support a cancellable block argument mapping).
+    // Clone the loop body and remap the block arguments of the collapsed
+    // loops (inlining does not support a cancellable block argument mapping).
     rewriter.cloneRegionBefore(op.getRegion(), newOp.getRegion(),
                                newOp.getRegion().begin(), mapping);
     rewriter.replaceOp(op, newOp.getResults());
@@ -3058,7 +3129,8 @@ void ReduceOp::build(
 }
 
 LogicalResult ReduceOp::verifyRegions() {
-  // The region of a ReduceOp has two arguments of the same type as its operand.
+  // The region of a ReduceOp has two arguments of the same type as its
+  // operand.
   auto type = getOperand().getType();
   Block &block = getReductionOperator().front();
   if (block.empty())
@@ -3424,10 +3496,10 @@ struct RemoveLoopInvariantArgsFromBeforeBlock
         break;
       }
       // If the i-th yield operand is k-th after block argument, then we check
-      // if the (k+1)-th condition op operand is equal to either the i-th before
-      // block argument or the initial value of i-th before block argument. If
-      // the comparison results `true`, i-th before block argument is a loop
-      // invariant.
+      // if the (k+1)-th condition op operand is equal to either the i-th
+      // before block argument or the initial value of i-th before block
+      // argument. If the comparison results `true`, i-th before block
+      // argument is a loop invariant.
       auto yieldOpBlockArg = yieldOpArg.dyn_cast<BlockArgument>();
       if (yieldOpBlockArg && yieldOpBlockArg.getOwner() == &afterBlock) {
         Value condOpArg = condOpArgs[yieldOpBlockArg.getArgNumber()];
@@ -3455,10 +3527,10 @@ struct RemoveLoopInvariantArgsFromBeforeBlock
         beforeBlockInitValMap.insert({index, initVal});
         continue;
       } else {
-        // If the i-th yield operand is k-th after block argument, then we check
-        // if the (k+1)-th condition op operand is equal to either the i-th
-        // before block argument or the initial value of i-th before block
-        // argument. If the comparison results `true`, i-th before block
+        // If the i-th yield operand is k-th after block argument, then we
+        // check if the (k+1)-th condition op operand is equal to either the
+        // i-th before block argument or the initial value of i-th before
+        // block argument. If the comparison results `true`, i-th before block
         // argument is a loop invariant.
         auto yieldOpBlockArg = yieldOpArg.dyn_cast<BlockArgument>();
         if (yieldOpBlockArg && yieldOpBlockArg.getOwner() == &afterBlock) {
@@ -3489,9 +3561,11 @@ struct RemoveLoopInvariantArgsFromBeforeBlock
 
     Block &beforeBlock = op.getBefore().front();
     SmallVector<Value> newBeforeBlockArgs(beforeBlock.getNumArguments());
-    // For each i-th before block argument we find it's replacement value as :-
+    // For each i-th before block argument we find it's replacement value as
+    // :-
     //   1. If i-th before block argument is a loop invariant, we fetch it's
-    //      initial value from `beforeBlockInitValMap` by querying for key `i`.
+    //      initial value from `beforeBlockInitValMap` by querying for key
+    //      `i`.
     //   2. Else we fetch j-th new before block argument as the replacement
     //      value of i-th before block argument.
     for (unsigned i = 0, j = 0, n = beforeBlock.getNumArguments(); i < n; i++) {
@@ -3612,9 +3686,9 @@ struct RemoveLoopInvariantValueYielded : public OpRewritePattern<WhileOp> {
 
     Block &afterBlock = op.getAfter().front();
     // Since a new scf.condition op was created, we need to fetch the new
-    // `after` block arguments which will be used while replacing operations of
-    // previous scf.while's `after` blocks. We'd also be fetching new result
-    // values too.
+    // `after` block arguments which will be used while replacing operations
+    // of previous scf.while's `after` blocks. We'd also be fetching new
+    // result values too.
     SmallVector<Value> newAfterBlockArgs(afterBlock.getNumArguments());
     SmallVector<Value> newWhileResults(afterBlock.getNumArguments());
     for (unsigned i = 0, j = 0, n = afterBlock.getNumArguments(); i < n; i++) {
