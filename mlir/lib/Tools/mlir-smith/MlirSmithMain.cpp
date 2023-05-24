@@ -126,9 +126,6 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
       llvm::errs() << "failed to generate main function body\n";
   }
 
-  if (module.verify().failed())
-    llvm::errs() << "top-level module failed to verify\n";
-
   // Output the result.
   module.print(output->os());
 

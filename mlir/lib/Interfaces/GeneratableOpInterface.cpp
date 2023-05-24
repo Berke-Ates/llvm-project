@@ -98,7 +98,7 @@ struct GeneratorOpBuilderImpl {
 
   /// Samples from a geometric distribution of available types in the current
   /// position.
-  llvm::SmallVector<Type> sampleTypes();
+  llvm::SmallVector<Type> sampleTypes(int32_t min = 0);
 
   /// Checks if a value of the given type is available in the current
   /// position.
@@ -319,9 +319,12 @@ GeneratorOpBuilderImpl::generateTerminator() {
   return block->back().getResults();
 }
 
-llvm::SmallVector<Type> GeneratorOpBuilderImpl::sampleTypes() {
-  llvm::SmallVector<Type> availableTypes;
+llvm::SmallVector<Type> GeneratorOpBuilderImpl::sampleTypes(int32_t min) {
+  if (min < 0)
+    llvm::errs()
+        << "lower bound of 'sampleTypes(int32_t min)' must be positive\n";
 
+  llvm::SmallVector<Type> availableTypes;
   for (RegisteredOperationName op : availableOps)
     availableTypes.append(getGeneratableTypes(op));
 
@@ -334,7 +337,7 @@ llvm::SmallVector<Type> GeneratorOpBuilderImpl::sampleTypes() {
 
   // Geometric distribution, p=0.5
   std::geometric_distribution<> dist(0.5);
-  int length = dist(rngGen);
+  int length = dist(rngGen) + min;
 
   llvm::SmallVector<Type> types;
   for (int i = 0; i < length; ++i) {
@@ -446,10 +449,14 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
     return std::nullopt;
   }
 
-  LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::sampleValueOfType "
-                             "sampled value "
-                          << value.value().getDefiningOp()->getName()
-                          << " of type " << t << "\n");
+  LLVM_DEBUG({
+    llvm::dbgs() << "GeneratorOpBuilderImpl::sampleValueOfType sampled value ";
+    if (Operation *op = value.value().getDefiningOp())
+      llvm::dbgs() << op->getName();
+    else
+      llvm::dbgs() << value.value();
+    llvm::dbgs() << " of type " << t << "\n";
+  });
 
   return value;
 }
@@ -660,8 +667,8 @@ GeneratorOpBuilder::generateTerminator() {
   return impl->generateTerminator();
 }
 
-llvm::SmallVector<Type> GeneratorOpBuilder::sampleTypes() {
-  return impl->sampleTypes();
+llvm::SmallVector<Type> GeneratorOpBuilder::sampleTypes(int32_t min) {
+  return impl->sampleTypes(min);
 }
 
 bool GeneratorOpBuilder::hasValueOfType(Type t) {

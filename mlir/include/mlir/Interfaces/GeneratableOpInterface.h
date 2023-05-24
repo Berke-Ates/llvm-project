@@ -178,7 +178,7 @@ public:
 
   /// Samples from a geometric distribution of available types in the current
   /// position.
-  llvm::SmallVector<Type> sampleTypes();
+  llvm::SmallVector<Type> sampleTypes(int32_t min = 0);
 
   /// Checks if a value of the given type is available in the current position.
   bool hasValueOfType(Type t);
