@@ -435,21 +435,17 @@ AllocOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
 
   llvm::SmallVector<llvm::SmallVector<int64_t, 1>> shapes1D = {
       {}, {0}, {1}, {2}};
-  llvm::SmallVector<llvm::SmallVector<int64_t, 4>> shapes;
+  llvm::SmallVector<llvm::SmallVector<int64_t, 3>> shapes;
 
-  // Iterate over the 1D shapes and concatenate them to create 2D, 3D, and 4D
-  // shapes.
+  // Iterate over the 1D shapes and concatenate them to create 2D and 3D shapes.
   for (auto &shape1 : shapes1D) {
     for (auto &shape2 : shapes1D) {
       for (auto &shape3 : shapes1D) {
-        for (auto &shape4 : shapes1D) {
-          llvm::SmallVector<int64_t, 4> combinedShape;
-          combinedShape.append(shape1.begin(), shape1.end());
-          combinedShape.append(shape2.begin(), shape2.end());
-          combinedShape.append(shape3.begin(), shape3.end());
-          combinedShape.append(shape4.begin(), shape4.end());
-          shapes.push_back(combinedShape);
-        }
+        llvm::SmallVector<int64_t, 3> combinedShape;
+        combinedShape.append(shape1.begin(), shape1.end());
+        combinedShape.append(shape2.begin(), shape2.end());
+        combinedShape.append(shape3.begin(), shape3.end());
+        shapes.push_back(combinedShape);
       }
     }
   }
@@ -1003,8 +999,22 @@ LogicalResult CopyOp::fold(FoldAdaptor adaptor,
 }
 
 LogicalResult CopyOp::generate(GeneratorOpBuilder &builder) {
-  // TODO: Generate this op
-  return failure();
+  llvm::SmallVector<Type> possibleTypes = AllocOp::getGeneratableTypes(builder);
+  if (possibleTypes.empty())
+    return failure();
+
+  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  Type type = possibleTypes[idx];
+
+  llvm::Optional<Value> lhs = builder.sampleValueOfType(type);
+  llvm::Optional<Value> rhs = builder.sampleValueOfType(type);
+
+  if (!lhs.has_value() || !rhs.has_value())
+    return failure();
+
+  OperationState state(builder.getUnknownLoc(), CopyOp::getOperationName());
+  CopyOp::build(builder, state, lhs.value(), rhs.value());
+  return success(builder.create(state) != nullptr);
 }
 
 llvm::SmallVector<Type>
