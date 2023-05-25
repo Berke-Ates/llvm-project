@@ -2907,82 +2907,95 @@ OpFoldResult arith::BitcastOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::BitcastOp::generate(GeneratorOpBuilder &builder) {
-  SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-  if (possibleTypes.empty())
-    return failure();
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
-  unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type inputType = possibleTypes[idx];
 
-  auto inputType = possibleTypes[idx];
+    // Sample 'in' operand
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
 
-  // Get in operand
-  llvm::Optional<Value> operand_in = builder.sampleValueOfType(inputType);
+    if (!lhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, inputType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
 
-  if (!operand_in.has_value())
-    return failure();
+    MemRefType memRefOppositeType;
+    Type oppositeType;
+    Type elementType;
 
-  MemRefType memRefOppositeType;
-  Type oppositeType;
-  Type elementType;
+    // Get element type
+    if (isa<MemRefType>(inputType)) {
+      memRefOppositeType = cast<MemRefType>(inputType);
+      elementType = memRefOppositeType.getElementType();
+    } else {
+      elementType = inputType;
+    }
 
-  // Get element type
-  if (isa<MemRefType>(inputType)) {
-    memRefOppositeType = cast<MemRefType>(inputType);
-    elementType = memRefOppositeType.getElementType();
-  } else {
-    elementType = inputType;
+    // Determine the opposite primitive type with equal width
+    if (auto floatType = elementType.dyn_cast<FloatType>()) {
+      if (floatType.isF16())
+        oppositeType = builder.getI16Type();
+      else if (floatType.isF32())
+        oppositeType = builder.getI32Type();
+      else if (floatType.isF64())
+        oppositeType = builder.getI64Type();
+    } else if (auto integerType = elementType.dyn_cast<IntegerType>()) {
+      if (integerType.isInteger(16))
+        oppositeType = builder.getF16Type();
+      else if (integerType.isInteger(32))
+        oppositeType = builder.getF32Type();
+      else if (integerType.isInteger(64))
+        oppositeType = builder.getF64Type();
+    }
+
+    // Check if the opposite type was found
+    if (!oppositeType) {
+      Type *it = llvm::find(possibleTypes, inputType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::BitcastOp::getOperationName());
+
+    // build BitcastOp depending on input type
+    if (isa<MemRefType>(inputType)) {
+      memRefOppositeType =
+          MemRefType::get(memRefOppositeType.getShape(), oppositeType);
+      arith::BitcastOp::build(builder, state, memRefOppositeType, lhs.value());
+    } else {
+      arith::BitcastOp::build(builder, state, oppositeType, lhs.value());
+    }
+
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, inputType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
   }
 
-  // Determine the opposite primitive type with equal width
-  if (auto floatType = elementType.dyn_cast<FloatType>()) {
-    if (floatType.isF16())
-      oppositeType = builder.getI16Type();
-    else if (floatType.isF32())
-      oppositeType = builder.getI32Type();
-    else if (floatType.isF64())
-      oppositeType = builder.getI64Type();
-  } else if (auto integerType = elementType.dyn_cast<IntegerType>()) {
-    if (integerType.isInteger(16))
-      oppositeType = builder.getF16Type();
-    else if (integerType.isInteger(32))
-      oppositeType = builder.getF32Type();
-    else if (integerType.isInteger(64))
-      oppositeType = builder.getF64Type();
-  }
-
-  // Check if the opposite type was found
-  if (!oppositeType)
-    return failure();
-
-  OperationState state(builder.getUnknownLoc(),
-                       arith::BitcastOp::getOperationName());
-
-  // build BitcastOp
-  if (isa<MemRefType>(inputType)) {
-    memRefOppositeType =
-        MemRefType::get(memRefOppositeType.getShape(), oppositeType);
-    arith::BitcastOp::build(builder, state, memRefOppositeType,
-                            operand_in.value());
-  } else {
-    arith::BitcastOp::build(builder, state, oppositeType, operand_in.value());
-  }
-
-  return success(builder.create(state) != nullptr);
+  return failure();
 }
 
 llvm::SmallVector<Type>
 arith::BitcastOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> elementTypes = {
-      builder.getIndexType(), builder.getI16Type(), builder.getI32Type(),
-      builder.getI64Type(),   builder.getF16Type(), builder.getF32Type(),
-      builder.getF64Type(),
+      builder.getI16Type(), builder.getI32Type(), builder.getI64Type(),
+      builder.getF16Type(), builder.getF32Type(), builder.getF64Type(),
   };
 
   llvm::SmallVector<llvm::SmallVector<int64_t, 1>> shapes1D = {
       {}, {0}, {1}, {2}};
   llvm::SmallVector<llvm::SmallVector<int64_t, 3>> shapes;
 
-  // Iterate over the 1D shapes and concatenate them to create 2D and 3D shapes.
+  // Iterate over the 1D shapes and concatenate them to create 2D and 3D
+  // shapes.
   for (auto &shape1 : shapes1D) {
     for (auto &shape2 : shapes1D) {
       for (auto &shape3 : shapes1D) {
@@ -3162,8 +3175,8 @@ void arith::CmpIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
 // CmpFOp
 //===----------------------------------------------------------------------===//
 
-/// Compute `lhs` `pred` `rhs`, where `pred` is one of the known floating point
-/// comparison predicates.
+/// Compute `lhs` `pred` `rhs`, where `pred` is one of the known floating
+/// point comparison predicates.
 bool mlir::arith::applyCmpPredicate(arith::CmpFPredicate predicate,
                                     const APFloat &lhs, const APFloat &rhs) {
   auto cmpResult = lhs.compare(rhs);
@@ -3270,8 +3283,8 @@ public:
     if (rhs.isNaN())
       return failure();
 
-    // Get the width of the mantissa.  We don't want to hack on conversions that
-    // might lose information from the integer, e.g. "i64 -> float"
+    // Get the width of the mantissa.  We don't want to hack on conversions
+    // that might lose information from the integer, e.g. "i64 -> float"
     FloatType floatTy = op.getRhs().getType().cast<FloatType>();
     int mantissaWidth = floatTy.getFPMantissaWidth();
     if (mantissaWidth <= 0)
@@ -3324,12 +3337,14 @@ public:
     CmpIPredicate pred;
     switch (op.getPredicate()) {
     case CmpFPredicate::ORD:
-      // Int to fp conversion doesn't create a nan (ord checks neither is a nan)
+      // Int to fp conversion doesn't create a nan (ord checks neither is a
+      // nan)
       rewriter.replaceOpWithNewOp<ConstantIntOp>(op, /*value=*/true,
                                                  /*width=*/1);
       return success();
     case CmpFPredicate::UNO:
-      // Int to fp conversion doesn't create a nan (uno checks either is a nan)
+      // Int to fp conversion doesn't create a nan (uno checks either is a
+      // nan)
       rewriter.replaceOpWithNewOp<ConstantIntOp>(op, /*value=*/false,
                                                  /*width=*/1);
       return success();
@@ -3404,9 +3419,9 @@ public:
       }
     }
 
-    // Okay, now we know that the FP constant fits in the range [SMIN, SMAX] or
-    // [0, UMAX], but it may still be fractional.  See if it is fractional by
-    // casting the FP value to the integer value and back, checking for
+    // Okay, now we know that the FP constant fits in the range [SMIN, SMAX]
+    // or [0, UMAX], but it may still be fractional.  See if it is fractional
+    // by casting the FP value to the integer value and back, checking for
     // equality. Don't do this for zero, because -0.0 is not fractional.
     bool ignored;
     APSInt rhsInt(intWidth, isUnsigned);
@@ -3424,9 +3439,9 @@ public:
 
       bool equal = apf == rhs;
       if (!equal) {
-        // If we had a comparison against a fractional value, we have to adjust
-        // the compare predicate and sometimes the value.  rhsInt is rounded
-        // towards zero at this point.
+        // If we had a comparison against a fractional value, we have to
+        // adjust the compare predicate and sometimes the value.  rhsInt is
+        // rounded towards zero at this point.
         switch (pred) {
         case CmpIPredicate::ne: // (float)int != 4.4   --> true
           rewriter.replaceOpWithNewOp<ConstantIntOp>(op, /*value=*/true,
@@ -3666,7 +3681,8 @@ ParseResult SelectOp::parse(OpAsmParser &parser, OperationState &result) {
       parser.parseColonType(resultType))
     return failure();
 
-  // Check for the explicit condition type if this is a masked tensor or vector.
+  // Check for the explicit condition type if this is a masked tensor or
+  // vector.
   if (succeeded(parser.parseOptionalComma())) {
     conditionType = resultType;
     if (parser.parseType(resultType))
