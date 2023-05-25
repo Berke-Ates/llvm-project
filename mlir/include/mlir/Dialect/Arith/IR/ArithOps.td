@@ -1009,7 +1009,8 @@ def Arith_RemFOp : Arith_FloatBinaryOp<"remf",
 // ExtUIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_ExtUIOp : Arith_IToICastOp<"extui"> {
+def Arith_ExtUIOp : Arith_IToICastOp<"extui", 
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer zero extension operation";
   let description = [{
     The integer zero extension operation takes an integer input of
@@ -1037,7 +1038,8 @@ def Arith_ExtUIOp : Arith_IToICastOp<"extui"> {
 // ExtSIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_ExtSIOp : Arith_IToICastOp<"extsi"> {
+def Arith_ExtSIOp : Arith_IToICastOp<"extsi", 
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer sign extension operation";
 
   let description = [{
@@ -1068,7 +1070,8 @@ def Arith_ExtSIOp : Arith_IToICastOp<"extsi"> {
 // ExtFOp
 //===----------------------------------------------------------------------===//
 
-def Arith_ExtFOp : Arith_FToFCastOp<"extf"> {
+def Arith_ExtFOp : Arith_FToFCastOp<"extf",
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "cast from floating-point to wider floating-point";
   let description = [{
     Cast a floating-point value to a larger floating-point-typed value.
@@ -1268,7 +1271,8 @@ def Arith_BitcastOp : Arith_CastOp<"bitcast", BitcastTypeConstraint,
 
 def Arith_CmpIOp
   : Arith_CompareOpOfAnyRank<"cmpi",
-                             [DeclareOpInterfaceMethods<InferIntRangeInterface>]> {
+                          [DeclareOpInterfaceMethods<InferIntRangeInterface>,
+                          DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer comparison operation";
   let description = [{
     The `cmpi` operation is a generic comparison for integer-like types. Its two
@@ -1350,7 +1354,8 @@ def Arith_CmpIOp
 // CmpFOp
 //===----------------------------------------------------------------------===//
 
-def Arith_CmpFOp : Arith_CompareOp<"cmpf"> {
+def Arith_CmpFOp : Arith_CompareOp<"cmpf", 
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "floating-point comparison operation";
   let description = [{
     The `cmpf` operation compares its two operands according to the float

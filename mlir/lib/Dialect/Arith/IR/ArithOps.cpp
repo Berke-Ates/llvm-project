@@ -2542,6 +2542,76 @@ LogicalResult arith::ExtUIOp::verify() {
   return verifyExtOp<IntegerType>(*this);
 }
 
+LogicalResult arith::ExtUIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type inputType = possibleTypes[idx];
+
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
+
+    if (!lhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, inputType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    // Set up all possible 'to' types
+    llvm::SmallVector<uint64_t> possibleToTypes;
+    if (inputType.isInteger(1)) {
+      possibleToTypes = {8, 16, 32, 64};
+    } else if (inputType.isInteger(8)) {
+      possibleToTypes = {16, 32, 64};
+    } else if (inputType.isInteger(16)) {
+      possibleToTypes = {32, 64};
+    } else if (inputType.isInteger(32)) {
+      possibleToTypes = {64};
+    }
+
+    // Check if some 'to' type was found
+    if (possibleToTypes.empty()) {
+      Type *it = llvm::find(possibleTypes, inputType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    unsigned toTypeIdx = builder.sampleUniform(possibleToTypes.size() - 1);
+    Type toType = builder.getIntegerType(possibleToTypes[toTypeIdx]);
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::ExtUIOp::getOperationName());
+    arith::ExtUIOp::build(builder, state, toType, lhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, inputType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
+}
+
+llvm::SmallVector<Type>
+arith::ExtUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),
+      builder.getI8Type(),
+      builder.getI16Type(),
+      builder.getI32Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
+}
+
 //===----------------------------------------------------------------------===//
 // ExtSIOp
 //===----------------------------------------------------------------------===//
@@ -2563,6 +2633,76 @@ OpFoldResult arith::ExtSIOp::fold(FoldAdaptor adaptor) {
 
 bool arith::ExtSIOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
   return checkWidthChangeCast<std::greater, IntegerType>(inputs, outputs);
+}
+
+LogicalResult arith::ExtSIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type inputType = possibleTypes[idx];
+
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
+
+    if (!lhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, inputType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    // Set up all possible 'to' types
+    llvm::SmallVector<uint64_t> possibleToTypes;
+    if (inputType.isInteger(1)) {
+      possibleToTypes = {8, 16, 32, 64};
+    } else if (inputType.isInteger(8)) {
+      possibleToTypes = {16, 32, 64};
+    } else if (inputType.isInteger(16)) {
+      possibleToTypes = {32, 64};
+    } else if (inputType.isInteger(32)) {
+      possibleToTypes = {64};
+    }
+
+    // Check if some 'to' type was found
+    if (possibleToTypes.empty()) {
+      Type *it = llvm::find(possibleTypes, inputType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    unsigned toTypeIdx = builder.sampleUniform(possibleToTypes.size() - 1);
+    Type toType = builder.getIntegerType(possibleToTypes[toTypeIdx]);
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::ExtSIOp::getOperationName());
+    arith::ExtSIOp::build(builder, state, toType, lhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, inputType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
+}
+
+llvm::SmallVector<Type>
+arith::ExtSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),
+      builder.getI8Type(),
+      builder.getI16Type(),
+      builder.getI32Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 void arith::ExtSIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -2593,6 +2733,74 @@ bool arith::ExtFOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
 }
 
 LogicalResult arith::ExtFOp::verify() { return verifyExtOp<FloatType>(*this); }
+
+LogicalResult arith::ExtFOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type inputType = possibleTypes[idx];
+
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
+
+    if (!lhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, inputType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    // Set up all possible 'to' types
+    llvm::SmallVector<uint64_t> possibleToTypes;
+    if (inputType.isF16()) {
+      possibleToTypes = {32, 64};
+    } else if (inputType.isF32()) {
+      possibleToTypes = {64};
+    }
+
+    // Check if some 'to' type was found
+    if (possibleToTypes.empty()) {
+      Type *it = llvm::find(possibleTypes, inputType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    unsigned toTypeIdx = builder.sampleUniform(possibleToTypes.size() - 1);
+    Type toType;
+    if (possibleToTypes[toTypeIdx] == 32)
+      toType = builder.getF32Type();
+    else if (possibleToTypes[toTypeIdx] == 64)
+      toType = builder.getF64Type();
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::ExtFOp::getOperationName());
+    arith::ExtFOp::build(builder, state, toType, lhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, inputType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
+}
+
+llvm::SmallVector<Type>
+arith::ExtFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
+}
 
 //===----------------------------------------------------------------------===//
 // TruncIOp
@@ -3165,6 +3373,59 @@ OpFoldResult arith::CmpIOp::fold(FoldAdaptor adaptor) {
   return {};
 }
 
+LogicalResult arith::CmpIOp::generate(GeneratorOpBuilder &builder) {
+  // Predicate is sampled once
+  llvm::SmallVector<uint64_t, 10> predicateTypes = {0, 1, 2, 3, 4,
+                                                    5, 6, 7, 8, 9};
+  unsigned predicateIdx = builder.sampleUniform(predicateTypes.size() - 1);
+  arith::CmpIPredicate predicate =
+      static_cast<arith::CmpIPredicate>(predicateTypes[predicateIdx]);
+
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
+
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::CmpIOp::getOperationName());
+    arith::CmpIOp::build(builder, state, predicate, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
+}
+
+llvm::SmallVector<Type>
+arith::CmpIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
+}
+
 void arith::CmpIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
                                                 MLIRContext *context) {
   patterns.insert<CmpIExtSI, CmpIExtUI>(context);
@@ -3524,6 +3785,60 @@ public:
     return success();
   }
 };
+
+LogicalResult arith::CmpFOp::generate(GeneratorOpBuilder &builder) {
+  // Predicate is sampled once
+  llvm::SmallVector<uint64_t, 16> predicateTypes = {
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  unsigned predicateIdx = builder.sampleUniform(predicateTypes.size() - 1);
+  arith::CmpFPredicate predicate =
+      static_cast<arith::CmpFPredicate>(predicateTypes[predicateIdx]);
+
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
+
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::CmpFOp::getOperationName());
+    arith::CmpFOp::build(builder, state, predicate, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
+}
+
+llvm::SmallVector<Type>
+arith::CmpFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
+}
 
 void arith::CmpFOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
                                                 MLIRContext *context) {
