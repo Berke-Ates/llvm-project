@@ -2994,8 +2994,7 @@ arith::BitcastOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
       {}, {0}, {1}, {2}};
   llvm::SmallVector<llvm::SmallVector<int64_t, 3>> shapes;
 
-  // Iterate over the 1D shapes and concatenate them to create 2D and 3D
-  // shapes.
+  // Iterate over the 1D shapes and concatenate them to create 2D and 3D shapes.
   for (auto &shape1 : shapes1D) {
     for (auto &shape2 : shapes1D) {
       for (auto &shape3 : shapes1D) {
@@ -3010,7 +3009,7 @@ arith::BitcastOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
 
   llvm::SmallVector<Type> genTypes;
 
-  // Add all memref types
+  // Add all memref types.
   for (llvm::ArrayRef shape : shapes)
     for (Type t : elementTypes) {
       auto memrefType = MemRefType::get(shape, t);
@@ -3018,7 +3017,7 @@ arith::BitcastOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
         genTypes.push_back(MemRefType::get(shape, t));
     }
 
-  // Add all standard types
+  // Add all standard types.
   for (Type t : elementTypes) {
     if (builder.hasValueOfType(t))
       genTypes.push_back(t);
@@ -3175,8 +3174,8 @@ void arith::CmpIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
 // CmpFOp
 //===----------------------------------------------------------------------===//
 
-/// Compute `lhs` `pred` `rhs`, where `pred` is one of the known floating
-/// point comparison predicates.
+/// Compute `lhs` `pred` `rhs`, where `pred` is one of the known floating point
+/// comparison predicates.
 bool mlir::arith::applyCmpPredicate(arith::CmpFPredicate predicate,
                                     const APFloat &lhs, const APFloat &rhs) {
   auto cmpResult = lhs.compare(rhs);
@@ -3283,8 +3282,8 @@ public:
     if (rhs.isNaN())
       return failure();
 
-    // Get the width of the mantissa.  We don't want to hack on conversions
-    // that might lose information from the integer, e.g. "i64 -> float"
+    // Get the width of the mantissa.  We don't want to hack on conversions that
+    // might lose information from the integer, e.g. "i64 -> float"
     FloatType floatTy = op.getRhs().getType().cast<FloatType>();
     int mantissaWidth = floatTy.getFPMantissaWidth();
     if (mantissaWidth <= 0)
@@ -3337,14 +3336,12 @@ public:
     CmpIPredicate pred;
     switch (op.getPredicate()) {
     case CmpFPredicate::ORD:
-      // Int to fp conversion doesn't create a nan (ord checks neither is a
-      // nan)
+      // Int to fp conversion doesn't create a nan (ord checks neither is a nan)
       rewriter.replaceOpWithNewOp<ConstantIntOp>(op, /*value=*/true,
                                                  /*width=*/1);
       return success();
     case CmpFPredicate::UNO:
-      // Int to fp conversion doesn't create a nan (uno checks either is a
-      // nan)
+      // Int to fp conversion doesn't create a nan (uno checks either is a nan)
       rewriter.replaceOpWithNewOp<ConstantIntOp>(op, /*value=*/false,
                                                  /*width=*/1);
       return success();
@@ -3439,9 +3436,9 @@ public:
 
       bool equal = apf == rhs;
       if (!equal) {
-        // If we had a comparison against a fractional value, we have to
-        // adjust the compare predicate and sometimes the value.  rhsInt is
-        // rounded towards zero at this point.
+        // If we had a comparison against a fractional value, we have to adjust
+        // the compare predicate and sometimes the value.  rhsInt is rounded
+        // towards zero at this point.
         switch (pred) {
         case CmpIPredicate::ne: // (float)int != 4.4   --> true
           rewriter.replaceOpWithNewOp<ConstantIntOp>(op, /*value=*/true,
@@ -3681,8 +3678,7 @@ ParseResult SelectOp::parse(OpAsmParser &parser, OperationState &result) {
       parser.parseColonType(resultType))
     return failure();
 
-  // Check for the explicit condition type if this is a masked tensor or
-  // vector.
+  // Check for the explicit condition type if this is a masked tensor or vector.
   if (succeeded(parser.parseOptionalComma())) {
     conditionType = resultType;
     if (parser.parseType(resultType))
