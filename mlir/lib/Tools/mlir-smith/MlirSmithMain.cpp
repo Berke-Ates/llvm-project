@@ -109,7 +109,7 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
 
   // Create main function.
   OperationState funcState(loc, func::FuncOp::getOperationName());
-  SmallVector<Type> retTypes = builder.sampleTypes();
+  SmallVector<Type> retTypes = {builder.getI32Type()};
   FunctionType funcType = builder.getFunctionType({}, retTypes);
   func::FuncOp::build(builder, funcState, "main", funcType);
   Operation *funcOp = builder.create(funcState);
