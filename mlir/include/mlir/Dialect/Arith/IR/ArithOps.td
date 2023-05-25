@@ -1279,9 +1279,9 @@ def Arith_BitcastOp : Arith_CastOp<"bitcast", BitcastTypeConstraint,
 //===----------------------------------------------------------------------===//
 
 def Arith_CmpIOp
-  : Arith_CompareOpOfAnyRank<"cmpi",
-                          [DeclareOpInterfaceMethods<InferIntRangeInterface>,
-                          DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
+  : Arith_CompareOpOfAnyRank<"cmpi", [
+      DeclareOpInterfaceMethods<InferIntRangeInterface>,
+      DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer comparison operation";
   let description = [{
     The `cmpi` operation is a generic comparison for integer-like types. Its two

@@ -202,7 +202,7 @@ void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
 }
 
 LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
-  DenseMap<Type, TypedAttr> attrMap = {
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getI1Type(), builder.getBoolAttr(builder.sampleBool())},
       {builder.getIndexType(),
        builder.getIndexAttr(builder.sampleNumberInt64())},
@@ -222,7 +222,7 @@ LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
        builder.getF64FloatAttr(builder.sampleNumberDouble())},
   };
 
-  SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
