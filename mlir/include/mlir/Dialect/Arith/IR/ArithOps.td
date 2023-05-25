@@ -1089,7 +1089,8 @@ def Arith_ExtFOp : Arith_FToFCastOp<"extf",
 // TruncIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_TruncIOp : Arith_IToICastOp<"trunci"> {
+def Arith_TruncIOp : Arith_IToICastOp<"trunci",
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer truncation operation";
   let description = [{
     The integer truncation operation takes an integer input of
@@ -1117,7 +1118,8 @@ def Arith_TruncIOp : Arith_IToICastOp<"trunci"> {
 // TruncFOp
 //===----------------------------------------------------------------------===//
 
-def Arith_TruncFOp : Arith_FToFCastOp<"truncf"> {
+def Arith_TruncFOp : Arith_FToFCastOp<"truncf",
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "cast from floating-point to narrower floating-point";
   let description = [{
     Truncate a floating-point value to a smaller floating-point-typed value.
@@ -1134,7 +1136,8 @@ def Arith_TruncFOp : Arith_FToFCastOp<"truncf"> {
 // UIToFPOp
 //===----------------------------------------------------------------------===//
 
-def Arith_UIToFPOp : Arith_IToFCastOp<"uitofp"> {
+def Arith_UIToFPOp : Arith_IToFCastOp<"uitofp",
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "cast from unsigned integer type to floating-point";
   let description = [{
     Cast from a value interpreted as unsigned integer to the corresponding
@@ -1149,7 +1152,8 @@ def Arith_UIToFPOp : Arith_IToFCastOp<"uitofp"> {
 // SIToFPOp
 //===----------------------------------------------------------------------===//
 
-def Arith_SIToFPOp : Arith_IToFCastOp<"sitofp"> {
+def Arith_SIToFPOp : Arith_IToFCastOp<"sitofp",
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "cast from integer type to floating-point";
   let description = [{
     Cast from a value interpreted as a signed integer to the corresponding
@@ -1407,6 +1411,7 @@ def Arith_CmpFOp : Arith_CompareOp<"cmpf",
 def SelectOp : Arith_Op<"select", [Pure,
     AllTypesMatch<["true_value", "false_value", "result"]>,
     DeclareOpInterfaceMethods<InferIntRangeInterface>,
+    DeclareOpInterfaceMethods<GeneratableOpInterface>
   ] # ElementwiseMappable.traits> {
   let summary = "select operation";
   let description = [{
