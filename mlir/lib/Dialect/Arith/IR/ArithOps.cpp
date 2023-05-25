@@ -2983,6 +2983,58 @@ OpFoldResult arith::FPToUIOp::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult arith::FPToUIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type inputType = possibleTypes[idx];
+
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
+
+    if (!lhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, inputType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    // Set up 'to' type
+    Type toType;
+    if (inputType.isF16())
+      toType = builder.getI16Type();
+    else if (inputType.isF32())
+      toType = builder.getI32Type();
+    else if (inputType.isF64())
+      toType = builder.getI64Type();
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::FPToUIOp::getOperationName());
+    arith::FPToUIOp::build(builder, state, toType, lhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, inputType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
+}
+
+llvm::SmallVector<Type>
+arith::FPToUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(), builder.getF32Type(), builder.getF64Type()};
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
+}
+
 //===----------------------------------------------------------------------===//
 // FPToSIOp
 //===----------------------------------------------------------------------===//
@@ -3003,6 +3055,58 @@ OpFoldResult arith::FPToSIOp::fold(FoldAdaptor adaptor) {
                      a.convertToInteger(api, APFloat::rmTowardZero, &ignored);
         return api;
       });
+}
+
+LogicalResult arith::FPToSIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type inputType = possibleTypes[idx];
+
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
+
+    if (!lhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, inputType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    // Set up 'to' type
+    Type toType;
+    if (inputType.isF16())
+      toType = builder.getI16Type();
+    else if (inputType.isF32())
+      toType = builder.getI32Type();
+    else if (inputType.isF64())
+      toType = builder.getI64Type();
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::FPToSIOp::getOperationName());
+    arith::FPToSIOp::build(builder, state, toType, lhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, inputType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
+}
+
+llvm::SmallVector<Type>
+arith::FPToSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(), builder.getF32Type(), builder.getF64Type()};
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -4055,6 +4159,54 @@ OpFoldResult arith::ShLIOp::fold(FoldAdaptor adaptor) {
   return bounded ? result : Attribute();
 }
 
+LogicalResult arith::ShLIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
+
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::ShLIOp::getOperationName());
+    arith::ShLIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
+}
+
+llvm::SmallVector<Type>
+arith::ShLIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI8Type(),
+      builder.getI16Type(),
+      builder.getI32Type(),
+      builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
+}
+
 //===----------------------------------------------------------------------===//
 // ShRUIOp
 //===----------------------------------------------------------------------===//
@@ -4073,6 +4225,54 @@ OpFoldResult arith::ShRUIOp::fold(FoldAdaptor adaptor) {
   return bounded ? result : Attribute();
 }
 
+LogicalResult arith::ShRUIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
+
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::ShRUIOp::getOperationName());
+    arith::ShRUIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
+}
+
+llvm::SmallVector<Type>
+arith::ShRUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI8Type(),
+      builder.getI16Type(),
+      builder.getI32Type(),
+      builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
+}
+
 //===----------------------------------------------------------------------===//
 // ShRSIOp
 //===----------------------------------------------------------------------===//
@@ -4089,6 +4289,54 @@ OpFoldResult arith::ShRSIOp::fold(FoldAdaptor adaptor) {
         return a.ashr(b);
       });
   return bounded ? result : Attribute();
+}
+
+LogicalResult arith::ShRSIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
+
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
+
+    if (!lhs.has_value() || !rhs.has_value()) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::ShRSIOp::getOperationName());
+    arith::ShRSIOp::build(builder, state, lhs.value(), rhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    Type *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
+  }
+
+  return failure();
+}
+
+llvm::SmallVector<Type>
+arith::ShRSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI8Type(),
+      builder.getI16Type(),
+      builder.getI32Type(),
+      builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
+    if (builder.hasValueOfType(t))
+      generatableTypes.push_back(t);
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//

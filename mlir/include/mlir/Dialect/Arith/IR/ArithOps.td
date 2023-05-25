@@ -699,7 +699,8 @@ def Arith_XOrIOp : Arith_TotalIntBinaryOp<"xori", [Commutative,
 // ShLIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_ShLIOp : Arith_TotalIntBinaryOp<"shli"> {
+def Arith_ShLIOp : Arith_TotalIntBinaryOp<"shli", 
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "integer left-shift";
   let description = [{
     The `shli` operation shifts an integer value to the left by a variable
@@ -720,7 +721,8 @@ def Arith_ShLIOp : Arith_TotalIntBinaryOp<"shli"> {
 // ShRUIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_ShRUIOp : Arith_TotalIntBinaryOp<"shrui"> {
+def Arith_ShRUIOp : Arith_TotalIntBinaryOp<"shrui",
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "unsigned integer right-shift";
   let description = [{
     The `shrui` operation shifts an integer value to the right by a variable
@@ -742,7 +744,8 @@ def Arith_ShRUIOp : Arith_TotalIntBinaryOp<"shrui"> {
 // ShRSIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_ShRSIOp : Arith_TotalIntBinaryOp<"shrsi"> {
+def Arith_ShRSIOp : Arith_TotalIntBinaryOp<"shrsi",
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "signed integer right-shift";
   let description = [{
     The `shrsi` operation shifts an integer value to the right by a variable
@@ -1161,7 +1164,8 @@ def Arith_SIToFPOp : Arith_IToFCastOp<"sitofp"> {
 // FPToUIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_FPToUIOp : Arith_FToICastOp<"fptoui"> {
+def Arith_FPToUIOp : Arith_FToICastOp<"fptoui",
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "cast from floating-point type to integer type";
   let description = [{
     Cast from a value interpreted as floating-point to the nearest (rounding
@@ -1175,7 +1179,8 @@ def Arith_FPToUIOp : Arith_FToICastOp<"fptoui"> {
 // FPToSIOp
 //===----------------------------------------------------------------------===//
 
-def Arith_FPToSIOp : Arith_FToICastOp<"fptosi"> {
+def Arith_FPToSIOp : Arith_FToICastOp<"fptosi",
+    [DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "cast from floating-point type to integer type";
   let description = [{
     Cast from a value interpreted as floating-point to the nearest (rounding
