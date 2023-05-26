@@ -3568,7 +3568,7 @@ LogicalResult arith::BitcastOp::generate(GeneratorOpBuilder &builder) {
     llvm::Optional<Value> lhs = builder.sampleValueOfType(typeMap[resultType]);
 
     if (!lhs.has_value()) {
-      std::tuple<Type, Type> *it = llvm::find(possibleTypes, resultType);
+      Type *it = llvm::find(possibleTypes, resultType);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
@@ -3580,7 +3580,7 @@ LogicalResult arith::BitcastOp::generate(GeneratorOpBuilder &builder) {
     if (builder.create(state) != nullptr)
       return success();
 
-    std::tuple<Type, Type> *it = llvm::find(possibleTypes, resultType);
+    Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
