@@ -380,7 +380,9 @@ llvm::SmallVector<Type> GeneratorOpBuilderImpl::sampleTypes(int32_t min) {
 
   llvm::SmallVector<Type> availableTypes;
   for (RegisteredOperationName op : availableOps)
-    availableTypes.append(getGeneratableTypes(op));
+    for (Type t : getGeneratableTypes(op))
+      if (llvm::find(availableTypes, t) == availableTypes.end())
+        availableTypes.push_back(t);
 
   // Nothing to sample from.
   if (availableTypes.empty()) {
