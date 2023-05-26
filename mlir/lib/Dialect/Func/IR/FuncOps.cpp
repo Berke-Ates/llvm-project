@@ -159,6 +159,53 @@ FunctionType CallOp::getCalleeType() {
   return FunctionType::get(getContext(), getOperandTypes(), getResultTypes());
 }
 
+LogicalResult CallOp::generate(GeneratorOpBuilder &builder) {
+  // NOTE: This is only fo testing DCE capabilities with differential testing.
+  OpBuilder::InsertPoint ip = builder.saveInsertionPoint();
+
+  Block *block = builder.getBlock();
+  Operation *parent = nullptr;
+
+  while (block != nullptr) {
+    parent = block->getParentOp();
+    block = nullptr;
+    if (parent != nullptr)
+      block = parent->getBlock();
+  }
+
+  if (parent == nullptr || !isa<ModuleOp>(parent))
+    return failure();
+
+  ModuleOp moduleOp = cast<ModuleOp>(parent);
+  builder.setInsertionPointToStart(moduleOp.getBody());
+  size_t numOps = moduleOp.getBody()->getOperations().size();
+  std::string name = "external_dce_flag_" + std::to_string(numOps);
+
+  OperationState funcState(builder.getUnknownLoc(), FuncOp::getOperationName());
+  FunctionType funcType = builder.getFunctionType({}, {});
+  FuncOp::build(builder, funcState, name, funcType,
+                {builder.getNamedAttr("sym_visibility",
+                                      builder.getStringAttr("private"))});
+  Operation *funcOpPtr = builder.create(funcState);
+  if (funcOpPtr == nullptr)
+    return failure();
+
+  FuncOp funcOp = cast<FuncOp>(funcOpPtr);
+  builder.restoreInsertionPoint(ip);
+  OperationState state(builder.getUnknownLoc(), CallOp::getOperationName());
+  CallOp::build(builder, state, funcOp);
+  if (builder.create(state) != nullptr)
+    return success();
+
+  funcOp.erase();
+  return failure();
+}
+
+llvm::SmallVector<Type>
+CallOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // CallIndirectOp
 //===----------------------------------------------------------------------===//
