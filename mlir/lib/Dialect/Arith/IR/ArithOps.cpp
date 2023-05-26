@@ -3359,13 +3359,64 @@ void arith::IndexCastOp::getCanonicalizationPatterns(
 }
 
 LogicalResult arith::IndexCastOp::generate(GeneratorOpBuilder &builder) {
-  // TODO: ADD THIS OP
+  llvm::SmallVector<Type> integerTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  Type indexType = builder.getIndexType();
+
+  llvm::SmallVector<std::tuple<Type, Type>> typeTuples;
+  for (Type intType : integerTypes) {
+    typeTuples.push_back(std::make_tuple(indexType, intType));
+    typeTuples.push_back(std::make_tuple(intType, indexType));
+  }
+
+  while (!typeTuples.empty()) {
+    unsigned idx = builder.sampleUniform(typeTuples.size() - 1);
+    std::tuple<Type, Type> types = typeTuples[idx];
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(std::get<0>(types));
+
+    if (!lhs.has_value()) {
+      std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
+      if (it != typeTuples.end())
+        typeTuples.erase(it);
+      continue;
+    }
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::IndexCastOp::getOperationName());
+    arith::IndexCastOp::build(builder, state, std::get<1>(types), lhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
+    if (it != typeTuples.end())
+      typeTuples.erase(it);
+  }
+
   return failure();
 }
 
 llvm::SmallVector<Type>
 arith::IndexCastOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
+      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes) {
+    if (builder.hasValueOfType(t)) {
+      for (Type otherType : possibleTypes) {
+        if (otherType != t) {
+          generatableTypes.push_back(otherType);
+        }
+      }
+    }
+  }
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3396,13 +3447,65 @@ void arith::IndexCastUIOp::getCanonicalizationPatterns(
 }
 
 LogicalResult arith::IndexCastUIOp::generate(GeneratorOpBuilder &builder) {
-  // TODO: ADD THIS OP
+  llvm::SmallVector<Type> integerTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  Type indexType = builder.getIndexType();
+
+  llvm::SmallVector<std::tuple<Type, Type>> typeTuples;
+  for (Type intType : integerTypes) {
+    typeTuples.push_back(std::make_tuple(indexType, intType));
+    typeTuples.push_back(std::make_tuple(intType, indexType));
+  }
+
+  while (!typeTuples.empty()) {
+    unsigned idx = builder.sampleUniform(typeTuples.size() - 1);
+    std::tuple<Type, Type> types = typeTuples[idx];
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(std::get<0>(types));
+
+    if (!lhs.has_value()) {
+      std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
+      if (it != typeTuples.end())
+        typeTuples.erase(it);
+      continue;
+    }
+
+    OperationState state(builder.getUnknownLoc(),
+                         arith::IndexCastUIOp::getOperationName());
+    arith::IndexCastUIOp::build(builder, state, std::get<1>(types),
+                                lhs.value());
+    if (builder.create(state) != nullptr)
+      return success();
+
+    std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
+    if (it != typeTuples.end())
+      typeTuples.erase(it);
+  }
+
   return failure();
 }
 
 llvm::SmallVector<Type>
 arith::IndexCastUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
+      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes) {
+    if (builder.hasValueOfType(t)) {
+      for (Type otherType : possibleTypes) {
+        if (otherType != t) {
+          generatableTypes.push_back(otherType);
+        }
+      }
+    }
+  }
+
+  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
