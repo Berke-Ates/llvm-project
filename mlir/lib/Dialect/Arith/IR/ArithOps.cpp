@@ -3551,38 +3551,38 @@ OpFoldResult arith::BitcastOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::BitcastOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> integerTypes = {
-      builder.getI16Type(), builder.getI32Type(), builder.getI64Type(),
-      builder.getF16Type(), builder.getF32Type(), builder.getF64Type(),
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+
+  llvm::DenseMap<Type, Type> typeMap = {
+      {builder.getI16Type(), builder.getF16Type()},
+      {builder.getF16Type(), builder.getI16Type()},
+      {builder.getI32Type(), builder.getF32Type()},
+      {builder.getF32Type(), builder.getI32Type()},
+      {builder.getI64Type(), builder.getF64Type()},
+      {builder.getF64Type(), builder.getI64Type()},
   };
 
-  llvm::SmallVector<std::tuple<Type, Type>> typeTuples;
-  for (Type type1 : integerTypes)
-    for (Type type2 : integerTypes)
-      if (type1 != type2)
-        typeTuples.push_back(std::make_tuple(type1, type2));
-
-  while (!typeTuples.empty()) {
-    unsigned idx = builder.sampleUniform(typeTuples.size() - 1);
-    std::tuple<Type, Type> types = typeTuples[idx];
-    llvm::Optional<Value> lhs = builder.sampleValueOfType(std::get<0>(types));
+  while (!possibleTypes.empty()) {
+    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[idx];
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(typeMap[resultType]);
 
     if (!lhs.has_value()) {
-      std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
-      if (it != typeTuples.end())
-        typeTuples.erase(it);
+      std::tuple<Type, Type> *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
       continue;
     }
 
     OperationState state(builder.getUnknownLoc(),
                          arith::BitcastOp::getOperationName());
-    arith::BitcastOp::build(builder, state, std::get<1>(types), lhs.value());
+    arith::BitcastOp::build(builder, state, resultType, lhs.value());
     if (builder.create(state) != nullptr)
       return success();
 
-    std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
-    if (it != typeTuples.end())
-      typeTuples.erase(it);
+    std::tuple<Type, Type> *it = llvm::find(possibleTypes, resultType);
+    if (it != possibleTypes.end())
+      possibleTypes.erase(it);
   }
 
   return failure();
@@ -3595,10 +3595,19 @@ arith::BitcastOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
       builder.getF16Type(), builder.getF32Type(), builder.getF64Type(),
   };
 
+  llvm::DenseMap<Type, Type> typeMap = {
+      {builder.getI16Type(), builder.getF16Type()},
+      {builder.getF16Type(), builder.getI16Type()},
+      {builder.getI32Type(), builder.getF32Type()},
+      {builder.getF32Type(), builder.getI32Type()},
+      {builder.getI64Type(), builder.getF64Type()},
+      {builder.getF64Type(), builder.getI64Type()},
+  };
+
   llvm::SmallVector<Type> generatableTypes;
   for (Type t : possibleTypes)
     if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
+      generatableTypes.push_back(typeMap[t]);
 
   return generatableTypes;
 }
