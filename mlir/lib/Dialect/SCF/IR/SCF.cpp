@@ -1240,12 +1240,12 @@ LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
-    OperationState minState(builder.getUnknownLoc(),
+    OperationState maxState(builder.getUnknownLoc(),
                             arith::MinSIOp::getOperationName());
-    arith::MinSIOp::build(builder, minState, step.value(),
+    arith::MaxSIOp::build(builder, maxState, step.value(),
                           constOp->getResult(0));
-    Operation *minOp = builder.create(minState);
-    if (minOp == nullptr) {
+    Operation *maxOp = builder.create(maxState);
+    if (maxOp == nullptr) {
       constOp->erase();
       return failure();
     }
@@ -1256,7 +1256,7 @@ LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
     for (Type t : iterTypes) {
       llvm::Optional<Value> val = builder.sampleValueOfType(t);
       if (!val.has_value()) {
-        minOp->erase();
+        maxOp->erase();
         constOp->erase();
         return failure();
       }
@@ -1264,11 +1264,11 @@ LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
     }
 
     OperationState state(builder.getUnknownLoc(), ForOp::getOperationName());
-    ForOp::build(builder, state, lb.value(), ub.value(), minOp->getResult(0),
+    ForOp::build(builder, state, lb.value(), ub.value(), maxOp->getResult(0),
                  iterArgs);
     Operation *op = builder.create(state);
     if (op == nullptr) {
-      minOp->erase();
+      maxOp->erase();
       constOp->erase();
       return failure();
     }
@@ -1280,7 +1280,7 @@ LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
                            /*requiredTypes=*/iterTypes)
             .failed()) {
       forOp.erase();
-      minOp->erase();
+      maxOp->erase();
       constOp->erase();
       return failure();
     }
