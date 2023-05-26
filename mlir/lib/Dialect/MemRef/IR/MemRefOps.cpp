@@ -460,7 +460,7 @@ AllocOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   };
 
   llvm::SmallVector<llvm::SmallVector<int64_t, 1>> shapes1D = {
-      {}, {0}, {1}, {2}};
+      {}, {ShapedType::kDynamic}, {0}, {1}, {2}};
   llvm::SmallVector<llvm::SmallVector<int64_t, 3>> shapes;
 
   // Iterate over the 1D shapes and concatenate them to create 2D and 3D shapes.
@@ -2891,6 +2891,7 @@ LogicalResult StoreOp::generate(GeneratorOpBuilder &builder) {
 
     MemRefType type = cast<MemRefType>(possibleTypes[idx]);
     // TODO: Handle dynamic sizes
+    // Use arith.remsi
     if (type.getNumDynamicDims() > 0) {
       Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
       if (it != possibleTypes.end())
