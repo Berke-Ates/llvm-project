@@ -2543,59 +2543,40 @@ LogicalResult arith::ExtUIOp::verify() {
 }
 
 LogicalResult arith::ExtUIOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
-
-  // Set up input type map
-  llvm::DenseMap<Type, llvm::SmallVector<Type>> inputTypesMap = {
-      {builder.getI8Type(), {builder.getI1Type()}},
-      {builder.getI16Type(), {builder.getI1Type(), builder.getI8Type()}},
-      {builder.getI32Type(),
-       {builder.getI1Type(), builder.getI8Type(), builder.getI16Type()}},
-      {builder.getI64Type(),
-       {builder.getI1Type(), builder.getI8Type(), builder.getI16Type(),
-        builder.getI32Type()}},
+  llvm::SmallVector<Type> allTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
   };
 
+  llvm::SmallVector<Type> possibleTypes(allTypes.begin(), allTypes.end() - 1);
+
+  llvm::DenseMap<Type, llvm::SmallVector<Type>> typesMap;
+  for (unsigned i = 0; i < possibleTypes.size(); ++i)
+    typesMap[possibleTypes[i]] =
+        llvm::SmallVector<Type>(allTypes.begin() + i + 1, allTypes.end());
+
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
+    unsigned inputIdx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type inputType = possibleTypes[inputIdx];
 
-    llvm::SmallVector<Type> possibleInputTypes = inputTypesMap[resultType];
-    llvm::Optional<Value> lhs;
-
-    // Sample until input type is found
-    while (!possibleInputTypes.empty()) {
-      unsigned inputIdx = builder.sampleUniform(possibleInputTypes.size() - 1);
-      Type inputType = possibleInputTypes[inputIdx];
-      lhs = builder.sampleValueOfType(inputType);
-
-      if (!lhs.has_value()) {
-        Type *it = llvm::find(possibleInputTypes, inputType);
-        if (it != possibleInputTypes.end())
-          possibleInputTypes.erase(it);
-        continue;
-      }
-
-      // Input type found, break the loop
-      break;
-    }
-
-    // If no lhs value with any allowed input type has been found, remove result
-    // type and try with another result type
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
     if (!lhs.has_value()) {
-      Type *it = llvm::find(possibleTypes, resultType);
+      Type *it = llvm::find(possibleTypes, inputType);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
     }
 
+    unsigned outputIdx = builder.sampleUniform(typesMap[inputType].size() - 1);
+    Type outputType = typesMap[inputType][outputIdx];
+
     OperationState state(builder.getUnknownLoc(),
                          arith::ExtUIOp::getOperationName());
-    arith::ExtUIOp::build(builder, state, resultType, lhs.value());
+    arith::ExtUIOp::build(builder, state, outputType, lhs.value());
     if (builder.create(state) != nullptr)
       return success();
 
-    Type *it = llvm::find(possibleTypes, resultType);
+    Type *it = llvm::find(possibleTypes, inputType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
@@ -2606,16 +2587,17 @@ LogicalResult arith::ExtUIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::ExtUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI8Type(),
-      builder.getI16Type(),
-      builder.getI32Type(),
-      builder.getI64Type(),
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
   };
 
+  bool foundLowerType = false;
   llvm::SmallVector<Type> generatableTypes;
   for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
+    if (foundLowerType)
       generatableTypes.push_back(t);
+    else if (builder.hasValueOfType(t))
+      foundLowerType = true;
 
   return generatableTypes;
 }
@@ -2644,14 +2626,23 @@ bool arith::ExtSIOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
 }
 
 LogicalResult arith::ExtSIOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> allTypes = {
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
+  };
+
+  llvm::SmallVector<Type> possibleTypes(allTypes.begin(), allTypes.end() - 1);
+
+  llvm::DenseMap<Type, llvm::SmallVector<Type>> typesMap;
+  for (unsigned i = 0; i < possibleTypes.size(); ++i)
+    typesMap[possibleTypes[i]] =
+        llvm::SmallVector<Type>(allTypes.begin() + i + 1, allTypes.end());
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[idx];
+    unsigned inputIdx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type inputType = possibleTypes[inputIdx];
 
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
-
     if (!lhs.has_value()) {
       Type *it = llvm::find(possibleTypes, inputType);
       if (it != possibleTypes.end())
@@ -2659,32 +2650,12 @@ LogicalResult arith::ExtSIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
-    // Set up all possible 'to' types
-    llvm::SmallVector<uint64_t> possibleToTypes;
-    if (inputType.isInteger(1)) {
-      possibleToTypes = {8, 16, 32, 64};
-    } else if (inputType.isInteger(8)) {
-      possibleToTypes = {16, 32, 64};
-    } else if (inputType.isInteger(16)) {
-      possibleToTypes = {32, 64};
-    } else if (inputType.isInteger(32)) {
-      possibleToTypes = {64};
-    }
-
-    // Check if some 'to' type was found
-    if (possibleToTypes.empty()) {
-      Type *it = llvm::find(possibleTypes, inputType);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-      continue;
-    }
-
-    unsigned toTypeIdx = builder.sampleUniform(possibleToTypes.size() - 1);
-    Type toType = builder.getIntegerType(possibleToTypes[toTypeIdx]);
+    unsigned outputIdx = builder.sampleUniform(typesMap[inputType].size() - 1);
+    Type outputType = typesMap[inputType][outputIdx];
 
     OperationState state(builder.getUnknownLoc(),
                          arith::ExtSIOp::getOperationName());
-    arith::ExtSIOp::build(builder, state, toType, lhs.value());
+    arith::ExtSIOp::build(builder, state, outputType, lhs.value());
     if (builder.create(state) != nullptr)
       return success();
 
@@ -2699,16 +2670,17 @@ LogicalResult arith::ExtSIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::ExtSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),
-      builder.getI8Type(),
-      builder.getI16Type(),
-      builder.getI32Type(),
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
   };
 
+  bool foundLowerType = false;
   llvm::SmallVector<Type> generatableTypes;
   for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
+    if (foundLowerType)
       generatableTypes.push_back(t);
+    else if (builder.hasValueOfType(t))
+      foundLowerType = true;
 
   return generatableTypes;
 }
@@ -2743,14 +2715,24 @@ bool arith::ExtFOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
 LogicalResult arith::ExtFOp::verify() { return verifyExtOp<FloatType>(*this); }
 
 LogicalResult arith::ExtFOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> allTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
+
+  llvm::SmallVector<Type> possibleTypes(allTypes.begin(), allTypes.end() - 1);
+
+  llvm::DenseMap<Type, llvm::SmallVector<Type>> typesMap;
+  for (unsigned i = 0; i < possibleTypes.size(); ++i)
+    typesMap[possibleTypes[i]] =
+        llvm::SmallVector<Type>(allTypes.begin() + i + 1, allTypes.end());
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[idx];
+    unsigned inputIdx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type inputType = possibleTypes[inputIdx];
 
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
-
     if (!lhs.has_value()) {
       Type *it = llvm::find(possibleTypes, inputType);
       if (it != possibleTypes.end())
@@ -2758,32 +2740,12 @@ LogicalResult arith::ExtFOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
-    // Set up all possible 'to' types
-    llvm::SmallVector<uint64_t> possibleToTypes;
-    if (inputType.isF16()) {
-      possibleToTypes = {32, 64};
-    } else if (inputType.isF32()) {
-      possibleToTypes = {64};
-    }
-
-    // Check if some 'to' type was found
-    if (possibleToTypes.empty()) {
-      Type *it = llvm::find(possibleTypes, inputType);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-      continue;
-    }
-
-    unsigned toTypeIdx = builder.sampleUniform(possibleToTypes.size() - 1);
-    Type toType;
-    if (possibleToTypes[toTypeIdx] == 32)
-      toType = builder.getF32Type();
-    else if (possibleToTypes[toTypeIdx] == 64)
-      toType = builder.getF64Type();
+    unsigned outputIdx = builder.sampleUniform(typesMap[inputType].size() - 1);
+    Type outputType = typesMap[inputType][outputIdx];
 
     OperationState state(builder.getUnknownLoc(),
                          arith::ExtFOp::getOperationName());
-    arith::ExtFOp::build(builder, state, toType, lhs.value());
+    arith::ExtFOp::build(builder, state, outputType, lhs.value());
     if (builder.create(state) != nullptr)
       return success();
 
@@ -2800,12 +2762,16 @@ arith::ExtFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
+      builder.getF64Type(),
   };
 
+  bool foundLowerType = false;
   llvm::SmallVector<Type> generatableTypes;
   for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
+    if (foundLowerType)
       generatableTypes.push_back(t);
+    else if (builder.hasValueOfType(t))
+      foundLowerType = true;
 
   return generatableTypes;
 }
@@ -2863,14 +2829,23 @@ LogicalResult arith::TruncIOp::verify() {
 }
 
 LogicalResult arith::TruncIOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> allTypes = {
+      builder.getI64Type(), builder.getI32Type(), builder.getI16Type(),
+      builder.getI8Type(),  builder.getI1Type(),
+  };
+
+  llvm::SmallVector<Type> possibleTypes(allTypes.begin(), allTypes.end() - 1);
+
+  llvm::DenseMap<Type, llvm::SmallVector<Type>> typesMap;
+  for (unsigned i = 0; i < possibleTypes.size(); ++i)
+    typesMap[possibleTypes[i]] =
+        llvm::SmallVector<Type>(allTypes.begin() + i + 1, allTypes.end());
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[idx];
+    unsigned inputIdx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type inputType = possibleTypes[inputIdx];
 
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
-
     if (!lhs.has_value()) {
       Type *it = llvm::find(possibleTypes, inputType);
       if (it != possibleTypes.end())
@@ -2878,32 +2853,12 @@ LogicalResult arith::TruncIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
-    // Set up all possible 'to' types
-    llvm::SmallVector<uint64_t> possibleToTypes;
-    if (inputType.isInteger(64)) {
-      possibleToTypes = {1, 8, 16, 32};
-    } else if (inputType.isInteger(32)) {
-      possibleToTypes = {1, 8, 16};
-    } else if (inputType.isInteger(16)) {
-      possibleToTypes = {1, 8};
-    } else if (inputType.isInteger(8)) {
-      possibleToTypes = {1};
-    }
-
-    // Check if some 'to' type was found
-    if (possibleToTypes.empty()) {
-      Type *it = llvm::find(possibleTypes, inputType);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-      continue;
-    }
-
-    unsigned toTypeIdx = builder.sampleUniform(possibleToTypes.size() - 1);
-    Type toType = builder.getIntegerType(possibleToTypes[toTypeIdx]);
+    unsigned outputIdx = builder.sampleUniform(typesMap[inputType].size() - 1);
+    Type outputType = typesMap[inputType][outputIdx];
 
     OperationState state(builder.getUnknownLoc(),
                          arith::TruncIOp::getOperationName());
-    arith::TruncIOp::build(builder, state, toType, lhs.value());
+    arith::TruncIOp::build(builder, state, outputType, lhs.value());
     if (builder.create(state) != nullptr)
       return success();
 
@@ -2918,16 +2873,17 @@ LogicalResult arith::TruncIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::TruncIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI8Type(),
-      builder.getI16Type(),
-      builder.getI32Type(),
-      builder.getI64Type(),
+      builder.getI64Type(), builder.getI32Type(), builder.getI16Type(),
+      builder.getI8Type(),  builder.getI1Type(),
   };
 
+  bool foundLowerType = false;
   llvm::SmallVector<Type> generatableTypes;
   for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
+    if (foundLowerType)
       generatableTypes.push_back(t);
+    else if (builder.hasValueOfType(t))
+      foundLowerType = true;
 
   return generatableTypes;
 }
@@ -2964,14 +2920,24 @@ LogicalResult arith::TruncFOp::verify() {
 }
 
 LogicalResult arith::TruncFOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> allTypes = {
+      builder.getF64Type(),
+      builder.getF32Type(),
+      builder.getF16Type(),
+  };
+
+  llvm::SmallVector<Type> possibleTypes(allTypes.begin(), allTypes.end() - 1);
+
+  llvm::DenseMap<Type, llvm::SmallVector<Type>> typesMap;
+  for (unsigned i = 0; i < possibleTypes.size(); ++i)
+    typesMap[possibleTypes[i]] =
+        llvm::SmallVector<Type>(allTypes.begin() + i + 1, allTypes.end());
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[idx];
+    unsigned inputIdx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type inputType = possibleTypes[inputIdx];
 
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
-
     if (!lhs.has_value()) {
       Type *it = llvm::find(possibleTypes, inputType);
       if (it != possibleTypes.end())
@@ -2979,32 +2945,12 @@ LogicalResult arith::TruncFOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
-    // Set up all possible 'to' types
-    llvm::SmallVector<uint64_t> possibleToTypes;
-    if (inputType.isF64()) {
-      possibleToTypes = {16, 32};
-    } else if (inputType.isF32()) {
-      possibleToTypes = {16};
-    }
-
-    // Check if some 'to' type was found
-    if (possibleToTypes.empty()) {
-      Type *it = llvm::find(possibleTypes, inputType);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-      continue;
-    }
-
-    unsigned toTypeIdx = builder.sampleUniform(possibleToTypes.size() - 1);
-    Type toType;
-    if (possibleToTypes[toTypeIdx] == 32)
-      toType = builder.getF32Type();
-    else if (possibleToTypes[toTypeIdx] == 16)
-      toType = builder.getF16Type();
+    unsigned outputIdx = builder.sampleUniform(typesMap[inputType].size() - 1);
+    Type outputType = typesMap[inputType][outputIdx];
 
     OperationState state(builder.getUnknownLoc(),
                          arith::TruncFOp::getOperationName());
-    arith::TruncFOp::build(builder, state, toType, lhs.value());
+    arith::TruncFOp::build(builder, state, outputType, lhs.value());
     if (builder.create(state) != nullptr)
       return success();
 
@@ -3019,14 +2965,18 @@ LogicalResult arith::TruncFOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::TruncFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getF32Type(),
       builder.getF64Type(),
+      builder.getF32Type(),
+      builder.getF16Type(),
   };
 
+  bool foundLowerType = false;
   llvm::SmallVector<Type> generatableTypes;
   for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
+    if (foundLowerType)
       generatableTypes.push_back(t);
+    else if (builder.hasValueOfType(t))
+      foundLowerType = true;
 
   return generatableTypes;
 }
@@ -3091,33 +3041,29 @@ LogicalResult arith::UIToFPOp::generate(GeneratorOpBuilder &builder) {
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[idx];
+    Type resultType = possibleTypes[idx];
+    if (!isa<FloatType>(resultType)) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+    }
 
+    Type inputType = builder.getIntegerType(resultType.getIntOrFloatBitWidth());
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
-
     if (!lhs.has_value()) {
-      Type *it = llvm::find(possibleTypes, inputType);
+      Type *it = llvm::find(possibleTypes, resultType);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
     }
 
-    // Set up 'to' type
-    Type toType;
-    if (inputType.isInteger(16))
-      toType = builder.getF16Type();
-    else if (inputType.isInteger(32))
-      toType = builder.getF32Type();
-    else if (inputType.isInteger(64))
-      toType = builder.getF64Type();
-
     OperationState state(builder.getUnknownLoc(),
                          arith::UIToFPOp::getOperationName());
-    arith::UIToFPOp::build(builder, state, toType, lhs.value());
+    arith::UIToFPOp::build(builder, state, resultType, lhs.value());
     if (builder.create(state) != nullptr)
       return success();
 
-    Type *it = llvm::find(possibleTypes, inputType);
+    Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
@@ -3128,7 +3074,10 @@ LogicalResult arith::UIToFPOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::UIToFPOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI16Type(), builder.getI32Type(), builder.getI64Type()};
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   llvm::SmallVector<Type> generatableTypes;
   for (Type t : possibleTypes)
@@ -3165,33 +3114,29 @@ LogicalResult arith::SIToFPOp::generate(GeneratorOpBuilder &builder) {
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[idx];
+    Type resultType = possibleTypes[idx];
+    if (!isa<FloatType>(resultType)) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+    }
 
+    Type inputType = builder.getIntegerType(resultType.getIntOrFloatBitWidth());
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
-
     if (!lhs.has_value()) {
-      Type *it = llvm::find(possibleTypes, inputType);
+      Type *it = llvm::find(possibleTypes, resultType);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
     }
 
-    // Set up 'to' type
-    Type toType;
-    if (inputType.isInteger(16))
-      toType = builder.getF16Type();
-    else if (inputType.isInteger(32))
-      toType = builder.getF32Type();
-    else if (inputType.isInteger(64))
-      toType = builder.getF64Type();
-
     OperationState state(builder.getUnknownLoc(),
                          arith::SIToFPOp::getOperationName());
-    arith::SIToFPOp::build(builder, state, toType, lhs.value());
+    arith::SIToFPOp::build(builder, state, resultType, lhs.value());
     if (builder.create(state) != nullptr)
       return success();
 
-    Type *it = llvm::find(possibleTypes, inputType);
+    Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
@@ -3202,7 +3147,10 @@ LogicalResult arith::SIToFPOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::SIToFPOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI16Type(), builder.getI32Type(), builder.getI64Type()};
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   llvm::SmallVector<Type> generatableTypes;
   for (Type t : possibleTypes)
@@ -3235,37 +3183,39 @@ OpFoldResult arith::FPToUIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::FPToUIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::DenseMap<Type, Type> typeMap = {
+      {builder.getI16Type(), builder.getF16Type()},
+      {builder.getI32Type(), builder.getF32Type()},
+      {builder.getI64Type(), builder.getF64Type()},
+  };
+
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[idx];
+    Type resultType = possibleTypes[idx];
+    if (!isa<IntegerType>(resultType)) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+    }
 
+    Type inputType = typeMap[resultType];
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
-
     if (!lhs.has_value()) {
-      Type *it = llvm::find(possibleTypes, inputType);
+      Type *it = llvm::find(possibleTypes, resultType);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
     }
 
-    // Set up 'to' type
-    Type toType;
-    if (inputType.isF16())
-      toType = builder.getI16Type();
-    else if (inputType.isF32())
-      toType = builder.getI32Type();
-    else if (inputType.isF64())
-      toType = builder.getI64Type();
-
     OperationState state(builder.getUnknownLoc(),
                          arith::FPToUIOp::getOperationName());
-    arith::FPToUIOp::build(builder, state, toType, lhs.value());
+    arith::FPToUIOp::build(builder, state, resultType, lhs.value());
     if (builder.create(state) != nullptr)
       return success();
 
-    Type *it = llvm::find(possibleTypes, inputType);
+    Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
@@ -3276,7 +3226,10 @@ LogicalResult arith::FPToUIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::FPToUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(), builder.getF32Type(), builder.getF64Type()};
+      builder.getI16Type(),
+      builder.getI32Type(),
+      builder.getI64Type(),
+  };
 
   llvm::SmallVector<Type> generatableTypes;
   for (Type t : possibleTypes)
@@ -3309,37 +3262,39 @@ OpFoldResult arith::FPToSIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::FPToSIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::DenseMap<Type, Type> typeMap = {
+      {builder.getI16Type(), builder.getF16Type()},
+      {builder.getI32Type(), builder.getF32Type()},
+      {builder.getI64Type(), builder.getF64Type()},
+  };
+
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[idx];
+    Type resultType = possibleTypes[idx];
+    if (!isa<IntegerType>(resultType)) {
+      Type *it = llvm::find(possibleTypes, resultType);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+    }
 
+    Type inputType = typeMap[resultType];
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
-
     if (!lhs.has_value()) {
-      Type *it = llvm::find(possibleTypes, inputType);
+      Type *it = llvm::find(possibleTypes, resultType);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
     }
 
-    // Set up 'to' type
-    Type toType;
-    if (inputType.isF16())
-      toType = builder.getI16Type();
-    else if (inputType.isF32())
-      toType = builder.getI32Type();
-    else if (inputType.isF64())
-      toType = builder.getI64Type();
-
     OperationState state(builder.getUnknownLoc(),
-                         arith::FPToSIOp::getOperationName());
-    arith::FPToSIOp::build(builder, state, toType, lhs.value());
+                         arith::FPToUIOp::getOperationName());
+    arith::FPToUIOp::build(builder, state, resultType, lhs.value());
     if (builder.create(state) != nullptr)
       return success();
 
-    Type *it = llvm::find(possibleTypes, inputType);
+    Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
@@ -3350,7 +3305,10 @@ LogicalResult arith::FPToSIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::FPToSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(), builder.getF32Type(), builder.getF64Type()};
+      builder.getI16Type(),
+      builder.getI32Type(),
+      builder.getI64Type(),
+  };
 
   llvm::SmallVector<Type> generatableTypes;
   for (Type t : possibleTypes)
@@ -3729,18 +3687,18 @@ OpFoldResult arith::CmpIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::CmpIOp::generate(GeneratorOpBuilder &builder) {
-  // Predicate is sampled once
-  llvm::SmallVector<uint64_t, 10> predicateTypes = {0, 1, 2, 3, 4,
-                                                    5, 6, 7, 8, 9};
-  unsigned predicateIdx = builder.sampleUniform(predicateTypes.size() - 1);
-  arith::CmpIPredicate predicate =
-      static_cast<arith::CmpIPredicate>(predicateTypes[predicateIdx]);
+  llvm::SmallVector<CmpIPredicate> predicateTypes = {
+      CmpIPredicate::eq,  CmpIPredicate::ne,  CmpIPredicate::sge,
+      CmpIPredicate::sgt, CmpIPredicate::sle, CmpIPredicate::slt,
+      CmpIPredicate::uge, CmpIPredicate::ugt, CmpIPredicate::ule,
+      CmpIPredicate::ult,
+  };
 
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
+    unsigned typeIdx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[typeIdx];
 
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
@@ -3751,6 +3709,9 @@ LogicalResult arith::CmpIOp::generate(GeneratorOpBuilder &builder) {
         possibleTypes.erase(it);
       continue;
     }
+
+    unsigned predicateIdx = builder.sampleUniform(predicateTypes.size() - 1);
+    arith::CmpIPredicate predicate = predicateTypes[predicateIdx];
 
     OperationState state(builder.getUnknownLoc(),
                          arith::CmpIOp::getOperationName());
@@ -4142,18 +4103,20 @@ public:
 };
 
 LogicalResult arith::CmpFOp::generate(GeneratorOpBuilder &builder) {
-  // Predicate is sampled once
-  llvm::SmallVector<uint64_t, 16> predicateTypes = {
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-  unsigned predicateIdx = builder.sampleUniform(predicateTypes.size() - 1);
-  arith::CmpFPredicate predicate =
-      static_cast<arith::CmpFPredicate>(predicateTypes[predicateIdx]);
+  llvm::SmallVector<CmpFPredicate> predicateTypes = {
+      CmpFPredicate::AlwaysFalse, CmpFPredicate::AlwaysTrue, CmpFPredicate::OEQ,
+      CmpFPredicate::OGE,         CmpFPredicate::OGT,        CmpFPredicate::OLE,
+      CmpFPredicate::OLT,         CmpFPredicate::ONE,        CmpFPredicate::ORD,
+      CmpFPredicate::UEQ,         CmpFPredicate::UGE,        CmpFPredicate::UGT,
+      CmpFPredicate::ULE,         CmpFPredicate::ULT,        CmpFPredicate::UNE,
+      CmpFPredicate::UNO,
+  };
 
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
+    unsigned typeIdx = builder.sampleUniform(possibleTypes.size() - 1);
+    Type resultType = possibleTypes[typeIdx];
 
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
@@ -4164,6 +4127,9 @@ LogicalResult arith::CmpFOp::generate(GeneratorOpBuilder &builder) {
         possibleTypes.erase(it);
       continue;
     }
+
+    unsigned predicateIdx = builder.sampleUniform(predicateTypes.size() - 1);
+    arith::CmpFPredicate predicate = predicateTypes[predicateIdx];
 
     OperationState state(builder.getUnknownLoc(),
                          arith::CmpFOp::getOperationName());
@@ -4400,22 +4366,15 @@ LogicalResult arith::SelectOp::generate(GeneratorOpBuilder &builder) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
     Type resultType = possibleTypes[idx];
 
+    llvm::Optional<Value> cond = builder.sampleValueOfType(builder.getI1Type());
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
-    if (!lhs.has_value() || !rhs.has_value()) {
+    if (!lhs.has_value() || !rhs.has_value() || !cond.has_value()) {
       Type *it = llvm::find(possibleTypes, resultType);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
-    }
-
-    Type boolType = builder.getI1Type();
-    llvm::Optional<Value> cond = builder.sampleValueOfType(boolType);
-
-    // Check if any bool-like value exists
-    if (!cond.has_value()) {
-      return failure();
     }
 
     OperationState state(builder.getUnknownLoc(),
@@ -4500,10 +4459,8 @@ LogicalResult arith::ShLIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::ShLIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI8Type(),
-      builder.getI16Type(),
-      builder.getI32Type(),
-      builder.getI64Type(),
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -4566,10 +4523,8 @@ LogicalResult arith::ShRUIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::ShRUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI8Type(),
-      builder.getI16Type(),
-      builder.getI32Type(),
-      builder.getI64Type(),
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -4632,10 +4587,8 @@ LogicalResult arith::ShRSIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::ShRSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI8Type(),
-      builder.getI16Type(),
-      builder.getI32Type(),
-      builder.getI64Type(),
+      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
+      builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
