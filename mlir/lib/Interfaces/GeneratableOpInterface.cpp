@@ -391,8 +391,8 @@ llvm::SmallVector<Type> GeneratorOpBuilderImpl::sampleTypes(int32_t min) {
     return {};
   }
 
-  // Geometric distribution, p=0.5
-  std::geometric_distribution<> dist(0.5);
+  // Geometric distribution, p=0.2
+  std::geometric_distribution<> dist(0.2);
   int length = dist(rngGen) + min;
 
   llvm::SmallVector<Type> types;
@@ -597,8 +597,8 @@ GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator,
   }
 
   // Randomly generate operations.
-  // Geometric distribution, p=0.5
-  std::geometric_distribution<> dist(0.5);
+  // Geometric distribution, p=0.2
+  std::geometric_distribution<> dist(0.2);
   int length = dist(rngGen);
 
   // Filter available ops.
