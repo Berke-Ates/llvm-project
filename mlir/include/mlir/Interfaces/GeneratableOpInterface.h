@@ -63,6 +63,8 @@ public:
     unsigned lineNr = 0;
 
     while (std::getline(input, line)) {
+      if (line.empty())
+        continue;
       std::istringstream lineStream(line);
       std::string key;
       char equalsSign;

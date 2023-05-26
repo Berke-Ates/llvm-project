@@ -2891,7 +2891,6 @@ LogicalResult StoreOp::generate(GeneratorOpBuilder &builder) {
 
     MemRefType type = cast<MemRefType>(possibleTypes[idx]);
     // TODO: Handle dynamic sizes
-    // Use arith.remsi
     if (type.getNumDynamicDims() > 0) {
       Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
       if (it != possibleTypes.end())
