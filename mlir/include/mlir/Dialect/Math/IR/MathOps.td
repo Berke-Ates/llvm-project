@@ -98,7 +98,8 @@ class Math_FloatTernaryOp<string mnemonic, list<Trait> traits = []> :
 // AbsFOp
 //===----------------------------------------------------------------------===//
 
-def Math_AbsFOp : Math_FloatUnaryOp<"absf"> {
+def Math_AbsFOp : Math_FloatUnaryOp<"absf",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "floating point absolute-value operation";
   let description = [{
     The `absf` operation computes the absolute value. It takes one operand of
@@ -119,7 +120,8 @@ def Math_AbsFOp : Math_FloatUnaryOp<"absf"> {
 // AbsIOp
 //===----------------------------------------------------------------------===//
 
-def Math_AbsIOp : Math_IntegerUnaryOp<"absi"> {
+def Math_AbsIOp : Math_IntegerUnaryOp<"absi",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "integer absolute-value operation";
   let description = [{
     The `absi` operation computes the absolute value. It takes one operand of
@@ -140,7 +142,8 @@ def Math_AbsIOp : Math_IntegerUnaryOp<"absi"> {
 // AtanOp
 //===----------------------------------------------------------------------===//
 
-def Math_AtanOp : Math_FloatUnaryOp<"atan">{
+def Math_AtanOp : Math_FloatUnaryOp<"atan", 
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "arcus tangent of the given value";
   let description = [{
     Syntax:
@@ -167,7 +170,8 @@ def Math_AtanOp : Math_FloatUnaryOp<"atan">{
 // Atan2Op
 //===----------------------------------------------------------------------===//
 
-def Math_Atan2Op : Math_FloatBinaryOp<"atan2">{
+def Math_Atan2Op : Math_FloatBinaryOp<"atan2",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "2-argument arcus tangent of the given values";
   let description = [{
     Syntax:
@@ -201,7 +205,8 @@ def Math_Atan2Op : Math_FloatBinaryOp<"atan2">{
 // CbrtOp
 //===----------------------------------------------------------------------===//
 
-def Math_CbrtOp : Math_FloatUnaryOp<"cbrt"> {
+def Math_CbrtOp : Math_FloatUnaryOp<"cbrt",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "cube root of the specified value";
   let description = [{
     The `cbrt` operation computes the cube root. It takes one operand of
@@ -223,7 +228,8 @@ def Math_CbrtOp : Math_FloatUnaryOp<"cbrt"> {
 // CeilOp
 //===----------------------------------------------------------------------===//
 
-def Math_CeilOp : Math_FloatUnaryOp<"ceil"> {
+def Math_CeilOp : Math_FloatUnaryOp<"ceil",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "ceiling of the specified value";
   let description = [{
     Syntax:
@@ -250,7 +256,8 @@ def Math_CeilOp : Math_FloatUnaryOp<"ceil"> {
 // CopySignOp
 //===----------------------------------------------------------------------===//
 
-def Math_CopySignOp : Math_FloatBinaryOp<"copysign"> {
+def Math_CopySignOp : Math_FloatBinaryOp<"copysign",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "A copysign operation";
   let description = [{
     Syntax:
@@ -278,7 +285,8 @@ def Math_CopySignOp : Math_FloatBinaryOp<"copysign"> {
 // CosOp
 //===----------------------------------------------------------------------===//
 
-def Math_CosOp : Math_FloatUnaryOp<"cos"> {
+def Math_CosOp : Math_FloatUnaryOp<"cos",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "cosine of the specified value";
   let description = [{
     Syntax:
@@ -305,7 +313,8 @@ def Math_CosOp : Math_FloatUnaryOp<"cos"> {
 // SinOp
 //===----------------------------------------------------------------------===//
 
-def Math_SinOp : Math_FloatUnaryOp<"sin"> {
+def Math_SinOp : Math_FloatUnaryOp<"sin",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "sine of the specified value";
   let description = [{
     Syntax:
@@ -332,7 +341,8 @@ def Math_SinOp : Math_FloatUnaryOp<"sin"> {
 // CountLeadingZerosOp
 //===----------------------------------------------------------------------===//
 
-def Math_CountLeadingZerosOp : Math_IntegerUnaryOp<"ctlz"> {
+def Math_CountLeadingZerosOp : Math_IntegerUnaryOp<"ctlz",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "counts the leading zeros an integer value";
   let description = [{
     The `ctlz` operation computes the number of leading zeros of an integer value.
@@ -352,7 +362,8 @@ def Math_CountLeadingZerosOp : Math_IntegerUnaryOp<"ctlz"> {
 // CountTrailingZerosOp
 //===----------------------------------------------------------------------===//
 
-def Math_CountTrailingZerosOp : Math_IntegerUnaryOp<"cttz"> {
+def Math_CountTrailingZerosOp : Math_IntegerUnaryOp<"cttz",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "counts the trailing zeros an integer value";
   let description = [{
     The `cttz` operation computes the number of trailing zeros of an integer value.
@@ -372,7 +383,8 @@ def Math_CountTrailingZerosOp : Math_IntegerUnaryOp<"cttz"> {
 // CtPopOp
 //===----------------------------------------------------------------------===//
 
-def Math_CtPopOp : Math_IntegerUnaryOp<"ctpop"> {
+def Math_CtPopOp : Math_IntegerUnaryOp<"ctpop",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "counts the number of set bits of an integer value";
   let description = [{
     The `ctpop` operation computes the number of set bits of an integer value.
@@ -392,7 +404,8 @@ def Math_CtPopOp : Math_IntegerUnaryOp<"ctpop"> {
 // ErfOp
 //===----------------------------------------------------------------------===//
 
-def Math_ErfOp : Math_FloatUnaryOp<"erf"> {
+def Math_ErfOp : Math_FloatUnaryOp<"erf",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "error function of the specified value";
   let description = [{
     Syntax:
@@ -420,7 +433,8 @@ def Math_ErfOp : Math_FloatUnaryOp<"erf"> {
 // ExpOp
 //===----------------------------------------------------------------------===//
 
-def Math_ExpOp : Math_FloatUnaryOp<"exp"> {
+def Math_ExpOp : Math_FloatUnaryOp<"exp",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "base-e exponential of the specified value";
   let description = [{
     Syntax:
@@ -447,7 +461,8 @@ def Math_ExpOp : Math_FloatUnaryOp<"exp"> {
 // Exp2Op
 //===----------------------------------------------------------------------===//
 
-def Math_Exp2Op : Math_FloatUnaryOp<"exp2"> {
+def Math_Exp2Op : Math_FloatUnaryOp<"exp2",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "base-2 exponential of the specified value";
 
   let description = [{
@@ -475,7 +490,8 @@ def Math_Exp2Op : Math_FloatUnaryOp<"exp2"> {
 // ExpM1Op
 //===----------------------------------------------------------------------===//
 
-def Math_ExpM1Op : Math_FloatUnaryOp<"expm1"> {
+def Math_ExpM1Op : Math_FloatUnaryOp<"expm1",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "base-e exponential of the specified value minus 1";
   let description = [{
     Syntax:
@@ -504,7 +520,8 @@ def Math_ExpM1Op : Math_FloatUnaryOp<"expm1"> {
 // FloorOp
 //===----------------------------------------------------------------------===//
 
-def Math_FloorOp : Math_FloatUnaryOp<"floor"> {
+def Math_FloorOp : Math_FloatUnaryOp<"floor",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "floor of the specified value";
   let description = [{
     Syntax:
@@ -532,7 +549,8 @@ def Math_FloorOp : Math_FloatUnaryOp<"floor"> {
 // FmaOp
 //===----------------------------------------------------------------------===//
 
-def Math_FmaOp : Math_FloatTernaryOp<"fma"> {
+def Math_FmaOp : Math_FloatTernaryOp<"fma",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "floating point fused multipy-add operation";
   let description = [{
     Syntax:
@@ -563,7 +581,8 @@ def Math_FmaOp : Math_FloatTernaryOp<"fma"> {
 // IPowIOp
 //===----------------------------------------------------------------------===//
 
-def Math_IPowIOp : Math_IntegerBinaryOp<"ipowi"> {
+def Math_IPowIOp : Math_IntegerBinaryOp<"ipowi",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "signed integer raised to the power of operation";
   let description = [{
     Syntax:
@@ -590,7 +609,8 @@ def Math_IPowIOp : Math_IntegerBinaryOp<"ipowi"> {
 // LogOp
 //===----------------------------------------------------------------------===//
 
-def Math_LogOp : Math_FloatUnaryOp<"log"> {
+def Math_LogOp : Math_FloatUnaryOp<"log",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "base-e logarithm of the specified value";
 
   let description = [{
@@ -612,7 +632,8 @@ def Math_LogOp : Math_FloatUnaryOp<"log"> {
 // Log10Op
 //===----------------------------------------------------------------------===//
 
-def Math_Log10Op : Math_FloatUnaryOp<"log10"> {
+def Math_Log10Op : Math_FloatUnaryOp<"log10",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "base-10 logarithm of the specified value";
 
   let description = [{
@@ -634,7 +655,8 @@ def Math_Log10Op : Math_FloatUnaryOp<"log10"> {
 // Log1pOp
 //===----------------------------------------------------------------------===//
 
-def Math_Log1pOp : Math_FloatUnaryOp<"log1p"> {
+def Math_Log1pOp : Math_FloatUnaryOp<"log1p",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "Computes the natural logarithm of one plus the given value";
 
   let description = [{
@@ -658,7 +680,8 @@ def Math_Log1pOp : Math_FloatUnaryOp<"log1p"> {
 // Log2Op
 //===----------------------------------------------------------------------===//
 
-def Math_Log2Op : Math_FloatUnaryOp<"log2"> {
+def Math_Log2Op : Math_FloatUnaryOp<"log2",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "base-2 logarithm of the specified value";
 
   let description = [{
@@ -680,7 +703,8 @@ def Math_Log2Op : Math_FloatUnaryOp<"log2"> {
 // PowFOp
 //===----------------------------------------------------------------------===//
 
-def Math_PowFOp : Math_FloatBinaryOp<"powf"> {
+def Math_PowFOp : Math_FloatBinaryOp<"powf",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "floating point raised to the power of operation";
   let description = [{
     Syntax:
@@ -707,7 +731,8 @@ def Math_PowFOp : Math_FloatBinaryOp<"powf"> {
 // RsqrtOp
 //===----------------------------------------------------------------------===//
 
-def Math_RsqrtOp : Math_FloatUnaryOp<"rsqrt"> {
+def Math_RsqrtOp : Math_FloatUnaryOp<"rsqrt",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "reciprocal of sqrt (1 / sqrt of the specified value)";
   let description = [{
     The `rsqrt` operation computes the reciprocal of the square root. It takes
@@ -727,7 +752,8 @@ def Math_RsqrtOp : Math_FloatUnaryOp<"rsqrt"> {
 // SqrtOp
 //===----------------------------------------------------------------------===//
 
-def Math_SqrtOp : Math_FloatUnaryOp<"sqrt"> {
+def Math_SqrtOp : Math_FloatUnaryOp<"sqrt",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "sqrt of the specified value";
   let description = [{
     The `sqrt` operation computes the square root. It takes one operand of
@@ -748,7 +774,8 @@ def Math_SqrtOp : Math_FloatUnaryOp<"sqrt"> {
 // TanOp
 //===----------------------------------------------------------------------===//
 
-def Math_TanOp : Math_FloatUnaryOp<"tan"> {
+def Math_TanOp : Math_FloatUnaryOp<"tan",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "tangent of the specified value";
   let description = [{
     The `tan` operation computes the tangent. It takes one operand
@@ -769,7 +796,8 @@ def Math_TanOp : Math_FloatUnaryOp<"tan"> {
 // TanhOp
 //===----------------------------------------------------------------------===//
 
-def Math_TanhOp : Math_FloatUnaryOp<"tanh"> {
+def Math_TanhOp : Math_FloatUnaryOp<"tanh",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "hyperbolic tangent of the specified value";
   let description = [{
     The `tanh` operation computes the hyperbolic tangent. It takes one operand
@@ -790,7 +818,8 @@ def Math_TanhOp : Math_FloatUnaryOp<"tanh"> {
 // RoundEvenOp
 //===----------------------------------------------------------------------===//
 
-def Math_RoundEvenOp : Math_FloatUnaryOp<"roundeven"> {
+def Math_RoundEvenOp : Math_FloatUnaryOp<"roundeven",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "round of the specified value with halfway cases to even";
   let description = [{
     Syntax:
@@ -820,7 +849,8 @@ def Math_RoundEvenOp : Math_FloatUnaryOp<"roundeven"> {
 // RoundOp
 //===----------------------------------------------------------------------===//
 
-def Math_RoundOp : Math_FloatUnaryOp<"round"> {
+def Math_RoundOp : Math_FloatUnaryOp<"round",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "round of the specified value";
   let description = [{
     Syntax:
@@ -850,7 +880,8 @@ def Math_RoundOp : Math_FloatUnaryOp<"round"> {
 // TruncOp
 //===----------------------------------------------------------------------===//
 
-def Math_TruncOp : Math_FloatUnaryOp<"trunc"> {
+def Math_TruncOp : Math_FloatUnaryOp<"trunc",
+                           [DeclareOpInterfaceMethods<GeneratableOpInterface>]>{
   let summary = "trunc of the specified value";
   let description = [{
     Syntax:
@@ -881,7 +912,8 @@ def Math_TruncOp : Math_FloatUnaryOp<"trunc"> {
 
 def Math_FPowIOp : Math_Op<"fpowi",
     [SameOperandsAndResultShape, AllTypesMatch<["lhs", "result"]>,
-     DeclareOpInterfaceMethods<ArithFastMathInterface>]> {
+     DeclareOpInterfaceMethods<ArithFastMathInterface>,
+     DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
   let summary = "floating point raised to the signed integer power";
   let description = [{
     Syntax:

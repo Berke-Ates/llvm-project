@@ -31,6 +31,16 @@ OpFoldResult math::AbsFOp::fold(FoldAdaptor adaptor) {
                                      [](const APFloat &a) { return abs(a); });
 }
 
+LogicalResult math::AbsFOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::AbsFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // AbsIOp folder
 //===----------------------------------------------------------------------===//
@@ -38,6 +48,16 @@ OpFoldResult math::AbsFOp::fold(FoldAdaptor adaptor) {
 OpFoldResult math::AbsIOp::fold(FoldAdaptor adaptor) {
   return constFoldUnaryOp<IntegerAttr>(adaptor.getOperands(),
                                        [](const APInt &a) { return a.abs(); });
+}
+
+LogicalResult math::AbsIOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::AbsIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -56,6 +76,16 @@ OpFoldResult math::AtanOp::fold(FoldAdaptor adaptor) {
           return {};
         }
       });
+}
+
+LogicalResult math::AtanOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::AtanOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -81,6 +111,16 @@ OpFoldResult math::Atan2Op::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult math::Atan2Op::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::Atan2Op::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // CeilOp folder
 //===----------------------------------------------------------------------===//
@@ -94,6 +134,16 @@ OpFoldResult math::CeilOp::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult math::CeilOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::CeilOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // CopySignOp folder
 //===----------------------------------------------------------------------===//
@@ -105,6 +155,16 @@ OpFoldResult math::CopySignOp::fold(FoldAdaptor adaptor) {
                                         result.copySign(b);
                                         return result;
                                       });
+}
+
+LogicalResult math::CopySignOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::CopySignOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -125,6 +185,16 @@ OpFoldResult math::CosOp::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult math::CosOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::CosOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // SinOp folder
 //===----------------------------------------------------------------------===//
@@ -143,6 +213,16 @@ OpFoldResult math::SinOp::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult math::SinOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::SinOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // CountLeadingZerosOp folder
 //===----------------------------------------------------------------------===//
@@ -151,6 +231,16 @@ OpFoldResult math::CountLeadingZerosOp::fold(FoldAdaptor adaptor) {
   return constFoldUnaryOp<IntegerAttr>(
       adaptor.getOperands(),
       [](const APInt &a) { return APInt(a.getBitWidth(), a.countl_zero()); });
+}
+
+LogicalResult math::CountLeadingZerosOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::CountLeadingZerosOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -163,6 +253,17 @@ OpFoldResult math::CountTrailingZerosOp::fold(FoldAdaptor adaptor) {
       [](const APInt &a) { return APInt(a.getBitWidth(), a.countr_zero()); });
 }
 
+LogicalResult
+math::CountTrailingZerosOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::CountTrailingZerosOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // CtPopOp folder
 //===----------------------------------------------------------------------===//
@@ -171,6 +272,16 @@ OpFoldResult math::CtPopOp::fold(FoldAdaptor adaptor) {
   return constFoldUnaryOp<IntegerAttr>(
       adaptor.getOperands(),
       [](const APInt &a) { return APInt(a.getBitWidth(), a.popcount()); });
+}
+
+LogicalResult math::CtPopOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::CtPopOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -189,6 +300,16 @@ OpFoldResult math::ErfOp::fold(FoldAdaptor adaptor) {
           return {};
         }
       });
+}
+
+LogicalResult math::ErfOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::ErfOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -242,6 +363,16 @@ OpFoldResult math::IPowIOp::fold(FoldAdaptor adaptor) {
   return Attribute();
 }
 
+LogicalResult math::IPowIOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::IPowIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // LogOp folder
 //===----------------------------------------------------------------------===//
@@ -260,6 +391,16 @@ OpFoldResult math::LogOp::fold(FoldAdaptor adaptor) {
 
         return {};
       });
+}
+
+LogicalResult math::LogOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::LogOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -282,6 +423,16 @@ OpFoldResult math::Log2Op::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult math::Log2Op::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::Log2Op::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // Log10Op folder
 //===----------------------------------------------------------------------===//
@@ -301,6 +452,16 @@ OpFoldResult math::Log10Op::fold(FoldAdaptor adaptor) {
           return {};
         }
       });
+}
+
+LogicalResult math::Log10Op::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::Log10Op::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -325,6 +486,16 @@ OpFoldResult math::Log1pOp::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult math::Log1pOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::Log1pOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // PowFOp folder
 //===----------------------------------------------------------------------===//
@@ -343,6 +514,16 @@ OpFoldResult math::PowFOp::fold(FoldAdaptor adaptor) {
 
         return {};
       });
+}
+
+LogicalResult math::PowFOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::PowFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -366,6 +547,16 @@ OpFoldResult math::SqrtOp::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult math::SqrtOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::SqrtOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // ExpOp folder
 //===----------------------------------------------------------------------===//
@@ -382,6 +573,16 @@ OpFoldResult math::ExpOp::fold(FoldAdaptor adaptor) {
           return {};
         }
       });
+}
+
+LogicalResult math::ExpOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::ExpOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -402,6 +603,16 @@ OpFoldResult math::Exp2Op::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult math::Exp2Op::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::Exp2Op::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // ExpM1Op folder
 //===----------------------------------------------------------------------===//
@@ -418,6 +629,16 @@ OpFoldResult math::ExpM1Op::fold(FoldAdaptor adaptor) {
           return {};
         }
       });
+}
+
+LogicalResult math::ExpM1Op::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::ExpM1Op::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -438,6 +659,16 @@ OpFoldResult math::TanOp::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult math::TanOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::TanOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // TanhOp folder
 //===----------------------------------------------------------------------===//
@@ -456,6 +687,16 @@ OpFoldResult math::TanhOp::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult math::TanhOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::TanhOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // RoundEvenOp folder
 //===----------------------------------------------------------------------===//
@@ -469,6 +710,16 @@ OpFoldResult math::RoundEvenOp::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult math::RoundEvenOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::RoundEvenOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // FloorOp folder
 //===----------------------------------------------------------------------===//
@@ -480,6 +731,16 @@ OpFoldResult math::FloorOp::fold(FoldAdaptor adaptor) {
         result.roundToIntegral(llvm::RoundingMode::TowardNegative);
         return result;
       });
+}
+
+LogicalResult math::FloorOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::FloorOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -500,6 +761,16 @@ OpFoldResult math::RoundOp::fold(FoldAdaptor adaptor) {
       });
 }
 
+LogicalResult math::RoundOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::RoundOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // TruncOp folder
 //===----------------------------------------------------------------------===//
@@ -516,6 +787,72 @@ OpFoldResult math::TruncOp::fold(FoldAdaptor adaptor) {
           return {};
         }
       });
+}
+
+LogicalResult math::TruncOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::TruncOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
+//===----------------------------------------------------------------------===//
+// CbrtOp
+//===----------------------------------------------------------------------===//
+
+LogicalResult math::CbrtOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::CbrtOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
+//===----------------------------------------------------------------------===//
+// FPowIOp
+//===----------------------------------------------------------------------===//
+
+LogicalResult math::FPowIOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::FPowIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
+//===----------------------------------------------------------------------===//
+// FmaOp
+//===----------------------------------------------------------------------===//
+
+LogicalResult math::FmaOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::FmaOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
+//===----------------------------------------------------------------------===//
+// RsqrtOp
+//===----------------------------------------------------------------------===//
+
+LogicalResult math::RsqrtOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+math::RsqrtOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 /// Materialize an integer or floating point constant.

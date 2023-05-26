@@ -3358,6 +3358,16 @@ void arith::IndexCastOp::getCanonicalizationPatterns(
   patterns.add<IndexCastOfIndexCast, IndexCastOfExtSI>(context);
 }
 
+LogicalResult arith::IndexCastOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+arith::IndexCastOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
+}
+
 //===----------------------------------------------------------------------===//
 // IndexCastUIOp
 //===----------------------------------------------------------------------===//
@@ -3383,6 +3393,16 @@ OpFoldResult arith::IndexCastUIOp::fold(FoldAdaptor adaptor) {
 void arith::IndexCastUIOp::getCanonicalizationPatterns(
     RewritePatternSet &patterns, MLIRContext *context) {
   patterns.add<IndexCastUIOfIndexCastUI, IndexCastUIOfExtUI>(context);
+}
+
+LogicalResult arith::IndexCastUIOp::generate(GeneratorOpBuilder &builder) {
+  // TODO: ADD THIS OP
+  return failure();
+}
+
+llvm::SmallVector<Type>
+arith::IndexCastUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
+  return {};
 }
 
 //===----------------------------------------------------------------------===//
