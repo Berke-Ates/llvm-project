@@ -3289,8 +3289,8 @@ LogicalResult arith::FPToSIOp::generate(GeneratorOpBuilder &builder) {
     }
 
     OperationState state(builder.getUnknownLoc(),
-                         arith::FPToUIOp::getOperationName());
-    arith::FPToUIOp::build(builder, state, resultType, lhs.value());
+                         arith::FPToSIOp::getOperationName());
+    arith::FPToSIOp::build(builder, state, resultType, lhs.value());
     if (builder.create(state) != nullptr)
       return success();
 
