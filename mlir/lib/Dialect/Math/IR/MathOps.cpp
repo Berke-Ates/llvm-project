@@ -1867,26 +1867,21 @@ LogicalResult math::FPowIOp::generate(GeneratorOpBuilder &builder) {
       builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
   };
 
-  while (!floatTypes.empty() && !intTypes.empty()) {
-    unsigned floatIdx = builder.sampleUniform(floatTypes.size() - 1);
-    Type floatType = floatTypes[floatIdx];
-    llvm::Optional<Value> lhs = builder.sampleValueOfType(floatType);
+  llvm::SmallVector<std::tuple<Type, Type>> typeTuples;
+  for (Type floatType : floatTypes)
+    for (Type intType : intTypes)
+      typeTuples.push_back(std::make_tuple(floatType, intType));
 
-    if (!lhs.has_value()) {
-      Type *it = llvm::find(floatTypes, floatType);
-      if (it != floatTypes.end())
-        floatTypes.erase(it);
-      continue;
-    }
+  while (!typeTuples.empty()) {
+    unsigned idx = builder.sampleUniform(typeTuples.size() - 1);
+    std::tuple<Type, Type> types = typeTuples[idx];
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(std::get<0>(types));
+    llvm::Optional<Value> rhs = builder.sampleValueOfType(std::get<1>(types));
 
-    unsigned intIdx = builder.sampleUniform(intTypes.size() - 1);
-    Type intType = intTypes[intIdx];
-    llvm::Optional<Value> rhs = builder.sampleValueOfType(intType);
-
-    if (!rhs.has_value()) {
-      Type *it = llvm::find(intTypes, intType);
-      if (it != intTypes.end())
-        intTypes.erase(it);
+    if (!lhs.has_value() || !rhs.has_value()) {
+      std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
+      if (it != typeTuples.end())
+        typeTuples.erase(it);
       continue;
     }
 
@@ -1896,13 +1891,9 @@ LogicalResult math::FPowIOp::generate(GeneratorOpBuilder &builder) {
     if (builder.create(state) != nullptr)
       return success();
 
-    Type *it = llvm::find(floatTypes, floatType);
-    if (it != floatTypes.end())
-      floatTypes.erase(it);
-
-    it = llvm::find(intTypes, intType);
-    if (it != intTypes.end())
-      intTypes.erase(it);
+    std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
+    if (it != typeTuples.end())
+      typeTuples.erase(it);
   }
 
   return failure();
