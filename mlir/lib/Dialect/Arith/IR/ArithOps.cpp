@@ -3551,77 +3551,38 @@ OpFoldResult arith::BitcastOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::BitcastOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> integerTypes = {
+      builder.getI16Type(), builder.getI32Type(), builder.getI64Type(),
+      builder.getF16Type(), builder.getF32Type(), builder.getF64Type(),
+  };
 
-  while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[idx];
+  llvm::SmallVector<std::tuple<Type, Type>> typeTuples;
+  for (Type type1 : integerTypes)
+    for (Type type2 : integerTypes)
+      if (type1 != type2)
+        typeTuples.push_back(std::make_tuple(type1, type2));
 
-    // Sample 'in' operand
-    llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
+  while (!typeTuples.empty()) {
+    unsigned idx = builder.sampleUniform(typeTuples.size() - 1);
+    std::tuple<Type, Type> types = typeTuples[idx];
+    llvm::Optional<Value> lhs = builder.sampleValueOfType(std::get<0>(types));
 
     if (!lhs.has_value()) {
-      Type *it = llvm::find(possibleTypes, inputType);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-      continue;
-    }
-
-    MemRefType memRefOppositeType;
-    Type oppositeType;
-    Type elementType;
-
-    // Get element type
-    if (isa<MemRefType>(inputType)) {
-      memRefOppositeType = cast<MemRefType>(inputType);
-      elementType = memRefOppositeType.getElementType();
-    } else {
-      elementType = inputType;
-    }
-
-    // Determine the opposite primitive type with equal width
-    if (auto floatType = elementType.dyn_cast<FloatType>()) {
-      if (floatType.isF16())
-        oppositeType = builder.getI16Type();
-      else if (floatType.isF32())
-        oppositeType = builder.getI32Type();
-      else if (floatType.isF64())
-        oppositeType = builder.getI64Type();
-    } else if (auto integerType = elementType.dyn_cast<IntegerType>()) {
-      if (integerType.isInteger(16))
-        oppositeType = builder.getF16Type();
-      else if (integerType.isInteger(32))
-        oppositeType = builder.getF32Type();
-      else if (integerType.isInteger(64))
-        oppositeType = builder.getF64Type();
-    }
-
-    // Check if the opposite type was found
-    if (!oppositeType) {
-      Type *it = llvm::find(possibleTypes, inputType);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
+      std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
+      if (it != typeTuples.end())
+        typeTuples.erase(it);
       continue;
     }
 
     OperationState state(builder.getUnknownLoc(),
                          arith::BitcastOp::getOperationName());
-
-    // build BitcastOp depending on input type
-    if (isa<MemRefType>(inputType)) {
-      memRefOppositeType =
-          MemRefType::get(memRefOppositeType.getShape(), oppositeType);
-      arith::BitcastOp::build(builder, state, memRefOppositeType, lhs.value());
-    } else {
-      arith::BitcastOp::build(builder, state, oppositeType, lhs.value());
-    }
-
+    arith::BitcastOp::build(builder, state, std::get<1>(types), lhs.value());
     if (builder.create(state) != nullptr)
       return success();
 
-    Type *it = llvm::find(possibleTypes, inputType);
-    if (it != possibleTypes.end())
-      possibleTypes.erase(it);
+    std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
+    if (it != typeTuples.end())
+      typeTuples.erase(it);
   }
 
   return failure();
@@ -3629,45 +3590,17 @@ LogicalResult arith::BitcastOp::generate(GeneratorOpBuilder &builder) {
 
 llvm::SmallVector<Type>
 arith::BitcastOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> elementTypes = {
+  llvm::SmallVector<Type> possibleTypes = {
       builder.getI16Type(), builder.getI32Type(), builder.getI64Type(),
       builder.getF16Type(), builder.getF32Type(), builder.getF64Type(),
   };
 
-  llvm::SmallVector<llvm::SmallVector<int64_t, 1>> shapes1D = {
-      {}, {0}, {1}, {2}};
-  llvm::SmallVector<llvm::SmallVector<int64_t, 3>> shapes;
-
-  // Iterate over the 1D shapes and concatenate them to create 2D and 3D shapes.
-  for (auto &shape1 : shapes1D) {
-    for (auto &shape2 : shapes1D) {
-      for (auto &shape3 : shapes1D) {
-        llvm::SmallVector<int64_t, 3> combinedShape;
-        combinedShape.append(shape1.begin(), shape1.end());
-        combinedShape.append(shape2.begin(), shape2.end());
-        combinedShape.append(shape3.begin(), shape3.end());
-        shapes.push_back(combinedShape);
-      }
-    }
-  }
-
-  llvm::SmallVector<Type> genTypes;
-
-  // Add all memref types.
-  for (llvm::ArrayRef shape : shapes)
-    for (Type t : elementTypes) {
-      auto memrefType = MemRefType::get(shape, t);
-      if (builder.hasValueOfType(memrefType))
-        genTypes.push_back(MemRefType::get(shape, t));
-    }
-
-  // Add all standard types.
-  for (Type t : elementTypes) {
+  llvm::SmallVector<Type> generatableTypes;
+  for (Type t : possibleTypes)
     if (builder.hasValueOfType(t))
-      genTypes.push_back(t);
-  }
+      generatableTypes.push_back(t);
 
-  return genTypes;
+  return generatableTypes;
 }
 
 void arith::BitcastOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
