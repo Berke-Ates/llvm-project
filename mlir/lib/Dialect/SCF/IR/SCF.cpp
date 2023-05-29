@@ -1200,93 +1200,70 @@ Speculation::Speculatability ForOp::getSpeculatability() {
 }
 
 LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
-  llvm::DenseMap<Type, TypedAttr> attrMap = {
-      {builder.getIndexType(), builder.getIndexAttr(1)},
-      {builder.getI8Type(), builder.getI8IntegerAttr(1)},
-      {builder.getI16Type(), builder.getI16IntegerAttr(1)},
-      {builder.getI32Type(), builder.getI32IntegerAttr(1)},
-      {builder.getI64Type(), builder.getI64IntegerAttr(1)},
-  };
+  Type indexType = builder.getIndexType();
 
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getIndexType(), builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(),   builder.getI64Type(),
-  };
+  llvm::Optional<Value> lb = builder.sampleValueOfType(indexType);
+  llvm::Optional<Value> ub = builder.sampleValueOfType(indexType);
+  llvm::Optional<Value> step = builder.sampleValueOfType(indexType);
 
-  while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    llvm::Optional<Value> lb = builder.sampleValueOfType(possibleTypes[idx]);
-    llvm::Optional<Value> ub = builder.sampleValueOfType(possibleTypes[idx]);
-    llvm::Optional<Value> step = builder.sampleValueOfType(possibleTypes[idx]);
+  if (!lb.has_value() || !ub.has_value() || !step.has_value())
+    return failure();
 
-    if (!lb.has_value() || !ub.has_value() || !step.has_value()) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-      continue;
-    }
+  // Limit bounds.
+  // FIXME: ABS() would be better
+  OperationState constState(builder.getUnknownLoc(),
+                            arith::ConstantOp::getOperationName());
+  arith::ConstantOp::build(builder, constState, indexType,
+                           builder.getIndexAttr(1));
+  Operation *constOp = builder.create(constState);
+  if (constOp == nullptr)
+    return failure();
 
-    // Limit bounds.
-    // FIXME: ABS() would be better
-    OperationState constState(builder.getUnknownLoc(),
-                              arith::ConstantOp::getOperationName());
-    arith::ConstantOp::build(builder, constState, possibleTypes[idx],
-                             attrMap[possibleTypes[idx]]);
-    Operation *constOp = builder.create(constState);
-    if (constOp == nullptr) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-      continue;
-    }
-
-    OperationState maxState(builder.getUnknownLoc(),
-                            arith::MinSIOp::getOperationName());
-    arith::MaxSIOp::build(builder, maxState, step.value(),
-                          constOp->getResult(0));
-    Operation *maxOp = builder.create(maxState);
-    if (maxOp == nullptr) {
-      constOp->erase();
-      return failure();
-    }
-
-    llvm::SmallVector<Type> iterTypes = builder.sampleTypes();
-    llvm::SmallVector<Value> iterArgs;
-
-    for (Type t : iterTypes) {
-      llvm::Optional<Value> val = builder.sampleValueOfType(t);
-      if (!val.has_value()) {
-        maxOp->erase();
-        constOp->erase();
-        return failure();
-      }
-      iterArgs.push_back(val.value());
-    }
-
-    OperationState state(builder.getUnknownLoc(), ForOp::getOperationName());
-    ForOp::build(builder, state, lb.value(), ub.value(), maxOp->getResult(0),
-                 iterArgs);
-    Operation *op = builder.create(state);
-    if (op == nullptr) {
-      maxOp->erase();
-      constOp->erase();
-      return failure();
-    }
-
-    ForOp forOp = cast<ForOp>(op);
-    builder.setInsertionPointToStart(forOp.getBody());
-    if (builder
-            .generateBlock(/*ensureTerminator=*/!iterTypes.empty(),
-                           /*requiredTypes=*/iterTypes)
-            .failed()) {
-      forOp.erase();
-      maxOp->erase();
-      constOp->erase();
-      return failure();
-    }
+  OperationState maxState(builder.getUnknownLoc(),
+                          arith::MinSIOp::getOperationName());
+  arith::MaxSIOp::build(builder, maxState, step.value(), constOp->getResult(0));
+  Operation *maxOp = builder.create(maxState);
+  if (maxOp == nullptr) {
+    constOp->erase();
+    return failure();
   }
 
-  return failure();
+  llvm::SmallVector<Type> iterTypes = builder.sampleTypes();
+  llvm::SmallVector<Value> iterArgs;
+
+  for (Type t : iterTypes) {
+    llvm::Optional<Value> val = builder.sampleValueOfType(t);
+    if (!val.has_value()) {
+      maxOp->erase();
+      constOp->erase();
+      return failure();
+    }
+    iterArgs.push_back(val.value());
+  }
+
+  OperationState state(builder.getUnknownLoc(), ForOp::getOperationName());
+  ForOp::build(builder, state, lb.value(), ub.value(), maxOp->getResult(0),
+               iterArgs);
+  Operation *op = builder.create(state);
+  if (op == nullptr) {
+    maxOp->erase();
+    constOp->erase();
+    return failure();
+  }
+
+  ForOp forOp = cast<ForOp>(op);
+  builder.setInsertionPointToStart(forOp.getBody());
+  if (builder
+          .generateBlock(/*ensureTerminator=*/!iterTypes.empty(),
+                         /*requiredTypes=*/iterTypes)
+          .failed()) {
+    forOp.erase();
+    maxOp->erase();
+    constOp->erase();
+    return failure();
+  }
+
+  return success();
 }
 
 llvm::SmallVector<Type>
