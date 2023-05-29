@@ -460,7 +460,7 @@ AllocOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   };
 
   llvm::SmallVector<llvm::SmallVector<int64_t, 1>> shapes1D = {
-      {}, {ShapedType::kDynamic}, {0}, {1}, {2}};
+      {}, /*{ShapedType::kDynamic},*/ {0}, {1}, {2}};
   llvm::SmallVector<llvm::SmallVector<int64_t, 3>> shapes;
 
   // Iterate over the 1D shapes and concatenate them to create 2D and 3D shapes.

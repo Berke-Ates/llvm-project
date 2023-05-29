@@ -1220,7 +1220,7 @@ LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
     return failure();
 
   OperationState maxState(builder.getUnknownLoc(),
-                          arith::MinSIOp::getOperationName());
+                          arith::MaxSIOp::getOperationName());
   arith::MaxSIOp::build(builder, maxState, step.value(), constOp->getResult(0));
   Operation *maxOp = builder.create(maxState);
   if (maxOp == nullptr) {

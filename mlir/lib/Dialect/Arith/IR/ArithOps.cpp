@@ -843,6 +843,14 @@ Speculation::Speculatability arith::DivUIOp::getSpeculatability() {
 }
 
 LogicalResult arith::DivUIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI8Type(), builder.getI8IntegerAttr(1)},
+      {builder.getI16Type(), builder.getI16IntegerAttr(1)},
+      {builder.getI32Type(), builder.getI32IntegerAttr(1)},
+      {builder.getI64Type(), builder.getI64IntegerAttr(1)},
+  };
+
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -859,15 +867,38 @@ LogicalResult arith::DivUIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
+    // Ensure non-zero values.
+    // FIXME: This excludes negative values
+    OperationState constState(builder.getUnknownLoc(),
+                              arith::ConstantOp::getOperationName());
+    arith::ConstantOp::build(builder, constState, resultType,
+                             attrMap[resultType]);
+    Operation *constOp = builder.create(constState);
+    if (constOp == nullptr)
+      return failure();
+
+    OperationState maxState(builder.getUnknownLoc(),
+                            arith::MaxSIOp::getOperationName());
+    arith::MaxSIOp::build(builder, maxState, rhs.value(),
+                          constOp->getResult(0));
+    Operation *maxOp = builder.create(maxState);
+    if (maxOp == nullptr) {
+      constOp->erase();
+      return failure();
+    }
+
     OperationState state(builder.getUnknownLoc(),
                          arith::DivUIOp::getOperationName());
-    arith::DivUIOp::build(builder, state, lhs.value(), rhs.value());
+    arith::DivUIOp::build(builder, state, lhs.value(), maxOp->getResult(0));
     if (builder.create(state) != nullptr)
       return success();
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
+
+    maxOp->erase();
+    constOp->erase();
   }
 
   return failure();
@@ -924,6 +955,14 @@ Speculation::Speculatability arith::DivSIOp::getSpeculatability() {
 }
 
 LogicalResult arith::DivSIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI8Type(), builder.getI8IntegerAttr(1)},
+      {builder.getI16Type(), builder.getI16IntegerAttr(1)},
+      {builder.getI32Type(), builder.getI32IntegerAttr(1)},
+      {builder.getI64Type(), builder.getI64IntegerAttr(1)},
+  };
+
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -940,15 +979,38 @@ LogicalResult arith::DivSIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
+    // Ensure non-zero values.
+    // FIXME: This excludes negative values
+    OperationState constState(builder.getUnknownLoc(),
+                              arith::ConstantOp::getOperationName());
+    arith::ConstantOp::build(builder, constState, resultType,
+                             attrMap[resultType]);
+    Operation *constOp = builder.create(constState);
+    if (constOp == nullptr)
+      return failure();
+
+    OperationState maxState(builder.getUnknownLoc(),
+                            arith::MaxSIOp::getOperationName());
+    arith::MaxSIOp::build(builder, maxState, rhs.value(),
+                          constOp->getResult(0));
+    Operation *maxOp = builder.create(maxState);
+    if (maxOp == nullptr) {
+      constOp->erase();
+      return failure();
+    }
+
     OperationState state(builder.getUnknownLoc(),
                          arith::DivSIOp::getOperationName());
-    arith::DivSIOp::build(builder, state, lhs.value(), rhs.value());
+    arith::DivSIOp::build(builder, state, lhs.value(), maxOp->getResult(0));
     if (builder.create(state) != nullptr)
       return success();
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
+
+    maxOp->erase();
+    constOp->erase();
   }
 
   return failure();
@@ -1014,6 +1076,14 @@ Speculation::Speculatability arith::CeilDivUIOp::getSpeculatability() {
 }
 
 LogicalResult arith::CeilDivUIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI8Type(), builder.getI8IntegerAttr(1)},
+      {builder.getI16Type(), builder.getI16IntegerAttr(1)},
+      {builder.getI32Type(), builder.getI32IntegerAttr(1)},
+      {builder.getI64Type(), builder.getI64IntegerAttr(1)},
+  };
+
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -1030,15 +1100,38 @@ LogicalResult arith::CeilDivUIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
+    // Ensure non-zero values.
+    // FIXME: This excludes negative values
+    OperationState constState(builder.getUnknownLoc(),
+                              arith::ConstantOp::getOperationName());
+    arith::ConstantOp::build(builder, constState, resultType,
+                             attrMap[resultType]);
+    Operation *constOp = builder.create(constState);
+    if (constOp == nullptr)
+      return failure();
+
+    OperationState maxState(builder.getUnknownLoc(),
+                            arith::MaxSIOp::getOperationName());
+    arith::MaxSIOp::build(builder, maxState, rhs.value(),
+                          constOp->getResult(0));
+    Operation *maxOp = builder.create(maxState);
+    if (maxOp == nullptr) {
+      constOp->erase();
+      return failure();
+    }
+
     OperationState state(builder.getUnknownLoc(),
                          arith::CeilDivUIOp::getOperationName());
-    arith::CeilDivUIOp::build(builder, state, lhs.value(), rhs.value());
+    arith::CeilDivUIOp::build(builder, state, lhs.value(), maxOp->getResult(0));
     if (builder.create(state) != nullptr)
       return success();
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
+
+    maxOp->erase();
+    constOp->erase();
   }
 
   return failure();
@@ -1121,6 +1214,14 @@ Speculation::Speculatability arith::CeilDivSIOp::getSpeculatability() {
 }
 
 LogicalResult arith::CeilDivSIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI8Type(), builder.getI8IntegerAttr(1)},
+      {builder.getI16Type(), builder.getI16IntegerAttr(1)},
+      {builder.getI32Type(), builder.getI32IntegerAttr(1)},
+      {builder.getI64Type(), builder.getI64IntegerAttr(1)},
+  };
+
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -1137,15 +1238,38 @@ LogicalResult arith::CeilDivSIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
+    // Ensure non-zero values.
+    // FIXME: This excludes negative values
+    OperationState constState(builder.getUnknownLoc(),
+                              arith::ConstantOp::getOperationName());
+    arith::ConstantOp::build(builder, constState, resultType,
+                             attrMap[resultType]);
+    Operation *constOp = builder.create(constState);
+    if (constOp == nullptr)
+      return failure();
+
+    OperationState maxState(builder.getUnknownLoc(),
+                            arith::MaxSIOp::getOperationName());
+    arith::MaxSIOp::build(builder, maxState, rhs.value(),
+                          constOp->getResult(0));
+    Operation *maxOp = builder.create(maxState);
+    if (maxOp == nullptr) {
+      constOp->erase();
+      return failure();
+    }
+
     OperationState state(builder.getUnknownLoc(),
                          arith::CeilDivSIOp::getOperationName());
-    arith::CeilDivSIOp::build(builder, state, lhs.value(), rhs.value());
+    arith::CeilDivSIOp::build(builder, state, lhs.value(), maxOp->getResult(0));
     if (builder.create(state) != nullptr)
       return success();
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
+
+    maxOp->erase();
+    constOp->erase();
   }
 
   return failure();
@@ -1216,6 +1340,14 @@ OpFoldResult arith::FloorDivSIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::FloorDivSIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI8Type(), builder.getI8IntegerAttr(1)},
+      {builder.getI16Type(), builder.getI16IntegerAttr(1)},
+      {builder.getI32Type(), builder.getI32IntegerAttr(1)},
+      {builder.getI64Type(), builder.getI64IntegerAttr(1)},
+  };
+
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -1232,15 +1364,39 @@ LogicalResult arith::FloorDivSIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
+    // Ensure non-zero values.
+    // FIXME: This excludes negative values
+    OperationState constState(builder.getUnknownLoc(),
+                              arith::ConstantOp::getOperationName());
+    arith::ConstantOp::build(builder, constState, resultType,
+                             attrMap[resultType]);
+    Operation *constOp = builder.create(constState);
+    if (constOp == nullptr)
+      return failure();
+
+    OperationState maxState(builder.getUnknownLoc(),
+                            arith::MaxSIOp::getOperationName());
+    arith::MaxSIOp::build(builder, maxState, rhs.value(),
+                          constOp->getResult(0));
+    Operation *maxOp = builder.create(maxState);
+    if (maxOp == nullptr) {
+      constOp->erase();
+      return failure();
+    }
+
     OperationState state(builder.getUnknownLoc(),
                          arith::FloorDivSIOp::getOperationName());
-    arith::FloorDivSIOp::build(builder, state, lhs.value(), rhs.value());
+    arith::FloorDivSIOp::build(builder, state, lhs.value(),
+                               maxOp->getResult(0));
     if (builder.create(state) != nullptr)
       return success();
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
+
+    maxOp->erase();
+    constOp->erase();
   }
 
   return failure();
@@ -1285,6 +1441,14 @@ OpFoldResult arith::RemUIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::RemUIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI8Type(), builder.getI8IntegerAttr(1)},
+      {builder.getI16Type(), builder.getI16IntegerAttr(1)},
+      {builder.getI32Type(), builder.getI32IntegerAttr(1)},
+      {builder.getI64Type(), builder.getI64IntegerAttr(1)},
+  };
+
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -1301,15 +1465,38 @@ LogicalResult arith::RemUIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
+    // Ensure non-zero values.
+    // FIXME: This excludes negative values
+    OperationState constState(builder.getUnknownLoc(),
+                              arith::ConstantOp::getOperationName());
+    arith::ConstantOp::build(builder, constState, resultType,
+                             attrMap[resultType]);
+    Operation *constOp = builder.create(constState);
+    if (constOp == nullptr)
+      return failure();
+
+    OperationState maxState(builder.getUnknownLoc(),
+                            arith::MaxSIOp::getOperationName());
+    arith::MaxSIOp::build(builder, maxState, rhs.value(),
+                          constOp->getResult(0));
+    Operation *maxOp = builder.create(maxState);
+    if (maxOp == nullptr) {
+      constOp->erase();
+      return failure();
+    }
+
     OperationState state(builder.getUnknownLoc(),
                          arith::RemUIOp::getOperationName());
-    arith::RemUIOp::build(builder, state, lhs.value(), rhs.value());
+    arith::RemUIOp::build(builder, state, lhs.value(), maxOp->getResult(0));
     if (builder.create(state) != nullptr)
       return success();
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
+
+    maxOp->erase();
+    constOp->erase();
   }
 
   return failure();
@@ -1354,6 +1541,14 @@ OpFoldResult arith::RemSIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::RemSIOp::generate(GeneratorOpBuilder &builder) {
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI8Type(), builder.getI8IntegerAttr(1)},
+      {builder.getI16Type(), builder.getI16IntegerAttr(1)},
+      {builder.getI32Type(), builder.getI32IntegerAttr(1)},
+      {builder.getI64Type(), builder.getI64IntegerAttr(1)},
+  };
+
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -1370,15 +1565,38 @@ LogicalResult arith::RemSIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
+    // Ensure non-zero values.
+    // FIXME: This excludes negative values
+    OperationState constState(builder.getUnknownLoc(),
+                              arith::ConstantOp::getOperationName());
+    arith::ConstantOp::build(builder, constState, resultType,
+                             attrMap[resultType]);
+    Operation *constOp = builder.create(constState);
+    if (constOp == nullptr)
+      return failure();
+
+    OperationState maxState(builder.getUnknownLoc(),
+                            arith::MaxSIOp::getOperationName());
+    arith::MaxSIOp::build(builder, maxState, rhs.value(),
+                          constOp->getResult(0));
+    Operation *maxOp = builder.create(maxState);
+    if (maxOp == nullptr) {
+      constOp->erase();
+      return failure();
+    }
+
     OperationState state(builder.getUnknownLoc(),
                          arith::RemSIOp::getOperationName());
-    arith::RemSIOp::build(builder, state, lhs.value(), rhs.value());
+    arith::RemSIOp::build(builder, state, lhs.value(), maxOp->getResult(0));
     if (builder.create(state) != nullptr)
       return success();
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
+
+    maxOp->erase();
+    constOp->erase();
   }
 
   return failure();
@@ -2316,6 +2534,12 @@ OpFoldResult arith::DivFOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::DivFOp::generate(GeneratorOpBuilder &builder) {
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getF16Type(), builder.getF16FloatAttr(1.0)},
+      {builder.getF32Type(), builder.getF32FloatAttr(1.0)},
+      {builder.getF64Type(), builder.getF64FloatAttr(1.0)},
+  };
+
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -2332,15 +2556,38 @@ LogicalResult arith::DivFOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
+    // Ensure non-zero values.
+    // FIXME: This excludes negative values
+    OperationState constState(builder.getUnknownLoc(),
+                              arith::ConstantOp::getOperationName());
+    arith::ConstantOp::build(builder, constState, resultType,
+                             attrMap[resultType]);
+    Operation *constOp = builder.create(constState);
+    if (constOp == nullptr)
+      return failure();
+
+    OperationState maxState(builder.getUnknownLoc(),
+                            arith::MaxSIOp::getOperationName());
+    arith::MaxSIOp::build(builder, maxState, rhs.value(),
+                          constOp->getResult(0));
+    Operation *maxOp = builder.create(maxState);
+    if (maxOp == nullptr) {
+      constOp->erase();
+      return failure();
+    }
+
     OperationState state(builder.getUnknownLoc(),
                          arith::DivFOp::getOperationName());
-    arith::DivFOp::build(builder, state, lhs.value(), rhs.value());
+    arith::DivFOp::build(builder, state, lhs.value(), maxOp->getResult(0));
     if (builder.create(state) != nullptr)
       return success();
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
+
+    maxOp->erase();
+    constOp->erase();
   }
 
   return failure();
@@ -2381,6 +2628,12 @@ OpFoldResult arith::RemFOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult arith::RemFOp::generate(GeneratorOpBuilder &builder) {
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getF16Type(), builder.getF16FloatAttr(1.0)},
+      {builder.getF32Type(), builder.getF32FloatAttr(1.0)},
+      {builder.getF64Type(), builder.getF64FloatAttr(1.0)},
+  };
+
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -2397,15 +2650,38 @@ LogicalResult arith::RemFOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
+    // Ensure non-zero values.
+    // FIXME: This excludes negative values
+    OperationState constState(builder.getUnknownLoc(),
+                              arith::ConstantOp::getOperationName());
+    arith::ConstantOp::build(builder, constState, resultType,
+                             attrMap[resultType]);
+    Operation *constOp = builder.create(constState);
+    if (constOp == nullptr)
+      return failure();
+
+    OperationState maxState(builder.getUnknownLoc(),
+                            arith::MaxSIOp::getOperationName());
+    arith::MaxSIOp::build(builder, maxState, rhs.value(),
+                          constOp->getResult(0));
+    Operation *maxOp = builder.create(maxState);
+    if (maxOp == nullptr) {
+      constOp->erase();
+      return failure();
+    }
+
     OperationState state(builder.getUnknownLoc(),
                          arith::RemFOp::getOperationName());
-    arith::RemFOp::build(builder, state, lhs.value(), rhs.value());
+    arith::RemFOp::build(builder, state, lhs.value(), maxOp->getResult(0));
     if (builder.create(state) != nullptr)
       return success();
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
+
+    maxOp->erase();
+    constOp->erase();
   }
 
   return failure();
