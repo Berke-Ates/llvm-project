@@ -203,9 +203,9 @@ void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
 
 LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
-      {builder.getI1Type(), builder.getBoolAttr(builder.sampleBool())},
       {builder.getIndexType(),
        builder.getIndexAttr(builder.sampleNumberInt64())},
+      {builder.getI1Type(), builder.getBoolAttr(builder.sampleBool())},
       {builder.getI8Type(),
        builder.getI8IntegerAttr(builder.sampleNumberInt8())},
       {builder.getI16Type(),
@@ -246,9 +246,9 @@ LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::ConstantOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> genTypes = {
-      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
-      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
-      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
+      builder.getF16Type(),   builder.getF32Type(), builder.getF64Type(),
   };
 
   return genTypes;
@@ -350,8 +350,8 @@ LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::AddIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -455,8 +455,8 @@ LogicalResult arith::AddUIExtendedOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::AddUIExtendedOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -532,8 +532,8 @@ LogicalResult arith::SubIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::SubIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -604,8 +604,8 @@ LogicalResult arith::MulIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::MulIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -693,8 +693,8 @@ LogicalResult arith::MulSIExtendedOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::MulSIExtendedOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -796,8 +796,8 @@ LogicalResult arith::MulUIExtendedOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::MulUIExtendedOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -845,6 +845,7 @@ Speculation::Speculatability arith::DivUIOp::getSpeculatability() {
 LogicalResult arith::DivUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI1Type(), builder.getBoolAttr(1)},
       {builder.getI8Type(), builder.getI8IntegerAttr(1)},
       {builder.getI16Type(), builder.getI16IntegerAttr(1)},
       {builder.getI32Type(), builder.getI32IntegerAttr(1)},
@@ -907,8 +908,8 @@ LogicalResult arith::DivUIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::DivUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -957,6 +958,7 @@ Speculation::Speculatability arith::DivSIOp::getSpeculatability() {
 LogicalResult arith::DivSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI1Type(), builder.getBoolAttr(1)},
       {builder.getI8Type(), builder.getI8IntegerAttr(1)},
       {builder.getI16Type(), builder.getI16IntegerAttr(1)},
       {builder.getI32Type(), builder.getI32IntegerAttr(1)},
@@ -1019,8 +1021,8 @@ LogicalResult arith::DivSIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::DivSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1078,6 +1080,7 @@ Speculation::Speculatability arith::CeilDivUIOp::getSpeculatability() {
 LogicalResult arith::CeilDivUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI1Type(), builder.getBoolAttr(1)},
       {builder.getI8Type(), builder.getI8IntegerAttr(1)},
       {builder.getI16Type(), builder.getI16IntegerAttr(1)},
       {builder.getI32Type(), builder.getI32IntegerAttr(1)},
@@ -1140,8 +1143,8 @@ LogicalResult arith::CeilDivUIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::CeilDivUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1216,6 +1219,7 @@ Speculation::Speculatability arith::CeilDivSIOp::getSpeculatability() {
 LogicalResult arith::CeilDivSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI1Type(), builder.getBoolAttr(1)},
       {builder.getI8Type(), builder.getI8IntegerAttr(1)},
       {builder.getI16Type(), builder.getI16IntegerAttr(1)},
       {builder.getI32Type(), builder.getI32IntegerAttr(1)},
@@ -1278,8 +1282,8 @@ LogicalResult arith::CeilDivSIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::CeilDivSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1342,6 +1346,7 @@ OpFoldResult arith::FloorDivSIOp::fold(FoldAdaptor adaptor) {
 LogicalResult arith::FloorDivSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI1Type(), builder.getBoolAttr(1)},
       {builder.getI8Type(), builder.getI8IntegerAttr(1)},
       {builder.getI16Type(), builder.getI16IntegerAttr(1)},
       {builder.getI32Type(), builder.getI32IntegerAttr(1)},
@@ -1405,8 +1410,8 @@ LogicalResult arith::FloorDivSIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::FloorDivSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1443,6 +1448,7 @@ OpFoldResult arith::RemUIOp::fold(FoldAdaptor adaptor) {
 LogicalResult arith::RemUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI1Type(), builder.getBoolAttr(1)},
       {builder.getI8Type(), builder.getI8IntegerAttr(1)},
       {builder.getI16Type(), builder.getI16IntegerAttr(1)},
       {builder.getI32Type(), builder.getI32IntegerAttr(1)},
@@ -1505,8 +1511,8 @@ LogicalResult arith::RemUIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::RemUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1543,6 +1549,7 @@ OpFoldResult arith::RemSIOp::fold(FoldAdaptor adaptor) {
 LogicalResult arith::RemSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
+      {builder.getI1Type(), builder.getBoolAttr(1)},
       {builder.getI8Type(), builder.getI8IntegerAttr(1)},
       {builder.getI16Type(), builder.getI16IntegerAttr(1)},
       {builder.getI32Type(), builder.getI32IntegerAttr(1)},
@@ -1605,8 +1612,8 @@ LogicalResult arith::RemSIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::RemSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1700,8 +1707,8 @@ LogicalResult arith::AndIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::AndIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1764,8 +1771,8 @@ LogicalResult arith::OrIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::OrIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -1843,8 +1850,8 @@ LogicalResult arith::XOrIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::XOrIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -2165,8 +2172,8 @@ LogicalResult arith::MaxSIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::MaxSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -2235,8 +2242,8 @@ LogicalResult arith::MaxUIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::MaxUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -2372,8 +2379,8 @@ LogicalResult arith::MinSIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::MinSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -2441,8 +2448,8 @@ LogicalResult arith::MinUIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::MinUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -2567,9 +2574,8 @@ LogicalResult arith::DivFOp::generate(GeneratorOpBuilder &builder) {
       return failure();
 
     OperationState maxState(builder.getUnknownLoc(),
-                            arith::MaxSIOp::getOperationName());
-    arith::MaxSIOp::build(builder, maxState, rhs.value(),
-                          constOp->getResult(0));
+                            arith::MaxFOp::getOperationName());
+    arith::MaxFOp::build(builder, maxState, rhs.value(), constOp->getResult(0));
     Operation *maxOp = builder.create(maxState);
     if (maxOp == nullptr) {
       constOp->erase();
@@ -2661,9 +2667,8 @@ LogicalResult arith::RemFOp::generate(GeneratorOpBuilder &builder) {
       return failure();
 
     OperationState maxState(builder.getUnknownLoc(),
-                            arith::MaxSIOp::getOperationName());
-    arith::MaxSIOp::build(builder, maxState, rhs.value(),
-                          constOp->getResult(0));
+                            arith::MaxFOp::getOperationName());
+    arith::MaxFOp::build(builder, maxState, rhs.value(), constOp->getResult(0));
     Operation *maxOp = builder.create(maxState);
     if (maxOp == nullptr) {
       constOp->erase();
@@ -2863,8 +2868,8 @@ LogicalResult arith::ExtUIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::ExtUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   bool foundLowerType = false;
@@ -2946,8 +2951,8 @@ LogicalResult arith::ExtSIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::ExtSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   bool foundLowerType = false;
@@ -3677,8 +3682,8 @@ LogicalResult arith::IndexCastOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::IndexCastOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
-      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -3766,8 +3771,8 @@ LogicalResult arith::IndexCastUIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::IndexCastUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
-      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -4071,8 +4076,8 @@ LogicalResult arith::CmpIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::CmpIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -4736,9 +4741,10 @@ LogicalResult arith::SelectOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::SelectOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(), builder.getF16Type(),
-      builder.getF32Type(), builder.getF64Type()};
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
+      builder.getF16Type(),   builder.getF32Type(), builder.getF64Type(),
+  };
 
   llvm::SmallVector<Type> generatableTypes;
   for (Type t : possibleTypes)
@@ -4800,8 +4806,8 @@ LogicalResult arith::ShLIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::ShLIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -4864,8 +4870,8 @@ LogicalResult arith::ShRUIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::ShRUIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
@@ -4928,8 +4934,8 @@ LogicalResult arith::ShRSIOp::generate(GeneratorOpBuilder &builder) {
 llvm::SmallVector<Type>
 arith::ShRSIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
-      builder.getI32Type(), builder.getI64Type(),
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
   };
 
   llvm::SmallVector<Type> generatableTypes;
