@@ -1092,6 +1092,15 @@ LogicalResult DeallocOp::generate(GeneratorOpBuilder &builder) {
     }
     Value memref = memrefOpt.value();
 
+    // Check if it originated from alloc
+    if (memref.getDefiningOp() == nullptr ||
+        !isa<AllocOp>(memref.getDefiningOp())) {
+      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+      if (it != possibleTypes.end())
+        possibleTypes.erase(it);
+      continue;
+    }
+
     // Create DeallocOp.
     OperationState state(builder.getUnknownLoc(),
                          DeallocOp::getOperationName());
