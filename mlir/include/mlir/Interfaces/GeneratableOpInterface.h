@@ -194,25 +194,11 @@ public:
   /// position.
   llvm::SmallVector<Type> sampleTypes(int32_t min = 0);
 
-  /// Checks if a value of the given type is available in the current position.
-  bool hasValueOfType(Type t);
-
   /// Randomly chooses a generated value of the given type, if one exists.
   llvm::Optional<Value> sampleValueOfType(Type t);
 
-  /// Randomly generates an operation with the given return type, if possible.
-  llvm::Optional<Value> generateValueOfType(Type t);
-
-  /// Randomly tries to chooses a generated value of the given type, if one
-  /// exists. If this fails, randomly generates an operation with the given
-  /// return type, if possible.
-  llvm::Optional<Value> sampleOrGenerateValueOfType(Type t);
-
-  /// Fills the current block with operations until the required types are
-  /// generated. Additionally generates operations using a geometric
-  /// distribution.
-  LogicalResult generateBlock(bool ensureTerminator = false,
-                              llvm::SmallVector<Type> requiredTypes = {});
+  /// Fills the current block with operations.
+  LogicalResult generateBlock(bool ensureTerminator = false);
 
 private:
   std::unique_ptr<detail::GeneratorOpBuilderImpl> impl;

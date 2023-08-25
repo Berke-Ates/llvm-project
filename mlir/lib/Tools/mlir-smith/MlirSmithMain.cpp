@@ -120,8 +120,8 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
 
     // Generate main function body.
     LogicalResult funcBodyRes =
-        builder.generateBlock(/*ensureTerminator=*/true,
-                              /*requiredTypes=*/retTypes);
+        builder.generateBlock(/*ensureTerminator=*/true
+                              /*requiredTypes=retTypes*/);
     if (funcBodyRes.failed())
       llvm::errs() << "failed to generate main function body\n";
   }

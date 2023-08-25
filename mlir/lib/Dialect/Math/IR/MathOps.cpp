@@ -32,7 +32,11 @@ OpFoldResult math::AbsFOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::AbsFOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -61,22 +65,6 @@ LogicalResult math::AbsFOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::AbsFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // AbsIOp
 //===----------------------------------------------------------------------===//
@@ -87,7 +75,10 @@ OpFoldResult math::AbsIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::AbsIOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
+      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -116,21 +107,6 @@ LogicalResult math::AbsIOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::AbsIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
-      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // AtanOp
 //===----------------------------------------------------------------------===//
@@ -150,7 +126,11 @@ OpFoldResult math::AtanOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::AtanOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -179,22 +159,6 @@ LogicalResult math::AtanOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::AtanOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // Atan2Op
 //===----------------------------------------------------------------------===//
@@ -219,7 +183,11 @@ OpFoldResult math::Atan2Op::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::Atan2Op::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -249,22 +217,6 @@ LogicalResult math::Atan2Op::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::Atan2Op::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // CeilOp
 //===----------------------------------------------------------------------===//
@@ -279,7 +231,11 @@ OpFoldResult math::CeilOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::CeilOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -308,22 +264,6 @@ LogicalResult math::CeilOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::CeilOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // CopySignOp
 //===----------------------------------------------------------------------===//
@@ -338,7 +278,11 @@ OpFoldResult math::CopySignOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::CopySignOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -368,22 +312,6 @@ LogicalResult math::CopySignOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::CopySignOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // CosOp
 //===----------------------------------------------------------------------===//
@@ -403,7 +331,11 @@ OpFoldResult math::CosOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::CosOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -432,22 +364,6 @@ LogicalResult math::CosOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::CosOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // SinOp
 //===----------------------------------------------------------------------===//
@@ -467,7 +383,11 @@ OpFoldResult math::SinOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::SinOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -496,22 +416,6 @@ LogicalResult math::SinOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::SinOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // CountLeadingZerosOp
 //===----------------------------------------------------------------------===//
@@ -523,7 +427,10 @@ OpFoldResult math::CountLeadingZerosOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::CountLeadingZerosOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
+      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -552,21 +459,6 @@ LogicalResult math::CountLeadingZerosOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::CountLeadingZerosOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
-      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // CountTrailingZerosOp
 //===----------------------------------------------------------------------===//
@@ -579,7 +471,10 @@ OpFoldResult math::CountTrailingZerosOp::fold(FoldAdaptor adaptor) {
 
 LogicalResult
 math::CountTrailingZerosOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
+      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -608,21 +503,6 @@ math::CountTrailingZerosOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::CountTrailingZerosOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
-      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // CtPopOp
 //===----------------------------------------------------------------------===//
@@ -634,7 +514,10 @@ OpFoldResult math::CtPopOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::CtPopOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
+      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -663,21 +546,6 @@ LogicalResult math::CtPopOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::CtPopOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
-      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // ErfOp
 //===----------------------------------------------------------------------===//
@@ -697,7 +565,11 @@ OpFoldResult math::ErfOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::ErfOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -724,22 +596,6 @@ LogicalResult math::ErfOp::generate(GeneratorOpBuilder &builder) {
   }
 
   return failure();
-}
-
-llvm::SmallVector<Type>
-math::ErfOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -794,7 +650,10 @@ OpFoldResult math::IPowIOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::IPowIOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
+      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -824,21 +683,6 @@ LogicalResult math::IPowIOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::IPowIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
-      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // LogOp
 //===----------------------------------------------------------------------===//
@@ -860,7 +704,11 @@ OpFoldResult math::LogOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::LogOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -889,22 +737,6 @@ LogicalResult math::LogOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::LogOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // Log2Op
 //===----------------------------------------------------------------------===//
@@ -926,7 +758,11 @@ OpFoldResult math::Log2Op::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::Log2Op::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -955,22 +791,6 @@ LogicalResult math::Log2Op::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::Log2Op::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // Log10Op
 //===----------------------------------------------------------------------===//
@@ -993,7 +813,11 @@ OpFoldResult math::Log10Op::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::Log10Op::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1022,22 +846,6 @@ LogicalResult math::Log10Op::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::Log10Op::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // Log1pOp
 //===----------------------------------------------------------------------===//
@@ -1061,7 +869,11 @@ OpFoldResult math::Log1pOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::Log1pOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1090,22 +902,6 @@ LogicalResult math::Log1pOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::Log1pOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // PowFOp
 //===----------------------------------------------------------------------===//
@@ -1127,7 +923,11 @@ OpFoldResult math::PowFOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::PowFOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1157,22 +957,6 @@ LogicalResult math::PowFOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::PowFOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // SqrtOp
 //===----------------------------------------------------------------------===//
@@ -1195,7 +979,11 @@ OpFoldResult math::SqrtOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::SqrtOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1224,22 +1012,6 @@ LogicalResult math::SqrtOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::SqrtOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // ExpOp
 //===----------------------------------------------------------------------===//
@@ -1259,7 +1031,11 @@ OpFoldResult math::ExpOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::ExpOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1288,22 +1064,6 @@ LogicalResult math::ExpOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::ExpOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // Exp2Op
 //===----------------------------------------------------------------------===//
@@ -1323,7 +1083,11 @@ OpFoldResult math::Exp2Op::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::Exp2Op::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1352,22 +1116,6 @@ LogicalResult math::Exp2Op::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::Exp2Op::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // ExpM1Op
 //===----------------------------------------------------------------------===//
@@ -1387,7 +1135,11 @@ OpFoldResult math::ExpM1Op::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::ExpM1Op::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1416,22 +1168,6 @@ LogicalResult math::ExpM1Op::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::ExpM1Op::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // TanOp
 //===----------------------------------------------------------------------===//
@@ -1451,7 +1187,11 @@ OpFoldResult math::TanOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::TanOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1480,22 +1220,6 @@ LogicalResult math::TanOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::TanOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // TanhOp
 //===----------------------------------------------------------------------===//
@@ -1515,7 +1239,11 @@ OpFoldResult math::TanhOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::TanhOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1544,22 +1272,6 @@ LogicalResult math::TanhOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::TanhOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // RoundEvenOp
 //===----------------------------------------------------------------------===//
@@ -1574,7 +1286,11 @@ OpFoldResult math::RoundEvenOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::RoundEvenOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1603,22 +1319,6 @@ LogicalResult math::RoundEvenOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::RoundEvenOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // FloorOp
 //===----------------------------------------------------------------------===//
@@ -1633,7 +1333,11 @@ OpFoldResult math::FloorOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::FloorOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1662,22 +1366,6 @@ LogicalResult math::FloorOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::FloorOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // RoundOp
 //===----------------------------------------------------------------------===//
@@ -1697,7 +1385,11 @@ OpFoldResult math::RoundOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::RoundOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1726,22 +1418,6 @@ LogicalResult math::RoundOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::RoundOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // TruncOp
 //===----------------------------------------------------------------------===//
@@ -1761,7 +1437,11 @@ OpFoldResult math::TruncOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult math::TruncOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1790,28 +1470,16 @@ LogicalResult math::TruncOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::TruncOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // CbrtOp
 //===----------------------------------------------------------------------===//
 
 LogicalResult math::CbrtOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1840,28 +1508,17 @@ LogicalResult math::CbrtOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::CbrtOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // FPowIOp
 //===----------------------------------------------------------------------===//
 
 LogicalResult math::FPowIOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> floatTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> floatTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
+
   llvm::SmallVector<Type> intTypes = {
       builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
       builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
@@ -1899,28 +1556,16 @@ LogicalResult math::FPowIOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::FPowIOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // FmaOp
 //===----------------------------------------------------------------------===//
 
 LogicalResult math::FmaOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1951,28 +1596,16 @@ LogicalResult math::FmaOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-math::FmaOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
-}
-
 //===----------------------------------------------------------------------===//
 // RsqrtOp
 //===----------------------------------------------------------------------===//
 
 LogicalResult math::RsqrtOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getF16Type(),
+      builder.getF32Type(),
+      builder.getF64Type(),
+  };
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1999,22 +1632,6 @@ LogicalResult math::RsqrtOp::generate(GeneratorOpBuilder &builder) {
   }
 
   return failure();
-}
-
-llvm::SmallVector<Type>
-math::RsqrtOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = {
-      builder.getF16Type(),
-      builder.getF32Type(),
-      builder.getF64Type(),
-  };
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (builder.hasValueOfType(t))
-      generatableTypes.push_back(t);
-
-  return generatableTypes;
 }
 
 /// Materialize an integer or floating point constant.

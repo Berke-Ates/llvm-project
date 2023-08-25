@@ -320,11 +320,6 @@ LogicalResult ConditionOp::generate(GeneratorOpBuilder &builder) {
   return success(builder.create(state) != nullptr);
 }
 
-llvm::SmallVector<Type>
-ConditionOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
-}
-
 //===----------------------------------------------------------------------===//
 // ForOp
 //===----------------------------------------------------------------------===//
@@ -1254,8 +1249,8 @@ LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
   ForOp forOp = cast<ForOp>(op);
   builder.setInsertionPointToStart(forOp.getBody());
   if (builder
-          .generateBlock(/*ensureTerminator=*/!iterTypes.empty(),
-                         /*requiredTypes=*/iterTypes)
+          .generateBlock(/*ensureTerminator=*/!iterTypes.empty()
+                         /*requiredTypes=iterTypes*/)
           .failed()) {
     forOp.erase();
     maxOp->erase();
@@ -1264,11 +1259,6 @@ LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
   }
 
   return success();
-}
-
-llvm::SmallVector<Type>
-ForOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -2744,8 +2734,8 @@ LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
   IfOp ifOp = cast<IfOp>(op);
   builder.setInsertionPointToStart(ifOp.thenBlock());
   if (builder
-          .generateBlock(/*ensureTerminator=*/true,
-                         /*requiredTypes=*/retTypes)
+          .generateBlock(/*ensureTerminator=*/true
+                         /*requiredTypes=retTypes*/)
           .failed()) {
     ifOp.erase();
     return failure();
@@ -2756,18 +2746,14 @@ LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
 
   builder.setInsertionPointToStart(ifOp.elseBlock());
   if (builder
-          .generateBlock(/*ensureTerminator=*/true,
-                         /*requiredTypes=*/retTypes)
+          .generateBlock(/*ensureTerminator=*/true
+                         /*requiredTypes=retTypes*/)
           .failed()) {
     ifOp.erase();
     return failure();
   }
 
   return success();
-}
-
-llvm::SmallVector<Type> IfOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -4058,8 +4044,8 @@ LogicalResult WhileOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> beforeTypes = resultTypes;
   beforeTypes.push_back(builder.getI1Type());
   if (builder
-          .generateBlock(/*ensureTerminator=*/true,
-                         /*requiredTypes=*/beforeTypes)
+          .generateBlock(/*ensureTerminator=*/true
+                         /*requiredTypes=beforeTypes*/)
           .failed()) {
     whileOp.erase();
     return failure();
@@ -4067,19 +4053,14 @@ LogicalResult WhileOp::generate(GeneratorOpBuilder &builder) {
 
   builder.setInsertionPointToEnd(&whileOp.getAfter().back());
   if (builder
-          .generateBlock(/*ensureTerminator=*/true,
-                         /*requiredTypes=*/operandTypes)
+          .generateBlock(/*ensureTerminator=*/true
+                         /*requiredTypes=operandTypes*/)
           .failed()) {
     whileOp.erase();
     return failure();
   }
 
   return success();
-}
-
-llvm::SmallVector<Type>
-WhileOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -4267,11 +4248,6 @@ LogicalResult YieldOp::generate(GeneratorOpBuilder &builder) {
   OperationState state(builder.getUnknownLoc(), YieldOp::getOperationName());
   YieldOp::build(builder, state, results);
   return success(builder.create(state) != nullptr);
-}
-
-llvm::SmallVector<Type>
-YieldOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
 }
 
 //===----------------------------------------------------------------------===//

@@ -160,7 +160,7 @@ FunctionType CallOp::getCalleeType() {
 }
 
 LogicalResult CallOp::generate(GeneratorOpBuilder &builder) {
-  // NOTE: This is only fo testing DCE capabilities with differential testing.
+  // NOTE: This is only for testing DCE capabilities with differential testing.
   OpBuilder::InsertPoint ip = builder.saveInsertionPoint();
 
   Block *block = builder.getBlock();
@@ -199,11 +199,6 @@ LogicalResult CallOp::generate(GeneratorOpBuilder &builder) {
 
   funcOp.erase();
   return failure();
-}
-
-llvm::SmallVector<Type>
-CallOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -384,6 +379,11 @@ FuncOp FuncOp::clone() {
   return clone(mapper);
 }
 
+LogicalResult FuncOp::generate(GeneratorOpBuilder &builder) {
+
+  return failure();
+}
+
 //===----------------------------------------------------------------------===//
 // ReturnOp
 //===----------------------------------------------------------------------===//
@@ -432,11 +432,6 @@ LogicalResult ReturnOp::generate(GeneratorOpBuilder &builder) {
   OperationState state(builder.getUnknownLoc(), ReturnOp::getOperationName());
   ReturnOp::build(builder, state, results);
   return success(builder.create(state) != nullptr);
-}
-
-llvm::SmallVector<Type>
-ReturnOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
 }
 
 //===----------------------------------------------------------------------===//

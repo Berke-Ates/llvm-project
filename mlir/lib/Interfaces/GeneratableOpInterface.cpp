@@ -105,26 +105,11 @@ struct GeneratorOpBuilderImpl {
   /// position.
   llvm::SmallVector<Type> sampleTypes(int32_t min = 0);
 
-  /// Checks if a value of the given type is available in the current
-  /// position.
-  bool hasValueOfType(Type t);
-
   /// Randomly chooses a generated value of the given type, if one exists.
   llvm::Optional<Value> sampleValueOfType(Type t);
 
-  /// Randomly generates an operation with the given return type, if possible.
-  llvm::Optional<Value> generateValueOfType(Type t);
-
-  /// Randomly tries to chooses a generated value of the given type, if one
-  /// exists. If this fails, randomly generates an operation with the given
-  /// return type, if possible.
-  llvm::Optional<Value> sampleOrGenerateValueOfType(Type t);
-
-  /// Fills the current block with operations until the required types are
-  /// generated. Additionally generates operations using a geometric
-  /// distribution.
-  LogicalResult generateBlock(bool ensureTerminator = false,
-                              llvm::SmallVector<Type> requiredTypes = {});
+  /// Fills the current block with operations.
+  LogicalResult generateBlock(bool ensureTerminator = false);
 
   /// Utility function to generate an operation.
   mlir::LogicalResult generate(RegisteredOperationName ron) {
@@ -133,16 +118,6 @@ struct GeneratorOpBuilderImpl {
       return failure();
     }
     return ron.getInterface<GeneratableOpInterface>()->generate(builder);
-  }
-
-  /// Utility function to get generatable types of an operation.
-  llvm::SmallVector<Type> getGeneratableTypes(RegisteredOperationName ron) {
-    if (!ron.hasInterface<GeneratableOpInterface>()) {
-      llvm::errs() << ron << "does not implement GeneratableOpInterface";
-      return {};
-    }
-    return ron.getInterface<GeneratableOpInterface>()->getGeneratableTypes(
-        builder);
   }
 
   /// Random number generator.
@@ -379,10 +354,27 @@ llvm::SmallVector<Type> GeneratorOpBuilderImpl::sampleTypes(int32_t min) {
         << "lower bound of 'sampleTypes(int32_t min)' must be positive\n";
 
   llvm::SmallVector<Type> availableTypes;
-  for (RegisteredOperationName op : availableOps)
-    for (Type t : getGeneratableTypes(op))
-      if (llvm::find(availableTypes, t) == availableTypes.end())
-        availableTypes.push_back(t);
+  Block *block = builder.getBlock();
+
+  while (block != nullptr) {
+    // Add all types of operations in the block.
+    for (Operation &op : block->getOperations())
+      for (OpResult res : op.getResults())
+        if (llvm::find(availableTypes, res.getType()) == availableTypes.end())
+          availableTypes.push_back(res.getType());
+
+    // Add all types of block arguments.
+    for (BlockArgument bArg : block->getArguments())
+      if (llvm::find(availableTypes, bArg.getType()) == availableTypes.end())
+        availableTypes.push_back(bArg.getType());
+
+    // Move up the hierarchy.
+    Operation *parent = block->getParentOp();
+    block = nullptr;
+
+    if (parent != nullptr)
+      block = parent->getBlock();
+  }
 
   // Nothing to sample from.
   if (availableTypes.empty()) {
@@ -413,45 +405,6 @@ llvm::SmallVector<Type> GeneratorOpBuilderImpl::sampleTypes(int32_t min) {
   LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::sampleTypes generated {"
                           << types << "}\n");
   return types;
-}
-
-bool GeneratorOpBuilderImpl::hasValueOfType(Type t) {
-  llvm::SmallVector<Value> possibleValues;
-  llvm::SmallVector<Value> excludedValues;
-
-  Block *block = builder.getBlock();
-
-  while (block != nullptr) {
-    // Add all operations in the block of type t.
-    for (Operation &op : block->getOperations())
-      for (OpResult res : op.getResults())
-        if (res.getType() == t)
-          possibleValues.push_back(res);
-
-    // Add all arguments of the block of type t
-    for (BlockArgument bArg : block->getArguments())
-      if (bArg.getType() == t)
-        possibleValues.push_back(bArg);
-
-    // Move up the hierarchy.
-    Operation *parent = block->getParentOp();
-    block = nullptr;
-
-    if (parent != nullptr) {
-      for (OpResult res : parent->getResults())
-        excludedValues.push_back(res);
-
-      block = parent->getBlock();
-    }
-  }
-
-  for (Value val : excludedValues) {
-    Value *it = llvm::find(possibleValues, val);
-    if (it != possibleValues.end())
-      possibleValues.erase(it);
-  }
-
-  return !possibleValues.empty();
 }
 
 llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
@@ -517,75 +470,7 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
   return value;
 }
 
-llvm::Optional<Value> GeneratorOpBuilderImpl::generateValueOfType(Type t) {
-  LLVM_DEBUG(
-      llvm::dbgs()
-      << "GeneratorOpBuilderImpl::generateValueOfType started generating\n");
-
-  llvm::SmallVector<RegisteredOperationName> possibleOps;
-
-  for (RegisteredOperationName op : availableOps) {
-    llvm::SmallVector<Type> opTypes = getGeneratableTypes(op);
-    if (llvm::find(opTypes, t) != opTypes.end())
-      possibleOps.push_back(op);
-  }
-
-  // Nothing to sample from.
-  if (possibleOps.empty()) {
-    LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateValueOfType "
-                               "has no operations generating the type "
-                            << t << "\n");
-    return {};
-  }
-
-  Block *block = builder.getBlock();
-  if (block == nullptr) {
-    LLVM_DEBUG(
-        llvm::dbgs()
-        << "GeneratorOpBuilderImpl::generateValueOfType requires a block\n");
-    return std::nullopt;
-  }
-
-  requiredReturnType = t;
-  llvm::Optional<llvm::SmallVector<Value>> values =
-      generateOperation(possibleOps);
-  requiredReturnType = std::nullopt;
-
-  // Failed to generate.
-  if (!values.has_value()) {
-    LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateValueOfType "
-                               "failed to generate operation for type "
-                            << t << "\n");
-    return std::nullopt;
-  }
-
-  llvm::SmallVector<Value> possible_values;
-  for (Value value : values.value())
-    if (value.getType() == t)
-      possible_values.push_back(value);
-
-  if (!possible_values.empty())
-    return sample(possible_values);
-
-  LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateValueOfType "
-                             "generated operation without the requested type "
-                          << t << "\n");
-  return std::nullopt;
-}
-
-llvm::Optional<Value>
-GeneratorOpBuilderImpl::sampleOrGenerateValueOfType(Type t) {
-  // First try to sample.
-  llvm::Optional<Value> outputValue = sampleValueOfType(t);
-  if (outputValue.has_value())
-    return outputValue;
-  // If sampling fails, try to generate.
-  return generateValueOfType(t);
-}
-
-LogicalResult
-GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator,
-                                      llvm::SmallVector<Type> requiredTypes) {
+LogicalResult GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator) {
   LLVM_DEBUG(llvm::dbgs()
              << "GeneratorOpBuilderImpl::generateBlock started generating\n");
 
@@ -614,17 +499,6 @@ GeneratorOpBuilderImpl::generateBlock(bool ensureTerminator,
                              "successfully generated additional operations\n");
 
   bypassBlockLengthLimit = true;
-  // Generate until all required types are generated.
-  for (Type t : requiredTypes)
-    if (!generateValueOfType(t).has_value()) {
-      LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock failed "
-                                 "to generate value of type "
-                              << t << "\n");
-      return failure();
-    }
-
-  LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilderImpl::generateBlock "
-                             "successfully generated required types\n");
 
   // If required, continue until a terminator has been generated.
   if (!ensureTerminator) {
@@ -659,7 +533,6 @@ GeneratorOpBuilder::GeneratorOpBuilder(MLIRContext *ctx,
     : OpBuilder(ctx),
       impl(new detail::GeneratorOpBuilderImpl(ctx, generatorConfig, *this)) {}
 
-// XXX: Might need to destruct impl
 GeneratorOpBuilder::~GeneratorOpBuilder() = default;
 
 Operation *GeneratorOpBuilder::create(const OperationState &state) {
@@ -722,26 +595,12 @@ llvm::SmallVector<Type> GeneratorOpBuilder::sampleTypes(int32_t min) {
   return impl->sampleTypes(min);
 }
 
-bool GeneratorOpBuilder::hasValueOfType(Type t) {
-  return impl->hasValueOfType(t);
-}
-
 llvm::Optional<Value> GeneratorOpBuilder::sampleValueOfType(Type t) {
   return impl->sampleValueOfType(t);
 }
 
-llvm::Optional<Value> GeneratorOpBuilder::generateValueOfType(Type t) {
-  return impl->generateValueOfType(t);
-}
-
-llvm::Optional<Value> GeneratorOpBuilder::sampleOrGenerateValueOfType(Type t) {
-  return impl->sampleOrGenerateValueOfType(t);
-}
-
-LogicalResult
-GeneratorOpBuilder::generateBlock(bool ensureTerminator,
-                                  llvm::SmallVector<Type> requiredTypes) {
-  return impl->generateBlock(ensureTerminator, requiredTypes);
+LogicalResult GeneratorOpBuilder::generateBlock(bool ensureTerminator) {
+  return impl->generateBlock(ensureTerminator);
 }
 
 //===----------------------------------------------------------------------===//

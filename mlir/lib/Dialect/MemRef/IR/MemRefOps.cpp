@@ -72,6 +72,38 @@ Operation *MemRefDialect::materializeConstant(OpBuilder &builder,
   return arith::ConstantOp::materialize(builder, value, type, loc);
 }
 
+llvm::SmallVector<Type> getGeneratableTypes(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> elementTypes = {
+      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
+      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
+      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
+  };
+
+  llvm::SmallVector<llvm::SmallVector<int64_t, 1>> shapes1D = {
+      {}, /*{ShapedType::kDynamic},*/ /*{0},*/ {1}, {2}, {100000}};
+  llvm::SmallVector<llvm::SmallVector<int64_t, 3>> shapes;
+
+  // Iterate over the 1D shapes and concatenate them to create 2D and 3D shapes.
+  for (auto &shape1 : shapes1D) {
+    for (auto &shape2 : shapes1D) {
+      for (auto &shape3 : shapes1D) {
+        llvm::SmallVector<int64_t, 3> combinedShape;
+        combinedShape.append(shape1.begin(), shape1.end());
+        combinedShape.append(shape2.begin(), shape2.end());
+        combinedShape.append(shape3.begin(), shape3.end());
+        shapes.push_back(combinedShape);
+      }
+    }
+  }
+
+  llvm::SmallVector<Type> genTypes;
+  for (llvm::ArrayRef shape : shapes)
+    for (Type t : elementTypes)
+      genTypes.push_back(MemRefType::get(shape, t));
+
+  return genTypes;
+}
+
 //===----------------------------------------------------------------------===//
 // Common canonicalization pattern support logic
 //===----------------------------------------------------------------------===//
@@ -449,44 +481,6 @@ LogicalResult AllocaOp::generate(GeneratorOpBuilder &builder) {
   }
 
   return failure();
-}
-
-llvm::SmallVector<Type>
-AllocOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> elementTypes = {
-      builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
-      builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
-      builder.getF16Type(), builder.getF32Type(),   builder.getF64Type(),
-  };
-
-  llvm::SmallVector<llvm::SmallVector<int64_t, 1>> shapes1D = {
-      {}, /*{ShapedType::kDynamic},*/ /*{0},*/ {1}, {2}, {100000}};
-  llvm::SmallVector<llvm::SmallVector<int64_t, 3>> shapes;
-
-  // Iterate over the 1D shapes and concatenate them to create 2D and 3D shapes.
-  for (auto &shape1 : shapes1D) {
-    for (auto &shape2 : shapes1D) {
-      for (auto &shape3 : shapes1D) {
-        llvm::SmallVector<int64_t, 3> combinedShape;
-        combinedShape.append(shape1.begin(), shape1.end());
-        combinedShape.append(shape2.begin(), shape2.end());
-        combinedShape.append(shape3.begin(), shape3.end());
-        shapes.push_back(combinedShape);
-      }
-    }
-  }
-
-  llvm::SmallVector<Type> genTypes;
-  for (llvm::ArrayRef shape : shapes)
-    for (Type t : elementTypes)
-      genTypes.push_back(MemRefType::get(shape, t));
-
-  return genTypes;
-}
-
-llvm::SmallVector<Type>
-AllocaOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return AllocOp::getGeneratableTypes(builder);
 }
 
 //===----------------------------------------------------------------------===//
@@ -933,11 +927,6 @@ LogicalResult CastOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-CastOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
-}
-
 //===----------------------------------------------------------------------===//
 // CopyOp
 //===----------------------------------------------------------------------===//
@@ -1025,7 +1014,7 @@ LogicalResult CopyOp::fold(FoldAdaptor adaptor,
 }
 
 LogicalResult CopyOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = AllocOp::getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1054,11 +1043,6 @@ LogicalResult CopyOp::generate(GeneratorOpBuilder &builder) {
   return failure();
 }
 
-llvm::SmallVector<Type>
-CopyOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
-}
-
 //===----------------------------------------------------------------------===//
 // DeallocOp
 //===----------------------------------------------------------------------===//
@@ -1070,7 +1054,7 @@ LogicalResult DeallocOp::fold(FoldAdaptor adaptor,
 }
 
 LogicalResult DeallocOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = AllocOp::getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1121,11 +1105,6 @@ LogicalResult DeallocOp::generate(GeneratorOpBuilder &builder) {
   }
 
   return failure();
-}
-
-llvm::SmallVector<Type>
-DeallocOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
 }
 
 //===----------------------------------------------------------------------===//
@@ -1893,7 +1872,10 @@ OpFoldResult LoadOp::fold(FoldAdaptor adaptor) {
 }
 
 LogicalResult LoadOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = AllocOp::getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes;
+  for (Type t : getGeneratableTypes(builder))
+    if (isa<MemRefType>(t) && builder.sampleValueOfType(t).has_value())
+      possibleTypes.push_back(cast<MemRefType>(t).getElementType());
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -1987,18 +1969,6 @@ LogicalResult LoadOp::generate(GeneratorOpBuilder &builder) {
   }
 
   return failure();
-}
-
-llvm::SmallVector<Type>
-LoadOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = AllocOp::getGeneratableTypes(builder);
-
-  llvm::SmallVector<Type> generatableTypes;
-  for (Type t : possibleTypes)
-    if (isa<MemRefType>(t) && builder.hasValueOfType(t))
-      generatableTypes.push_back(cast<MemRefType>(t).getElementType());
-
-  return generatableTypes;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2887,7 +2857,7 @@ LogicalResult StoreOp::fold(FoldAdaptor adaptor,
 }
 
 LogicalResult StoreOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes = AllocOp::getGeneratableTypes(builder);
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
     unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
@@ -2989,11 +2959,6 @@ LogicalResult StoreOp::generate(GeneratorOpBuilder &builder) {
   }
 
   return failure();
-}
-
-llvm::SmallVector<Type>
-StoreOp::getGeneratableTypes(GeneratorOpBuilder &builder) {
-  return {};
 }
 
 //===----------------------------------------------------------------------===//
