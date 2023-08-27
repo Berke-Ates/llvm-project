@@ -94,7 +94,6 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   GeneratorOpBuilder builder(&ctx, config);
   Location loc = builder.getUnknownLoc();
 
-  // IDEA: Could move this to the operations themselves
   // Create top-level module.
   OperationState moduleState(loc, ModuleOp::getOperationName());
   ModuleOp::build(builder, moduleState);
@@ -106,24 +105,9 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
 
   ModuleOp module = cast<ModuleOp>(moduleOp);
   builder.setInsertionPointToStart(module.getBody());
-
-  // Create main function.
-  OperationState funcState(loc, func::FuncOp::getOperationName());
-  SmallVector<Type> retTypes = {builder.getI32Type()};
-  FunctionType funcType = builder.getFunctionType({}, retTypes);
-  func::FuncOp::build(builder, funcState, "main", funcType);
-  Operation *funcOp = builder.create(funcState);
-
-  if (funcOp != nullptr) {
-    func::FuncOp func = cast<func::FuncOp>(funcOp);
-    builder.setInsertionPointToStart(func.addEntryBlock());
-
-    // Generate main function body.
-    LogicalResult funcBodyRes =
-        builder.generateBlock(/*ensureTerminator=*/true
-                              /*requiredTypes=retTypes*/);
-    if (funcBodyRes.failed())
-      llvm::errs() << "failed to generate main function body\n";
+  if (func::FuncOp::generate(builder).failed()) {
+    llvm::errs() << "failed to generate main function\n";
+    return failure();
   }
 
   // Output the result.
@@ -131,5 +115,8 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
 
   // Keep the output file if the generation was successful.
   output->keep();
+
+  // Deallocate.
+  module.erase();
   return success();
 }

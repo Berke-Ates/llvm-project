@@ -160,7 +160,9 @@ FunctionType CallOp::getCalleeType() {
 }
 
 LogicalResult CallOp::generate(GeneratorOpBuilder &builder) {
-  // NOTE: This is only for testing DCE capabilities with differential testing.
+  return failure();
+  // NOTE: This is only for testing DCE capabilities with differential
+  // testing.
   OpBuilder::InsertPoint ip = builder.saveInsertionPoint();
 
   Block *block = builder.getBlock();
@@ -380,8 +382,30 @@ FuncOp FuncOp::clone() {
 }
 
 LogicalResult FuncOp::generate(GeneratorOpBuilder &builder) {
+  Block *block = builder.getBlock();
+  if (block == nullptr)
+    return failure();
 
-  return failure();
+  Operation *parent = block->getParentOp();
+  if (parent == nullptr || !isa<ModuleOp>(parent))
+    return failure();
+
+  ModuleOp moduleOp = cast<ModuleOp>(parent);
+  builder.setInsertionPointToStart(moduleOp.getBody());
+
+  OperationState state(builder.getUnknownLoc(), FuncOp::getOperationName());
+  FunctionType funcType = builder.getFunctionType({}, {});
+  FuncOp::build(builder, state, "main", funcType);
+  Operation *op = builder.create(state);
+  if (op == nullptr)
+    return failure();
+
+  FuncOp funcOp = cast<FuncOp>(op);
+  builder.setInsertionPointToStart(funcOp.addEntryBlock());
+  if (builder.generateBlock(/*ensureTerminator=*/true).failed())
+    return failure();
+
+  return success();
 }
 
 //===----------------------------------------------------------------------===//
@@ -418,10 +442,14 @@ LogicalResult ReturnOp::generate(GeneratorOpBuilder &builder) {
   if (parent == nullptr || !isa<FuncOp>(parent))
     return failure();
 
+  llvm::SmallVector<Type> types = builder.sampleTypes();
   FuncOp funcOp = cast<FuncOp>(parent);
+  FunctionType funcType =
+      builder.getFunctionType(funcOp.getArgumentTypes(), types);
+  funcOp.setFunctionType(funcType);
 
   llvm::SmallVector<Value> results;
-  for (Type t : funcOp.getFunctionType().getResults()) {
+  for (Type t : types) {
     llvm::Optional<Value> sampleValue = builder.sampleValueOfType(t);
     if (!sampleValue.has_value())
       return failure();
