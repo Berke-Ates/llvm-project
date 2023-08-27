@@ -372,7 +372,7 @@ llvm::SmallVector<Type> GeneratorOpBuilderImpl::sampleTypes(int32_t min) {
     Operation *parent = block->getParentOp();
     block = nullptr;
 
-    if (parent != nullptr)
+    if (parent != nullptr && !parent->hasTrait<OpTrait::IsIsolatedFromAbove>())
       block = parent->getBlock();
   }
 
@@ -420,7 +420,7 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
         if (res.getType() == t)
           possibleValues.push_back(res);
 
-    // Add all arguments of the block of type t
+    // Add all arguments of the block of type t.
     for (BlockArgument bArg : block->getArguments())
       if (bArg.getType() == t)
         possibleValues.push_back(bArg);
@@ -429,7 +429,8 @@ llvm::Optional<Value> GeneratorOpBuilderImpl::sampleValueOfType(Type t) {
     Operation *parent = block->getParentOp();
     block = nullptr;
 
-    if (parent != nullptr) {
+    if (parent != nullptr &&
+        !parent->hasTrait<OpTrait::IsIsolatedFromAbove>()) {
       for (OpResult res : parent->getResults())
         excludedValues.push_back(res);
 
