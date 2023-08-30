@@ -107,6 +107,7 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
   builder.setInsertionPointToStart(module.getBody());
   if (func::FuncOp::generate(builder).failed()) {
     llvm::errs() << "failed to generate main function\n";
+    module.erase();
     return failure();
   }
 

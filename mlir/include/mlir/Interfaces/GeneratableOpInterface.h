@@ -16,6 +16,7 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Tools/mlir-smith/MlirSmithMain.h"
+#include <random>
 
 namespace mlir {
 class GeneratableOpInterface;
@@ -132,10 +133,6 @@ public:
 // OpBuilder with utilities for IR generation
 //===----------------------------------------------------------------------===//
 
-namespace detail {
-struct GeneratorOpBuilderImpl;
-} // namespace detail
-
 /// This class implements a builder for use in generation functions. It
 /// extends the base OpBuilder and provides utility functions to generate
 /// common structures and to sample from a configured distribution.
@@ -143,19 +140,49 @@ class GeneratorOpBuilder final : public OpBuilder {
 public:
   explicit GeneratorOpBuilder(MLIRContext *ctxt,
                               GeneratorOpBuilderConfig generatorConfig);
-  ~GeneratorOpBuilder();
+
+  //===--------------------------------------------------------------------===//
+  // State Management
+  //===--------------------------------------------------------------------===//
+
+  /// This class represents a saved snapshot of an operation.
+  class Snapshot {
+  public:
+    Snapshot() = default;
+    Snapshot(OpBuilder::InsertPoint ip) : ip(ip) {}
+
+    OpBuilder::InsertPoint getInsertionPoint() { return ip; }
+
+  private:
+    OpBuilder::InsertPoint ip;
+  };
+
+  /// Takes a snapshot of the current state.
+  Snapshot takeSnapshot();
+
+  /// Rolls back to the provided snapshot.
+  void rollback(Snapshot snapshot);
+
+  //===--------------------------------------------------------------------===//
+  // Operation Creation
+  //===--------------------------------------------------------------------===//
+
+  /// Checks if the given OperationState adheres to the generator constraints.
+  bool canCreate(const OperationState &state);
 
   /// Creates an operation given the fields represented as an OperationState and
   /// enforces generator constraints.
   Operation *create(const OperationState &state);
 
-  /// Creates an operation with the given fields and enforces generator
-  /// constraints.
-  Operation *create(Location loc, StringAttr opName, ValueRange operands,
-                    TypeRange types = {},
-                    ArrayRef<NamedAttribute> attributes = {},
-                    BlockRange successors = {},
-                    MutableArrayRef<std::unique_ptr<Region>> regions = {});
+  //===--------------------------------------------------------------------===//
+  // Samplers
+  //===--------------------------------------------------------------------===//
+
+  /// Samples from a vector of choices. If no probability vector is provided,
+  /// it samples using a uniform distribution.
+  template <typename T>
+  llvm::Optional<T> sample(llvm::SmallVector<T> choices,
+                           llvm::SmallVector<unsigned> probs = {});
 
   /// Returns a random number between 0 and max (inclusive) using uniform
   /// distribution.
@@ -182,14 +209,6 @@ public:
   /// Returns a random number using a normal distribution around zero.
   double_t sampleNumberDouble();
 
-  /// Randomly generates an operation in the current position. Returns the
-  /// generated Values if successful.
-  llvm::Optional<llvm::SmallVector<Value>> generateOperation();
-
-  /// Randomly generates a terminator operation in the current position. Returns
-  /// the generated Values if successful.
-  llvm::Optional<llvm::SmallVector<Value>> generateTerminator();
-
   /// Samples from a geometric distribution of available types in the current
   /// position.
   llvm::SmallVector<Type> sampleTypes(int32_t min = 0);
@@ -197,11 +216,46 @@ public:
   /// Randomly chooses a generated value of the given type, if one exists.
   llvm::Optional<Value> sampleValueOfType(Type t);
 
+  //===--------------------------------------------------------------------===//
+  // Generators
+  //===--------------------------------------------------------------------===//
+
+  /// Randomly generates an operation in the current position.
+  // FIXME: This doesn't differentiate between ops not provided and an empty
+  // list.
+  LogicalResult
+  generateOperation(llvm::SmallVector<RegisteredOperationName> ops = {});
+
+  /// Randomly generates a terminator operation in the current position.
+  LogicalResult generateTerminator();
+
   /// Fills the current block with operations.
   LogicalResult generateBlock(bool ensureTerminator = false);
 
 private:
-  std::unique_ptr<detail::GeneratorOpBuilderImpl> impl;
+  /// Utility function to generate an operation.
+  LogicalResult generate(RegisteredOperationName ron);
+
+  /// Returns a random number using a normal distribution around zero. This
+  /// function combines all specialized functions.
+  template <typename T>
+  T sampleNumber();
+
+  /// Random number generator.
+  std::mt19937 rngGen;
+
+  /// The configuration used for IR generation.
+  GeneratorOpBuilderConfig generatorConfig;
+
+  /// All operations that can be generated.
+  llvm::SmallVector<RegisteredOperationName> availableOps = {};
+
+  /// If set, forces operations to have the specified return type.
+  llvm::Optional<Type> requiredReturnType;
+
+  /// Allows bypassing the block length limit to ensure that terminators can be
+  /// generated.
+  bool bypassBlockLengthLimit = false;
 };
 
 } // namespace mlir
