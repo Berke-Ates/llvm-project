@@ -129,37 +129,6 @@ Operation *GeneratorOpBuilder::create(const OperationState &state) {
 // Samplers
 //===----------------------------------------------------------------------===//
 
-template <typename T>
-llvm::Optional<T>
-GeneratorOpBuilder::sample(llvm::SmallVector<T> choices,
-                           llvm::SmallVector<unsigned> probs) {
-  if (choices.empty())
-    return std::nullopt;
-
-  if (!probs.empty() && probs.size() != choices.size())
-    return std::nullopt;
-
-  // Fill up with ones if probs is empty.
-  while (probs.size() < choices.size())
-    probs.push_back(1);
-
-  // Probability based sampling.
-  for (unsigned i = 1; i < probs.size(); ++i)
-    probs[i] += probs[i - 1];
-
-  if (probs[probs.size() - 1] < 1)
-    return std::nullopt;
-
-  std::uniform_int_distribution<unsigned> dist(1, probs[probs.size() - 1]);
-
-  unsigned rngNum = dist(rngGen);
-  unsigned idx = 0;
-  while (rngNum > probs[idx])
-    idx++;
-
-  return choices[idx];
-}
-
 unsigned GeneratorOpBuilder::sampleUniform(int32_t max) {
   if (max < 0)
     llvm::errs()
@@ -172,41 +141,6 @@ bool GeneratorOpBuilder::sampleBool() {
   // 0.5 is the probability for generating true.
   std::bernoulli_distribution dist(0.5);
   return dist(rngGen);
-}
-
-template <typename T>
-T GeneratorOpBuilder::sampleNumber() {
-  static_assert(std::is_arithmetic<T>::value, "Numeric type required");
-  // Normal distribution, mean=0, stddev=1
-  std::normal_distribution<> dist(0, 1);
-
-  if constexpr (std::is_integral<T>::value) {
-    return static_cast<T>(std::round(dist(rngGen)));
-  } else if constexpr (std::is_floating_point<T>::value) {
-    return static_cast<T>(dist(rngGen));
-  }
-}
-
-int8_t GeneratorOpBuilder::sampleNumberInt8() { return sampleNumber<int8_t>(); }
-
-int16_t GeneratorOpBuilder::sampleNumberInt16() {
-  return sampleNumber<int16_t>();
-}
-
-int32_t GeneratorOpBuilder::sampleNumberInt32() {
-  return sampleNumber<int32_t>();
-}
-
-int64_t GeneratorOpBuilder::sampleNumberInt64() {
-  return sampleNumber<int64_t>();
-}
-
-float_t GeneratorOpBuilder::sampleNumberFloat() {
-  return sampleNumber<float_t>();
-}
-
-double_t GeneratorOpBuilder::sampleNumberDouble() {
-  return sampleNumber<double_t>();
 }
 
 llvm::SmallVector<Type> GeneratorOpBuilder::sampleTypes(int32_t min) {

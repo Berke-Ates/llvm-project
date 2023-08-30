@@ -204,22 +204,22 @@ void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
 LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(),
-       builder.getIndexAttr(builder.sampleNumberInt64())},
+       builder.getIndexAttr(builder.sampleNumber<int64_t>())},
       {builder.getI1Type(), builder.getBoolAttr(builder.sampleBool())},
       {builder.getI8Type(),
-       builder.getI8IntegerAttr(builder.sampleNumberInt8())},
+       builder.getI8IntegerAttr(builder.sampleNumber<int8_t>())},
       {builder.getI16Type(),
-       builder.getI16IntegerAttr(builder.sampleNumberInt16())},
+       builder.getI16IntegerAttr(builder.sampleNumber<int16_t>())},
       {builder.getI32Type(),
-       builder.getI32IntegerAttr(builder.sampleNumberInt32())},
+       builder.getI32IntegerAttr(builder.sampleNumber<int32_t>())},
       {builder.getI64Type(),
-       builder.getI64IntegerAttr(builder.sampleNumberInt64())},
+       builder.getI64IntegerAttr(builder.sampleNumber<int64_t>())},
       {builder.getF16Type(),
-       builder.getF16FloatAttr(builder.sampleNumberFloat())},
+       builder.getF16FloatAttr(builder.sampleNumber<float_t>())},
       {builder.getF32Type(),
-       builder.getF32FloatAttr(builder.sampleNumberFloat())},
+       builder.getF32FloatAttr(builder.sampleNumber<float_t>())},
       {builder.getF64Type(),
-       builder.getF64FloatAttr(builder.sampleNumberDouble())},
+       builder.getF64FloatAttr(builder.sampleNumber<double_t>())},
   };
 
   llvm::SmallVector<Type> possibleTypes = {
@@ -229,8 +229,7 @@ LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type type = possibleTypes[idx];
+    Type type = builder.sample(possibleTypes).value();
     TypedAttr attr = attrMap[type];
 
     OperationState state(builder.getUnknownLoc(),

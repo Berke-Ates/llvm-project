@@ -182,7 +182,48 @@ public:
   /// it samples using a uniform distribution.
   template <typename T>
   llvm::Optional<T> sample(llvm::SmallVector<T> choices,
-                           llvm::SmallVector<unsigned> probs = {});
+                           llvm::SmallVector<unsigned> probs = {}) {
+    if (choices.empty())
+      return std::nullopt;
+
+    if (!probs.empty() && probs.size() != choices.size())
+      return std::nullopt;
+
+    // Fill up with ones if probs is empty.
+    while (probs.size() < choices.size())
+      probs.push_back(1);
+
+    // Probability based sampling.
+    for (unsigned i = 1; i < probs.size(); ++i)
+      probs[i] += probs[i - 1];
+
+    if (probs[probs.size() - 1] < 1)
+      return std::nullopt;
+
+    std::uniform_int_distribution<unsigned> dist(1, probs[probs.size() - 1]);
+
+    unsigned rngNum = dist(rngGen);
+    unsigned idx = 0;
+    while (rngNum > probs[idx])
+      idx++;
+
+    return choices[idx];
+  }
+
+  /// Returns a random number using a normal distribution around zero. This
+  /// function combines all specialized functions.
+  template <typename T>
+  T sampleNumber() {
+    static_assert(std::is_arithmetic<T>::value, "Numeric type required");
+    // Normal distribution, mean=0, stddev=1
+    std::normal_distribution<> dist(0, 1);
+
+    if constexpr (std::is_integral<T>::value) {
+      return static_cast<T>(std::round(dist(rngGen)));
+    } else if constexpr (std::is_floating_point<T>::value) {
+      return static_cast<T>(dist(rngGen));
+    }
+  }
 
   /// Returns a random number between 0 and max (inclusive) using uniform
   /// distribution.
@@ -235,11 +276,6 @@ public:
 private:
   /// Utility function to generate an operation.
   LogicalResult generate(RegisteredOperationName ron);
-
-  /// Returns a random number using a normal distribution around zero. This
-  /// function combines all specialized functions.
-  template <typename T>
-  T sampleNumber();
 
   /// Random number generator.
   std::mt19937 rngGen;
