@@ -159,50 +159,6 @@ FunctionType CallOp::getCalleeType() {
   return FunctionType::get(getContext(), getOperandTypes(), getResultTypes());
 }
 
-LogicalResult CallOp::generate(GeneratorOpBuilder &builder) {
-  return failure();
-  // NOTE: This is only for testing DCE capabilities with differential
-  // testing.
-  OpBuilder::InsertPoint ip = builder.saveInsertionPoint();
-
-  Block *block = builder.getBlock();
-  Operation *parent = nullptr;
-
-  while (block != nullptr) {
-    parent = block->getParentOp();
-    block = nullptr;
-    if (parent != nullptr)
-      block = parent->getBlock();
-  }
-
-  if (parent == nullptr || !isa<ModuleOp>(parent))
-    return failure();
-
-  ModuleOp moduleOp = cast<ModuleOp>(parent);
-  builder.setInsertionPointToStart(moduleOp.getBody());
-  size_t numOps = moduleOp.getBody()->getOperations().size();
-  std::string name = "external_dce_flag_" + std::to_string(numOps);
-
-  OperationState funcState(builder.getUnknownLoc(), FuncOp::getOperationName());
-  FunctionType funcType = builder.getFunctionType({}, {});
-  FuncOp::build(builder, funcState, name, funcType,
-                {builder.getNamedAttr("sym_visibility",
-                                      builder.getStringAttr("private"))});
-  Operation *funcOpPtr = builder.create(funcState);
-  if (funcOpPtr == nullptr)
-    return failure();
-
-  FuncOp funcOp = cast<FuncOp>(funcOpPtr);
-  builder.restoreInsertionPoint(ip);
-  OperationState state(builder.getUnknownLoc(), CallOp::getOperationName());
-  CallOp::build(builder, state, funcOp);
-  if (builder.create(state) != nullptr)
-    return success();
-
-  funcOp.erase();
-  return failure();
-}
-
 //===----------------------------------------------------------------------===//
 // CallIndirectOp
 //===----------------------------------------------------------------------===//
@@ -381,31 +337,52 @@ FuncOp FuncOp::clone() {
   return clone(mapper);
 }
 
-LogicalResult FuncOp::generate(GeneratorOpBuilder &builder) {
+Operation *FuncOp::generate(GeneratorOpBuilder &builder) {
   Block *block = builder.getBlock();
-  if (block == nullptr)
-    return failure();
+  if (!block)
+    return nullptr;
 
   Operation *parent = block->getParentOp();
-  if (parent == nullptr || !isa<ModuleOp>(parent))
-    return failure();
+  if (!parent || !isa<ModuleOp>(parent))
+    return nullptr;
 
   ModuleOp moduleOp = cast<ModuleOp>(parent);
   builder.setInsertionPointToStart(moduleOp.getBody());
 
   OperationState state(builder.getUnknownLoc(), FuncOp::getOperationName());
-  FunctionType funcType = builder.getFunctionType({}, {});
-  FuncOp::build(builder, state, "main", funcType);
+  FuncOp::build(builder, state, "main", builder.getFunctionType({}, {}));
   Operation *op = builder.create(state);
-  if (op == nullptr)
-    return failure();
+  if (!op)
+    return nullptr;
 
   FuncOp funcOp = cast<FuncOp>(op);
-  builder.setInsertionPointToStart(funcOp.addEntryBlock());
-  if (builder.generateBlock(/*ensureTerminator=*/true).failed())
-    return failure();
+  if (builder.generateBlock(funcOp.addEntryBlock()).failed())
+    return nullptr;
 
-  return success();
+  // Generate return operation.
+  builder.setInsertionPointToEnd(&funcOp.getBody().front());
+  llvm::SmallVector<Type> types = builder.sampleTypes();
+
+  FunctionType funcType =
+      builder.getFunctionType(funcOp.getArgumentTypes(), types);
+  funcOp.setFunctionType(funcType);
+
+  llvm::Optional<llvm::SmallVector<Value>> results =
+      builder.sampleValuesOfTypes(types);
+  if (!results.has_value()) {
+    funcOp.erase();
+    return nullptr;
+  }
+
+  state = OperationState(builder.getUnknownLoc(), ReturnOp::getOperationName());
+  ReturnOp::build(builder, state, results.value());
+  op = builder.create(state);
+  if (!op) {
+    funcOp.erase();
+    return nullptr;
+  }
+
+  return funcOp;
 }
 
 //===----------------------------------------------------------------------===//
@@ -431,35 +408,6 @@ LogicalResult ReturnOp::verify() {
                          << " in function @" << function.getName();
 
   return success();
-}
-
-LogicalResult ReturnOp::generate(GeneratorOpBuilder &builder) {
-  Block *block = builder.getBlock();
-  if (block == nullptr)
-    return failure();
-
-  Operation *parent = block->getParentOp();
-  if (parent == nullptr || !isa<FuncOp>(parent))
-    return failure();
-
-  llvm::SmallVector<Type> types = builder.sampleTypes();
-  FuncOp funcOp = cast<FuncOp>(parent);
-  FunctionType funcType =
-      builder.getFunctionType(funcOp.getArgumentTypes(), types);
-  funcOp.setFunctionType(funcType);
-
-  llvm::SmallVector<Value> results;
-  for (Type t : types) {
-    llvm::Optional<Value> sampleValue = builder.sampleValueOfType(t);
-    if (!sampleValue.has_value())
-      return failure();
-
-    results.push_back(sampleValue.value());
-  }
-
-  OperationState state(builder.getUnknownLoc(), ReturnOp::getOperationName());
-  ReturnOp::build(builder, state, results);
-  return success(builder.create(state) != nullptr);
 }
 
 //===----------------------------------------------------------------------===//

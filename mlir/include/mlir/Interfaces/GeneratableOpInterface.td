@@ -29,8 +29,8 @@ def GeneratableOpInterface : OpInterface<"GeneratableOpInterface"> {
 
   let methods = [
     StaticInterfaceMethod<
-      /*desc=*/"Attempts to generate this operation at the current location.",
-      /*retTy=*/"::mlir::LogicalResult",
+      /*desc=*/"Attempts to generate this operation at the current location and returns it. On failure returns nullptr.",
+      /*retTy=*/"::mlir::Operation *",
       /*methodName=*/"generate",
       /*args=*/(ins "::mlir::GeneratorOpBuilder &":$builder)
     >,

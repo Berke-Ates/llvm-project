@@ -399,7 +399,7 @@ void AllocaOp::getCanonicalizationPatterns(RewritePatternSet &results,
       context);
 }
 
-LogicalResult AllocOp::generate(GeneratorOpBuilder &builder) {
+Operation *AllocOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -418,7 +418,7 @@ LogicalResult AllocOp::generate(GeneratorOpBuilder &builder) {
       llvm::Optional<Value> sampleValue =
           builder.sampleValueOfType(builder.getIndexType());
       if (!sampleValue.has_value())
-        return failure();
+        return nullptr;
 
       dynamicSizes.push_back(sampleValue.value());
     }
@@ -430,18 +430,19 @@ LogicalResult AllocOp::generate(GeneratorOpBuilder &builder) {
     else
       AllocOp::build(builder, state, type, dynamicSizes);
 
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, type);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
-LogicalResult AllocaOp::generate(GeneratorOpBuilder &builder) {
+Operation *AllocaOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -460,7 +461,7 @@ LogicalResult AllocaOp::generate(GeneratorOpBuilder &builder) {
       llvm::Optional<Value> sampleValue =
           builder.sampleValueOfType(builder.getIndexType());
       if (!sampleValue.has_value())
-        return failure();
+        return nullptr;
 
       dynamicSizes.push_back(sampleValue.value());
     }
@@ -472,15 +473,16 @@ LogicalResult AllocaOp::generate(GeneratorOpBuilder &builder) {
     else
       AllocaOp::build(builder, state, type, dynamicSizes);
 
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, type);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -922,9 +924,9 @@ OpFoldResult CastOp::fold(FoldAdaptor adaptor) {
   return succeeded(foldMemRefCast(*this)) ? getResult() : Value();
 }
 
-LogicalResult CastOp::generate(GeneratorOpBuilder &builder) {
+Operation *CastOp::generate(GeneratorOpBuilder &builder) {
   // TODO: Generate this op
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1013,7 +1015,7 @@ LogicalResult CopyOp::fold(FoldAdaptor adaptor,
   return success(folded);
 }
 
-LogicalResult CopyOp::generate(GeneratorOpBuilder &builder) {
+Operation *CopyOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -1032,15 +1034,16 @@ LogicalResult CopyOp::generate(GeneratorOpBuilder &builder) {
 
     OperationState state(builder.getUnknownLoc(), CopyOp::getOperationName());
     CopyOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, type);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1053,7 +1056,7 @@ LogicalResult DeallocOp::fold(FoldAdaptor adaptor,
   return foldMemRefCast(*this);
 }
 
-LogicalResult DeallocOp::generate(GeneratorOpBuilder &builder) {
+Operation *DeallocOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -1089,14 +1092,15 @@ LogicalResult DeallocOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          DeallocOp::getOperationName());
     DeallocOp::build(builder, state, memref);
-    if (builder.create(state) != nullptr) {
+    Operation *op = builder.create(state);
+    if (op) {
       // Mark memref as deallocated.
       if (memref.getDefiningOp() == nullptr)
-        return success();
+        return op;
 
       memref.getDefiningOp()->setAttr("generate_deallocated",
                                       builder.getBoolAttr(true));
-      return success();
+      return op;
     }
 
     Type *it = llvm::find(possibleTypes, type);
@@ -1104,7 +1108,7 @@ LogicalResult DeallocOp::generate(GeneratorOpBuilder &builder) {
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1871,7 +1875,7 @@ OpFoldResult LoadOp::fold(FoldAdaptor adaptor) {
   return OpFoldResult();
 }
 
-LogicalResult LoadOp::generate(GeneratorOpBuilder &builder) {
+Operation *LoadOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes;
   for (Type t : getGeneratableTypes(builder))
     if (isa<MemRefType>(t) && builder.sampleValueOfType(t).has_value())
@@ -1948,7 +1952,7 @@ LogicalResult LoadOp::generate(GeneratorOpBuilder &builder) {
       if (constOp == nullptr) {
         for (Value v : indices)
           v.getDefiningOp()->erase();
-        return failure();
+        return nullptr;
       }
 
       indices.push_back(cast<arith::ConstantOp>(constOp));
@@ -1957,8 +1961,9 @@ LogicalResult LoadOp::generate(GeneratorOpBuilder &builder) {
     // Create LoadOp.
     OperationState state(builder.getUnknownLoc(), LoadOp::getOperationName());
     LoadOp::build(builder, state, memref, indices);
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     for (Value v : indices)
       v.getDefiningOp()->erase();
@@ -1968,7 +1973,7 @@ LogicalResult LoadOp::generate(GeneratorOpBuilder &builder) {
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2856,7 +2861,7 @@ LogicalResult StoreOp::fold(FoldAdaptor adaptor,
   return foldMemRefCast(*this, getValueToStore());
 }
 
-LogicalResult StoreOp::generate(GeneratorOpBuilder &builder) {
+Operation *StoreOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
@@ -2931,7 +2936,7 @@ LogicalResult StoreOp::generate(GeneratorOpBuilder &builder) {
       if (constOp == nullptr) {
         for (Value v : indices)
           v.getDefiningOp()->erase();
-        return failure();
+        return nullptr;
       }
 
       indices.push_back(cast<arith::ConstantOp>(constOp));
@@ -2940,14 +2945,15 @@ LogicalResult StoreOp::generate(GeneratorOpBuilder &builder) {
     // Create StoreOp.
     OperationState state(builder.getUnknownLoc(), StoreOp::getOperationName());
     StoreOp::build(builder, state, value, memref, indices);
-    if (builder.create(state) != nullptr) {
+    Operation *op = builder.create(state);
+    if (op) {
       // Mark memref as initialized.
       if (memref.getDefiningOp() == nullptr)
-        return success();
+        return op;
 
       memref.getDefiningOp()->setAttr("generate_initialized",
                                       builder.getBoolAttr(true));
-      return success();
+      return op;
     }
 
     for (Value v : indices)
@@ -2958,7 +2964,7 @@ LogicalResult StoreOp::generate(GeneratorOpBuilder &builder) {
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//

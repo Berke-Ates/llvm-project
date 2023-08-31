@@ -38,8 +38,7 @@ class Func_Op<string mnemonic, list<Trait> traits = []> :
 
 def CallOp : Func_Op<"call",
     [CallOpInterface, MemRefsNormalizable,
-     DeclareOpInterfaceMethods<SymbolUserOpInterface>,
-     DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
+     DeclareOpInterfaceMethods<SymbolUserOpInterface>]> {
   let summary = "call operation";
   let description = [{
     The `func.call` operation represents a direct call to a function that is
@@ -347,8 +346,7 @@ def FuncOp : Func_Op<"func", [
 //===----------------------------------------------------------------------===//
 
 def ReturnOp : Func_Op<"return", 
-    [Pure, HasParent<"FuncOp">, MemRefsNormalizable, ReturnLike, Terminator, 
-     DeclareOpInterfaceMethods<GeneratableOpInterface>]> {
+    [Pure, HasParent<"FuncOp">, MemRefsNormalizable, ReturnLike, Terminator]> {
   let summary = "Function return operation";
   let description = [{
     The `func.return` operation represents a return operation within a function.

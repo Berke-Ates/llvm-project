@@ -16,6 +16,7 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Tools/mlir-smith/MlirSmithMain.h"
+#include <functional>
 #include <random>
 
 namespace mlir {
@@ -168,11 +169,23 @@ public:
   //===--------------------------------------------------------------------===//
 
   /// Checks if the given OperationState adheres to the generator constraints.
-  bool canCreate(const OperationState &state);
+  bool canCreate(Operation *op);
 
   /// Creates an operation given the fields represented as an OperationState and
   /// enforces generator constraints.
   Operation *create(const OperationState &state);
+
+  //===--------------------------------------------------------------------===//
+  // Collectors
+  //===--------------------------------------------------------------------===//
+
+  /// Returns a list of all available values in the current location.
+  llvm::SmallVector<Value>
+  collectValues(std::function<bool(const Value &)> filterFn = nullptr);
+
+  /// Returns a list of all available types in the current location.
+  llvm::SmallVector<Type>
+  collectTypes(std::function<bool(const Type &)> filterFn = nullptr);
 
   //===--------------------------------------------------------------------===//
   // Samplers
@@ -183,10 +196,7 @@ public:
   template <typename T>
   llvm::Optional<T> sample(llvm::SmallVector<T> choices,
                            llvm::SmallVector<unsigned> probs = {}) {
-    if (choices.empty())
-      return std::nullopt;
-
-    if (!probs.empty() && probs.size() != choices.size())
+    if (choices.empty() || (!probs.empty() && probs.size() != choices.size()))
       return std::nullopt;
 
     // Fill up with ones if probs is empty.
@@ -210,6 +220,41 @@ public:
     return choices[idx];
   }
 
+  /// Samples multiple times from a vector of choices. If no probability vector
+  /// is provided, it samples using a uniform distribution.
+  template <typename T>
+  llvm::Optional<llvm::SmallVector<T>>
+  sample(llvm::SmallVector<T> choices, unsigned num,
+         bool allowDuplicates = true, llvm::SmallVector<unsigned> probs = {}) {
+    if (choices.empty() || (!probs.empty() && probs.size() != choices.size()))
+      return std::nullopt;
+
+    // Fill up with ones if probs is empty.
+    while (probs.size() < choices.size())
+      probs.push_back(1);
+
+    llvm::SmallVector<T> selected;
+
+    for (unsigned i = 0; i < num; ++i) {
+      llvm::Optional<T> choice = sample(choices, probs);
+      if (!choice.has_value())
+        return std::nullopt;
+
+      selected.push_back(choice.value());
+
+      // If duplicates are not allowed, remove the choice from choices and
+      // probs.
+      if (!allowDuplicates) {
+        auto it = llvm::find(choices, choice);
+        auto index = std::distance(choices.begin(), it);
+        choices.erase(it);
+        probs.erase(probs.begin() + index);
+      }
+    }
+
+    return selected;
+  }
+
   /// Returns a random number using a normal distribution around zero. This
   /// function combines all specialized functions.
   template <typename T>
@@ -227,55 +272,40 @@ public:
 
   /// Returns a random number between 0 and max (inclusive) using uniform
   /// distribution.
-  unsigned sampleUniform(int32_t max);
+  unsigned sampleUniform(unsigned max);
 
   /// Returns a random boolean.
   bool sampleBool();
 
-  /// Returns a random number using a normal distribution around zero.
-  int8_t sampleNumberInt8();
-
-  /// Returns a random number using a normal distribution around zero.
-  int16_t sampleNumberInt16();
-
-  /// Returns a random number using a normal distribution around zero.
-  int32_t sampleNumberInt32();
-
-  /// Returns a random number using a normal distribution around zero.
-  int64_t sampleNumberInt64();
-
-  /// Returns a random number using a normal distribution around zero.
-  float_t sampleNumberFloat();
-
-  /// Returns a random number using a normal distribution around zero.
-  double_t sampleNumberDouble();
-
   /// Samples from a geometric distribution of available types in the current
   /// position.
-  llvm::SmallVector<Type> sampleTypes(int32_t min = 0);
+  llvm::SmallVector<Type> sampleTypes(unsigned min = 0);
 
-  /// Randomly chooses a generated value of the given type, if one exists.
-  llvm::Optional<Value> sampleValueOfType(Type t);
+  /// Returns a list of values of the provided types.
+  llvm::Optional<llvm::SmallVector<Value>>
+  sampleValuesOfTypes(llvm::SmallVector<Type> types);
+
+  /// Returns a value with of the provided type.
+  llvm::Optional<Value> sampleValueOfType(Type type);
 
   //===--------------------------------------------------------------------===//
   // Generators
   //===--------------------------------------------------------------------===//
 
-  /// Randomly generates an operation in the current position.
-  // FIXME: This doesn't differentiate between ops not provided and an empty
-  // list.
-  LogicalResult
-  generateOperation(llvm::SmallVector<RegisteredOperationName> ops = {});
+  /// Randomly generates an operation in the current position and returns it.
+  /// Returns nullptr if it fails.
+  Operation *generateOperation(llvm::SmallVector<RegisteredOperationName> ops);
 
-  /// Randomly generates a terminator operation in the current position.
-  LogicalResult generateTerminator();
+  /// Randomly generates a terminator operation in the current position and
+  /// returns it. Returns nullptr if it fails.
+  Operation *generateTerminator();
 
   /// Fills the current block with operations.
-  LogicalResult generateBlock(bool ensureTerminator = false);
+  LogicalResult generateBlock(Block *block, bool ensureTerminator = false);
 
 private:
   /// Utility function to generate an operation.
-  LogicalResult generate(RegisteredOperationName ron);
+  Operation *generate(RegisteredOperationName ron);
 
   /// Random number generator.
   std::mt19937 rngGen;
@@ -285,13 +315,6 @@ private:
 
   /// All operations that can be generated.
   llvm::SmallVector<RegisteredOperationName> availableOps = {};
-
-  /// If set, forces operations to have the specified return type.
-  llvm::Optional<Type> requiredReturnType;
-
-  /// Allows bypassing the block length limit to ensure that terminators can be
-  /// generated.
-  bool bypassBlockLengthLimit = false;
 };
 
 } // namespace mlir

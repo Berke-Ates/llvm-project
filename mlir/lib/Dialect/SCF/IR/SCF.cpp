@@ -288,36 +288,32 @@ ConditionOp::getMutableSuccessorOperands(std::optional<unsigned> index) {
   return getArgsMutable();
 }
 
-LogicalResult ConditionOp::generate(GeneratorOpBuilder &builder) {
+Operation *ConditionOp::generate(GeneratorOpBuilder &builder) {
   Block *block = builder.getBlock();
   if (block == nullptr)
-    return failure();
+    return nullptr;
 
   Operation *parent = block->getParentOp();
   if (parent == nullptr || !isa<WhileOp>(parent))
-    return failure();
+    return nullptr;
 
   WhileOp whileOp = cast<WhileOp>(parent);
   if (&whileOp.getBefore().back() != block)
-    return failure();
+    return nullptr;
 
   llvm::Optional<Value> cond = builder.sampleValueOfType(builder.getI1Type());
   if (!cond.has_value())
-    return failure();
+    return nullptr;
 
-  llvm::SmallVector<Value> args;
-  for (Type t : whileOp.getResultTypes()) {
-    llvm::Optional<Value> res = builder.sampleValueOfType(t);
-    if (!res.has_value())
-      return failure();
-
-    args.push_back(res.value());
-  }
+  llvm::Optional<llvm::SmallVector<Value>> args = builder.sampleValuesOfTypes(
+      llvm::SmallVector<Type>(whileOp.getResultTypes()));
+  if (!args.has_value())
+    return nullptr;
 
   OperationState state(builder.getUnknownLoc(),
                        ConditionOp::getOperationName());
-  ConditionOp::build(builder, state, cond.value(), args);
-  return success(builder.create(state) != nullptr);
+  ConditionOp::build(builder, state, cond.value(), args.value());
+  return builder.create(state);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1194,15 +1190,13 @@ Speculation::Speculatability ForOp::getSpeculatability() {
   return Speculation::NotSpeculatable;
 }
 
-LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
+Operation *ForOp::generate(GeneratorOpBuilder &builder) {
   Type indexType = builder.getIndexType();
+  llvm::Optional<llvm::SmallVector<Value>> bounds =
+      builder.sampleValuesOfTypes({indexType, indexType, indexType});
 
-  llvm::Optional<Value> lb = builder.sampleValueOfType(indexType);
-  llvm::Optional<Value> ub = builder.sampleValueOfType(indexType);
-  llvm::Optional<Value> step = builder.sampleValueOfType(indexType);
-
-  if (!lb.has_value() || !ub.has_value() || !step.has_value())
-    return failure();
+  if (!bounds.has_value())
+    return nullptr;
 
   // Limit bounds.
   // FIXME: ABS() would be better
@@ -1212,53 +1206,49 @@ LogicalResult ForOp::generate(GeneratorOpBuilder &builder) {
                            builder.getIndexAttr(1));
   Operation *constOp = builder.create(constState);
   if (constOp == nullptr)
-    return failure();
+    return nullptr;
 
   OperationState maxState(builder.getUnknownLoc(),
                           arith::MaxSIOp::getOperationName());
-  arith::MaxSIOp::build(builder, maxState, step.value(), constOp->getResult(0));
+  arith::MaxSIOp::build(builder, maxState, bounds.value()[2],
+                        constOp->getResult(0));
   Operation *maxOp = builder.create(maxState);
   if (maxOp == nullptr) {
     constOp->erase();
-    return failure();
+    return nullptr;
   }
 
   llvm::SmallVector<Type> iterTypes = builder.sampleTypes();
-  llvm::SmallVector<Value> iterArgs;
-
-  for (Type t : iterTypes) {
-    llvm::Optional<Value> val = builder.sampleValueOfType(t);
-    if (!val.has_value()) {
-      maxOp->erase();
-      constOp->erase();
-      return failure();
-    }
-    iterArgs.push_back(val.value());
+  llvm::Optional<llvm::SmallVector<Value>> iterArgs =
+      builder.sampleValuesOfTypes(iterTypes);
+  if (!iterArgs.has_value()) {
+    maxOp->erase();
+    constOp->erase();
+    return nullptr;
   }
 
   OperationState state(builder.getUnknownLoc(), ForOp::getOperationName());
-  ForOp::build(builder, state, lb.value(), ub.value(), maxOp->getResult(0),
-               iterArgs);
+  ForOp::build(builder, state, bounds.value()[0], bounds.value()[1],
+               maxOp->getResult(0), iterArgs.value());
   Operation *op = builder.create(state);
   if (op == nullptr) {
     maxOp->erase();
     constOp->erase();
-    return failure();
+    return nullptr;
   }
 
   ForOp forOp = cast<ForOp>(op);
-  builder.setInsertionPointToStart(forOp.getBody());
   if (builder
-          .generateBlock(/*ensureTerminator=*/!iterTypes.empty()
-                         /*requiredTypes=iterTypes*/)
+          .generateBlock(forOp.getBody(),
+                         /*ensureTerminator=*/!iterTypes.empty())
           .failed()) {
     forOp.erase();
     maxOp->erase();
     constOp->erase();
-    return failure();
+    return nullptr;
   }
 
-  return success();
+  return forOp;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2717,10 +2707,10 @@ Block *IfOp::elseBlock() {
 }
 YieldOp IfOp::elseYield() { return cast<YieldOp>(&elseBlock()->back()); }
 
-LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
+Operation *IfOp::generate(GeneratorOpBuilder &builder) {
   llvm::Optional<Value> cond = builder.sampleValueOfType(builder.getI1Type());
   if (!cond.has_value())
-    return failure();
+    return nullptr;
 
   llvm::SmallVector<Type> retTypes = builder.sampleTypes();
   bool hasElse = builder.sampleUniform(1) == 1 || !retTypes.empty();
@@ -2729,31 +2719,25 @@ LogicalResult IfOp::generate(GeneratorOpBuilder &builder) {
   IfOp::build(builder, state, retTypes, cond.value(), hasElse);
   Operation *op = builder.create(state);
   if (op == nullptr)
-    return failure();
+    return nullptr;
 
   IfOp ifOp = cast<IfOp>(op);
-  builder.setInsertionPointToStart(ifOp.thenBlock());
-  if (builder
-          .generateBlock(/*ensureTerminator=*/true
-                         /*requiredTypes=retTypes*/)
+  if (builder.generateBlock(ifOp.thenBlock(), /*ensureTerminator=*/true)
           .failed()) {
     ifOp.erase();
-    return failure();
+    return nullptr;
   }
 
   if (!hasElse)
-    return success();
+    return ifOp;
 
-  builder.setInsertionPointToStart(ifOp.elseBlock());
-  if (builder
-          .generateBlock(/*ensureTerminator=*/true
-                         /*requiredTypes=retTypes*/)
+  if (builder.generateBlock(ifOp.elseBlock(), /*ensureTerminator=*/true)
           .failed()) {
     ifOp.erase();
-    return failure();
+    return nullptr;
   }
 
-  return success();
+  return ifOp;
 }
 
 //===----------------------------------------------------------------------===//
@@ -4008,24 +3992,19 @@ void WhileOp::getCanonicalizationPatterns(RewritePatternSet &results,
               WhileRemoveUnusedArgs>(context);
 }
 
-LogicalResult WhileOp::generate(GeneratorOpBuilder &builder) {
+Operation *WhileOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> operandTypes = builder.sampleTypes(/*min=*/1);
   llvm::SmallVector<Type> resultTypes = builder.sampleTypes(/*min=*/1);
-  llvm::SmallVector<Value> operands;
-
-  for (Type t : operandTypes) {
-    llvm::Optional<Value> val = builder.sampleValueOfType(t);
-    if (!val.has_value())
-      return failure();
-
-    operands.push_back(val.value());
-  }
+  llvm::Optional<llvm::SmallVector<Value>> operands =
+      builder.sampleValuesOfTypes(operandTypes);
+  if (!operands.has_value())
+    return nullptr;
 
   OperationState state(builder.getUnknownLoc(), WhileOp::getOperationName());
-  WhileOp::build(builder, state, resultTypes, operands);
+  WhileOp::build(builder, state, resultTypes, operands.value());
   Operation *op = builder.create(state);
-  if (op == nullptr)
-    return failure();
+  if (!op)
+    return nullptr;
 
   llvm::SmallVector<Location> operandLocs;
   llvm::SmallVector<Location> resultLocs;
@@ -4044,23 +4023,21 @@ LogicalResult WhileOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> beforeTypes = resultTypes;
   beforeTypes.push_back(builder.getI1Type());
   if (builder
-          .generateBlock(/*ensureTerminator=*/true
-                         /*requiredTypes=beforeTypes*/)
+          .generateBlock(&whileOp.getBefore().front(),
+                         /*ensureTerminator=*/true)
           .failed()) {
     whileOp.erase();
-    return failure();
+    return nullptr;
   }
 
-  builder.setInsertionPointToEnd(&whileOp.getAfter().back());
   if (builder
-          .generateBlock(/*ensureTerminator=*/true
-                         /*requiredTypes=operandTypes*/)
+          .generateBlock(&whileOp.getAfter().front(), /*ensureTerminator=*/true)
           .failed()) {
     whileOp.erase();
-    return failure();
+    return nullptr;
   }
 
-  return success();
+  return whileOp;
 }
 
 //===----------------------------------------------------------------------===//
@@ -4200,25 +4177,25 @@ void IndexSwitchOp::getRegionInvocationBounds(
 // YieldOp
 //===----------------------------------------------------------------------===//
 
-LogicalResult YieldOp::generate(GeneratorOpBuilder &builder) {
+Operation *YieldOp::generate(GeneratorOpBuilder &builder) {
   Block *block = builder.getBlock();
   if (block == nullptr)
-    return failure();
+    return nullptr;
 
   Operation *parent = block->getParentOp();
   if (parent == nullptr ||
       !(isa<ExecuteRegionOp>(parent) || isa<ForOp>(parent) ||
         isa<IfOp>(parent) || isa<IndexSwitchOp>(parent) ||
         isa<ParallelOp>(parent) || isa<WhileOp>(parent)))
-    return failure();
+    return nullptr;
 
   // Has implicit yield.
   if (isa<IfOp>(parent) && cast<IfOp>(parent).getResultTypes().empty())
-    return success();
+    return nullptr;
 
   // Needs to be in the after region.
   if (isa<WhileOp>(parent) && &cast<WhileOp>(parent).getAfter().back() != block)
-    return failure();
+    return nullptr;
 
   // Get required types.
   TypeRange retTypes;
@@ -4236,18 +4213,14 @@ LogicalResult YieldOp::generate(GeneratorOpBuilder &builder) {
   else if (WhileOp op = dyn_cast<WhileOp>(parent))
     retTypes = op.getOperandTypes();
 
-  llvm::SmallVector<Value> results;
-  for (Type t : retTypes) {
-    llvm::Optional<Value> sampleValue = builder.sampleValueOfType(t);
-    if (!sampleValue.has_value())
-      return failure();
-
-    results.push_back(sampleValue.value());
-  }
+  llvm::Optional<llvm::SmallVector<Value>> results =
+      builder.sampleValuesOfTypes(retTypes);
+  if (!results.has_value())
+    return nullptr;
 
   OperationState state(builder.getUnknownLoc(), YieldOp::getOperationName());
-  YieldOp::build(builder, state, results);
-  return success(builder.create(state) != nullptr);
+  YieldOp::build(builder, state, results.value());
+  return builder.create(state);
 }
 
 //===----------------------------------------------------------------------===//

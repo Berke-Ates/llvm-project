@@ -201,7 +201,7 @@ void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
                            builder.getIntegerAttr(type, value));
 }
 
-LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(),
        builder.getIndexAttr(builder.sampleNumber<int64_t>())},
@@ -235,15 +235,16 @@ LogicalResult arith::ConstantOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::ConstantOp::getOperationName());
     arith::ConstantOp::build(builder, state, type, attr);
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, type);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::ConstantIntOp::build(OpBuilder &builder, OperationState &result,
@@ -308,7 +309,7 @@ OpFoldResult arith::AddIOp::fold(FoldAdaptor adaptor) {
       [](APInt a, const APInt &b) { return std::move(a) + b; });
 }
 
-LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::AddIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -331,15 +332,16 @@ LogicalResult arith::AddIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::AddIOp::getOperationName());
     arith::AddIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::AddIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -401,7 +403,7 @@ arith::AddUIExtendedOp::fold(FoldAdaptor adaptor,
   return failure();
 }
 
-LogicalResult arith::AddUIExtendedOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::AddUIExtendedOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -424,15 +426,16 @@ LogicalResult arith::AddUIExtendedOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::AddUIExtendedOp::getOperationName());
     arith::AddUIExtendedOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::AddUIExtendedOp::getCanonicalizationPatterns(
@@ -466,7 +469,7 @@ OpFoldResult arith::SubIOp::fold(FoldAdaptor adaptor) {
       [](APInt a, const APInt &b) { return std::move(a) - b; });
 }
 
-LogicalResult arith::SubIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::SubIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -489,15 +492,16 @@ LogicalResult arith::SubIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::SubIOp::getOperationName());
     arith::SubIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::SubIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -526,7 +530,7 @@ OpFoldResult arith::MulIOp::fold(FoldAdaptor adaptor) {
       [](const APInt &a, const APInt &b) { return a * b; });
 }
 
-LogicalResult arith::MulIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::MulIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -549,15 +553,16 @@ LogicalResult arith::MulIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::MulIOp::getOperationName());
     arith::MulIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -603,7 +608,7 @@ arith::MulSIExtendedOp::fold(FoldAdaptor adaptor,
   return failure();
 }
 
-LogicalResult arith::MulSIExtendedOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::MulSIExtendedOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -626,15 +631,16 @@ LogicalResult arith::MulSIExtendedOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::MulSIExtendedOp::getOperationName());
     arith::MulSIExtendedOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::MulSIExtendedOp::getCanonicalizationPatterns(
@@ -694,7 +700,7 @@ arith::MulUIExtendedOp::fold(FoldAdaptor adaptor,
   return failure();
 }
 
-LogicalResult arith::MulUIExtendedOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::MulUIExtendedOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -717,15 +723,16 @@ LogicalResult arith::MulUIExtendedOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::MulUIExtendedOp::getOperationName());
     arith::MulUIExtendedOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::MulUIExtendedOp::getCanonicalizationPatterns(
@@ -762,7 +769,7 @@ Speculation::Speculatability arith::DivUIOp::getSpeculatability() {
                                              : Speculation::NotSpeculatable;
 }
 
-LogicalResult arith::DivUIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::DivUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
       {builder.getI1Type(), builder.getBoolAttr(1)},
@@ -799,7 +806,7 @@ LogicalResult arith::DivUIOp::generate(GeneratorOpBuilder &builder) {
                              attrMap[resultType]);
     Operation *constOp = builder.create(constState);
     if (constOp == nullptr)
-      return failure();
+      return nullptr;
 
     OperationState maxState(builder.getUnknownLoc(),
                             arith::MaxSIOp::getOperationName());
@@ -808,14 +815,15 @@ LogicalResult arith::DivUIOp::generate(GeneratorOpBuilder &builder) {
     Operation *maxOp = builder.create(maxState);
     if (maxOp == nullptr) {
       constOp->erase();
-      return failure();
+      return nullptr;
     }
 
     OperationState state(builder.getUnknownLoc(),
                          arith::DivUIOp::getOperationName());
     arith::DivUIOp::build(builder, state, lhs.value(), maxOp->getResult(0));
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
@@ -825,7 +833,7 @@ LogicalResult arith::DivUIOp::generate(GeneratorOpBuilder &builder) {
     constOp->erase();
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -863,7 +871,7 @@ Speculation::Speculatability arith::DivSIOp::getSpeculatability() {
   return mayHaveUB ? Speculation::NotSpeculatable : Speculation::Speculatable;
 }
 
-LogicalResult arith::DivSIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::DivSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
       {builder.getI1Type(), builder.getBoolAttr(1)},
@@ -900,7 +908,7 @@ LogicalResult arith::DivSIOp::generate(GeneratorOpBuilder &builder) {
                              attrMap[resultType]);
     Operation *constOp = builder.create(constState);
     if (constOp == nullptr)
-      return failure();
+      return nullptr;
 
     OperationState maxState(builder.getUnknownLoc(),
                             arith::MaxSIOp::getOperationName());
@@ -909,14 +917,15 @@ LogicalResult arith::DivSIOp::generate(GeneratorOpBuilder &builder) {
     Operation *maxOp = builder.create(maxState);
     if (maxOp == nullptr) {
       constOp->erase();
-      return failure();
+      return nullptr;
     }
 
     OperationState state(builder.getUnknownLoc(),
                          arith::DivSIOp::getOperationName());
     arith::DivSIOp::build(builder, state, lhs.value(), maxOp->getResult(0));
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
@@ -926,7 +935,7 @@ LogicalResult arith::DivSIOp::generate(GeneratorOpBuilder &builder) {
     constOp->erase();
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -973,7 +982,7 @@ Speculation::Speculatability arith::CeilDivUIOp::getSpeculatability() {
                                              : Speculation::NotSpeculatable;
 }
 
-LogicalResult arith::CeilDivUIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::CeilDivUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
       {builder.getI1Type(), builder.getBoolAttr(1)},
@@ -1010,7 +1019,7 @@ LogicalResult arith::CeilDivUIOp::generate(GeneratorOpBuilder &builder) {
                              attrMap[resultType]);
     Operation *constOp = builder.create(constState);
     if (constOp == nullptr)
-      return failure();
+      return nullptr;
 
     OperationState maxState(builder.getUnknownLoc(),
                             arith::MaxSIOp::getOperationName());
@@ -1019,14 +1028,15 @@ LogicalResult arith::CeilDivUIOp::generate(GeneratorOpBuilder &builder) {
     Operation *maxOp = builder.create(maxState);
     if (maxOp == nullptr) {
       constOp->erase();
-      return failure();
+      return nullptr;
     }
 
     OperationState state(builder.getUnknownLoc(),
                          arith::CeilDivUIOp::getOperationName());
     arith::CeilDivUIOp::build(builder, state, lhs.value(), maxOp->getResult(0));
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
@@ -1036,7 +1046,7 @@ LogicalResult arith::CeilDivUIOp::generate(GeneratorOpBuilder &builder) {
     constOp->erase();
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1100,7 +1110,7 @@ Speculation::Speculatability arith::CeilDivSIOp::getSpeculatability() {
   return mayHaveUB ? Speculation::NotSpeculatable : Speculation::Speculatable;
 }
 
-LogicalResult arith::CeilDivSIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::CeilDivSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
       {builder.getI1Type(), builder.getBoolAttr(1)},
@@ -1137,7 +1147,7 @@ LogicalResult arith::CeilDivSIOp::generate(GeneratorOpBuilder &builder) {
                              attrMap[resultType]);
     Operation *constOp = builder.create(constState);
     if (constOp == nullptr)
-      return failure();
+      return nullptr;
 
     OperationState maxState(builder.getUnknownLoc(),
                             arith::MaxSIOp::getOperationName());
@@ -1146,14 +1156,15 @@ LogicalResult arith::CeilDivSIOp::generate(GeneratorOpBuilder &builder) {
     Operation *maxOp = builder.create(maxState);
     if (maxOp == nullptr) {
       constOp->erase();
-      return failure();
+      return nullptr;
     }
 
     OperationState state(builder.getUnknownLoc(),
                          arith::CeilDivSIOp::getOperationName());
     arith::CeilDivSIOp::build(builder, state, lhs.value(), maxOp->getResult(0));
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
@@ -1163,7 +1174,7 @@ LogicalResult arith::CeilDivSIOp::generate(GeneratorOpBuilder &builder) {
     constOp->erase();
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1215,7 +1226,7 @@ OpFoldResult arith::FloorDivSIOp::fold(FoldAdaptor adaptor) {
   return overflowOrDiv0 ? Attribute() : result;
 }
 
-LogicalResult arith::FloorDivSIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::FloorDivSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
       {builder.getI1Type(), builder.getBoolAttr(1)},
@@ -1252,7 +1263,7 @@ LogicalResult arith::FloorDivSIOp::generate(GeneratorOpBuilder &builder) {
                              attrMap[resultType]);
     Operation *constOp = builder.create(constState);
     if (constOp == nullptr)
-      return failure();
+      return nullptr;
 
     OperationState maxState(builder.getUnknownLoc(),
                             arith::MaxSIOp::getOperationName());
@@ -1261,15 +1272,16 @@ LogicalResult arith::FloorDivSIOp::generate(GeneratorOpBuilder &builder) {
     Operation *maxOp = builder.create(maxState);
     if (maxOp == nullptr) {
       constOp->erase();
-      return failure();
+      return nullptr;
     }
 
     OperationState state(builder.getUnknownLoc(),
                          arith::FloorDivSIOp::getOperationName());
     arith::FloorDivSIOp::build(builder, state, lhs.value(),
                                maxOp->getResult(0));
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
@@ -1279,7 +1291,7 @@ LogicalResult arith::FloorDivSIOp::generate(GeneratorOpBuilder &builder) {
     constOp->erase();
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1305,7 +1317,7 @@ OpFoldResult arith::RemUIOp::fold(FoldAdaptor adaptor) {
   return div0 ? Attribute() : result;
 }
 
-LogicalResult arith::RemUIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::RemUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
       {builder.getI1Type(), builder.getBoolAttr(1)},
@@ -1342,7 +1354,7 @@ LogicalResult arith::RemUIOp::generate(GeneratorOpBuilder &builder) {
                              attrMap[resultType]);
     Operation *constOp = builder.create(constState);
     if (constOp == nullptr)
-      return failure();
+      return nullptr;
 
     OperationState maxState(builder.getUnknownLoc(),
                             arith::MaxSIOp::getOperationName());
@@ -1351,14 +1363,15 @@ LogicalResult arith::RemUIOp::generate(GeneratorOpBuilder &builder) {
     Operation *maxOp = builder.create(maxState);
     if (maxOp == nullptr) {
       constOp->erase();
-      return failure();
+      return nullptr;
     }
 
     OperationState state(builder.getUnknownLoc(),
                          arith::RemUIOp::getOperationName());
     arith::RemUIOp::build(builder, state, lhs.value(), maxOp->getResult(0));
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
@@ -1368,7 +1381,7 @@ LogicalResult arith::RemUIOp::generate(GeneratorOpBuilder &builder) {
     constOp->erase();
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1394,7 +1407,7 @@ OpFoldResult arith::RemSIOp::fold(FoldAdaptor adaptor) {
   return div0 ? Attribute() : result;
 }
 
-LogicalResult arith::RemSIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::RemSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getIndexType(), builder.getIndexAttr(1)},
       {builder.getI1Type(), builder.getBoolAttr(1)},
@@ -1431,7 +1444,7 @@ LogicalResult arith::RemSIOp::generate(GeneratorOpBuilder &builder) {
                              attrMap[resultType]);
     Operation *constOp = builder.create(constState);
     if (constOp == nullptr)
-      return failure();
+      return nullptr;
 
     OperationState maxState(builder.getUnknownLoc(),
                             arith::MaxSIOp::getOperationName());
@@ -1440,14 +1453,15 @@ LogicalResult arith::RemSIOp::generate(GeneratorOpBuilder &builder) {
     Operation *maxOp = builder.create(maxState);
     if (maxOp == nullptr) {
       constOp->erase();
-      return failure();
+      return nullptr;
     }
 
     OperationState state(builder.getUnknownLoc(),
                          arith::RemSIOp::getOperationName());
     arith::RemSIOp::build(builder, state, lhs.value(), maxOp->getResult(0));
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
@@ -1457,7 +1471,7 @@ LogicalResult arith::RemSIOp::generate(GeneratorOpBuilder &builder) {
     constOp->erase();
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1509,7 +1523,7 @@ OpFoldResult arith::AndIOp::fold(FoldAdaptor adaptor) {
       [](APInt a, const APInt &b) { return std::move(a) & b; });
 }
 
-LogicalResult arith::AndIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::AndIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -1532,15 +1546,16 @@ LogicalResult arith::AndIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::AndIOp::getOperationName());
     arith::AndIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1561,7 +1576,7 @@ OpFoldResult arith::OrIOp::fold(FoldAdaptor adaptor) {
       [](APInt a, const APInt &b) { return std::move(a) | b; });
 }
 
-LogicalResult arith::OrIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::OrIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -1584,15 +1599,16 @@ LogicalResult arith::OrIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::OrIOp::getOperationName());
     arith::OrIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1628,7 +1644,7 @@ OpFoldResult arith::XOrIOp::fold(FoldAdaptor adaptor) {
       [](APInt a, const APInt &b) { return std::move(a) ^ b; });
 }
 
-LogicalResult arith::XOrIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::XOrIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -1651,15 +1667,16 @@ LogicalResult arith::XOrIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::XOrIOp::getOperationName());
     arith::XOrIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::XOrIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -1679,7 +1696,7 @@ OpFoldResult arith::NegFOp::fold(FoldAdaptor adaptor) {
                                      [](const APFloat &a) { return -a; });
 }
 
-LogicalResult arith::NegFOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::NegFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1702,15 +1719,16 @@ LogicalResult arith::NegFOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::NegFOp::getOperationName());
     arith::NegFOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1727,7 +1745,7 @@ OpFoldResult arith::AddFOp::fold(FoldAdaptor adaptor) {
       [](const APFloat &a, const APFloat &b) { return a + b; });
 }
 
-LogicalResult arith::AddFOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::AddFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1751,15 +1769,16 @@ LogicalResult arith::AddFOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::AddFOp::getOperationName());
     arith::AddFOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1776,7 +1795,7 @@ OpFoldResult arith::SubFOp::fold(FoldAdaptor adaptor) {
       [](const APFloat &a, const APFloat &b) { return a - b; });
 }
 
-LogicalResult arith::SubFOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::SubFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1800,15 +1819,16 @@ LogicalResult arith::SubFOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::SubFOp::getOperationName());
     arith::SubFOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1829,7 +1849,7 @@ OpFoldResult arith::MaxFOp::fold(FoldAdaptor adaptor) {
       [](const APFloat &a, const APFloat &b) { return llvm::maximum(a, b); });
 }
 
-LogicalResult arith::MaxFOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::MaxFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1853,15 +1873,16 @@ LogicalResult arith::MaxFOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::MaxFOp::getOperationName());
     arith::MaxFOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1890,7 +1911,7 @@ OpFoldResult MaxSIOp::fold(FoldAdaptor adaptor) {
                                         });
 }
 
-LogicalResult arith::MaxSIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::MaxSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -1913,15 +1934,16 @@ LogicalResult arith::MaxSIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::MaxSIOp::getOperationName());
     arith::MaxSIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1948,7 +1970,7 @@ OpFoldResult MaxUIOp::fold(FoldAdaptor adaptor) {
                                         });
 }
 
-LogicalResult arith::MaxUIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::MaxUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -1971,15 +1993,16 @@ LogicalResult arith::MaxUIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::MaxUIOp::getOperationName());
     arith::MaxUIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2000,7 +2023,7 @@ OpFoldResult arith::MinFOp::fold(FoldAdaptor adaptor) {
       [](const APFloat &a, const APFloat &b) { return llvm::minimum(a, b); });
 }
 
-LogicalResult arith::MinFOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::MinFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -2024,15 +2047,16 @@ LogicalResult arith::MinFOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::MinFOp::getOperationName());
     arith::MinFOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2061,7 +2085,7 @@ OpFoldResult MinSIOp::fold(FoldAdaptor adaptor) {
                                         });
 }
 
-LogicalResult arith::MinSIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::MinSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -2084,15 +2108,16 @@ LogicalResult arith::MinSIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::MinSIOp::getOperationName());
     arith::MinSIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2119,7 +2144,7 @@ OpFoldResult MinUIOp::fold(FoldAdaptor adaptor) {
                                         });
 }
 
-LogicalResult arith::MinUIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::MinUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -2141,15 +2166,16 @@ LogicalResult arith::MinUIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::MinUIOp::getOperationName());
     arith::MinUIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2166,7 +2192,7 @@ OpFoldResult arith::MulFOp::fold(FoldAdaptor adaptor) {
       [](const APFloat &a, const APFloat &b) { return a * b; });
 }
 
-LogicalResult arith::MulFOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::MulFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -2190,15 +2216,16 @@ LogicalResult arith::MulFOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::MulFOp::getOperationName());
     arith::MulFOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::MulFOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -2220,7 +2247,7 @@ OpFoldResult arith::DivFOp::fold(FoldAdaptor adaptor) {
       [](const APFloat &a, const APFloat &b) { return a / b; });
 }
 
-LogicalResult arith::DivFOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::DivFOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getF16Type(), builder.getF16FloatAttr(1.0)},
       {builder.getF32Type(), builder.getF32FloatAttr(1.0)},
@@ -2255,7 +2282,7 @@ LogicalResult arith::DivFOp::generate(GeneratorOpBuilder &builder) {
                              attrMap[resultType]);
     Operation *constOp = builder.create(constState);
     if (constOp == nullptr)
-      return failure();
+      return nullptr;
 
     OperationState maxState(builder.getUnknownLoc(),
                             arith::MaxFOp::getOperationName());
@@ -2263,14 +2290,15 @@ LogicalResult arith::DivFOp::generate(GeneratorOpBuilder &builder) {
     Operation *maxOp = builder.create(maxState);
     if (maxOp == nullptr) {
       constOp->erase();
-      return failure();
+      return nullptr;
     }
 
     OperationState state(builder.getUnknownLoc(),
                          arith::DivFOp::getOperationName());
     arith::DivFOp::build(builder, state, lhs.value(), maxOp->getResult(0));
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
@@ -2280,7 +2308,7 @@ LogicalResult arith::DivFOp::generate(GeneratorOpBuilder &builder) {
     constOp->erase();
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::DivFOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -2301,7 +2329,7 @@ OpFoldResult arith::RemFOp::fold(FoldAdaptor adaptor) {
                                       });
 }
 
-LogicalResult arith::RemFOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::RemFOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, TypedAttr> attrMap = {
       {builder.getF16Type(), builder.getF16FloatAttr(1.0)},
       {builder.getF32Type(), builder.getF32FloatAttr(1.0)},
@@ -2336,7 +2364,7 @@ LogicalResult arith::RemFOp::generate(GeneratorOpBuilder &builder) {
                              attrMap[resultType]);
     Operation *constOp = builder.create(constState);
     if (constOp == nullptr)
-      return failure();
+      return nullptr;
 
     OperationState maxState(builder.getUnknownLoc(),
                             arith::MaxFOp::getOperationName());
@@ -2344,14 +2372,15 @@ LogicalResult arith::RemFOp::generate(GeneratorOpBuilder &builder) {
     Operation *maxOp = builder.create(maxState);
     if (maxOp == nullptr) {
       constOp->erase();
-      return failure();
+      return nullptr;
     }
 
     OperationState state(builder.getUnknownLoc(),
                          arith::RemFOp::getOperationName());
     arith::RemFOp::build(builder, state, lhs.value(), maxOp->getResult(0));
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
@@ -2361,7 +2390,7 @@ LogicalResult arith::RemFOp::generate(GeneratorOpBuilder &builder) {
     constOp->erase();
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2479,7 +2508,7 @@ LogicalResult arith::ExtUIOp::verify() {
   return verifyExtOp<IntegerType>(*this);
 }
 
-LogicalResult arith::ExtUIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::ExtUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> allTypes = {
       builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
       builder.getI32Type(), builder.getI64Type(),
@@ -2510,15 +2539,16 @@ LogicalResult arith::ExtUIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::ExtUIOp::getOperationName());
     arith::ExtUIOp::build(builder, state, outputType, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, inputType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2544,7 +2574,7 @@ bool arith::ExtSIOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
   return checkWidthChangeCast<std::greater, IntegerType>(inputs, outputs);
 }
 
-LogicalResult arith::ExtSIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::ExtSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> allTypes = {
       builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
       builder.getI32Type(), builder.getI64Type(),
@@ -2575,15 +2605,16 @@ LogicalResult arith::ExtSIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::ExtSIOp::getOperationName());
     arith::ExtSIOp::build(builder, state, outputType, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, inputType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::ExtSIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -2615,7 +2646,7 @@ bool arith::ExtFOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
 
 LogicalResult arith::ExtFOp::verify() { return verifyExtOp<FloatType>(*this); }
 
-LogicalResult arith::ExtFOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::ExtFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> allTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -2647,15 +2678,16 @@ LogicalResult arith::ExtFOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::ExtFOp::getOperationName());
     arith::ExtFOp::build(builder, state, outputType, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, inputType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2710,7 +2742,7 @@ LogicalResult arith::TruncIOp::verify() {
   return verifyTruncateOp<IntegerType>(*this);
 }
 
-LogicalResult arith::TruncIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::TruncIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> allTypes = {
       builder.getI64Type(), builder.getI32Type(), builder.getI16Type(),
       builder.getI8Type(),  builder.getI1Type(),
@@ -2741,15 +2773,16 @@ LogicalResult arith::TruncIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::TruncIOp::getOperationName());
     arith::TruncIOp::build(builder, state, outputType, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, inputType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2783,7 +2816,7 @@ LogicalResult arith::TruncFOp::verify() {
   return verifyTruncateOp<FloatType>(*this);
 }
 
-LogicalResult arith::TruncFOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::TruncFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> allTypes = {
       builder.getF64Type(),
       builder.getF32Type(),
@@ -2815,15 +2848,16 @@ LogicalResult arith::TruncFOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::TruncFOp::getOperationName());
     arith::TruncFOp::build(builder, state, outputType, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, inputType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2881,7 +2915,7 @@ OpFoldResult arith::UIToFPOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult arith::UIToFPOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::UIToFPOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -2909,15 +2943,16 @@ LogicalResult arith::UIToFPOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::UIToFPOp::getOperationName());
     arith::UIToFPOp::build(builder, state, resultType, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -2942,7 +2977,7 @@ OpFoldResult arith::SIToFPOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult arith::SIToFPOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::SIToFPOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -2970,15 +3005,16 @@ LogicalResult arith::SIToFPOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::SIToFPOp::getOperationName());
     arith::SIToFPOp::build(builder, state, resultType, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3003,7 +3039,7 @@ OpFoldResult arith::FPToUIOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult arith::FPToUIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::FPToUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, Type> typeMap = {
       {builder.getI16Type(), builder.getF16Type()},
       {builder.getI32Type(), builder.getF32Type()},
@@ -3037,15 +3073,16 @@ LogicalResult arith::FPToUIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::FPToUIOp::getOperationName());
     arith::FPToUIOp::build(builder, state, resultType, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3070,7 +3107,7 @@ OpFoldResult arith::FPToSIOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult arith::FPToSIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::FPToSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::DenseMap<Type, Type> typeMap = {
       {builder.getI16Type(), builder.getF16Type()},
       {builder.getI32Type(), builder.getF32Type()},
@@ -3104,15 +3141,16 @@ LogicalResult arith::FPToSIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::FPToSIOp::getOperationName());
     arith::FPToSIOp::build(builder, state, resultType, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3155,7 +3193,7 @@ void arith::IndexCastOp::getCanonicalizationPatterns(
   patterns.add<IndexCastOfIndexCast, IndexCastOfExtSI>(context);
 }
 
-LogicalResult arith::IndexCastOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::IndexCastOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> integerTypes = {
       builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
       builder.getI32Type(), builder.getI64Type(),
@@ -3184,15 +3222,16 @@ LogicalResult arith::IndexCastOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::IndexCastOp::getOperationName());
     arith::IndexCastOp::build(builder, state, std::get<1>(types), lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
     if (it != typeTuples.end())
       typeTuples.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3222,7 +3261,7 @@ void arith::IndexCastUIOp::getCanonicalizationPatterns(
   patterns.add<IndexCastUIOfIndexCastUI, IndexCastUIOfExtUI>(context);
 }
 
-LogicalResult arith::IndexCastUIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::IndexCastUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> integerTypes = {
       builder.getI1Type(),  builder.getI8Type(),  builder.getI16Type(),
       builder.getI32Type(), builder.getI64Type(),
@@ -3252,15 +3291,16 @@ LogicalResult arith::IndexCastUIOp::generate(GeneratorOpBuilder &builder) {
                          arith::IndexCastUIOp::getOperationName());
     arith::IndexCastUIOp::build(builder, state, std::get<1>(types),
                                 lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
     if (it != typeTuples.end())
       typeTuples.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3305,7 +3345,7 @@ OpFoldResult arith::BitcastOp::fold(FoldAdaptor adaptor) {
   return IntegerAttr::get(resType, bits);
 }
 
-LogicalResult arith::BitcastOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::BitcastOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getI16Type(), builder.getI32Type(), builder.getI64Type(),
       builder.getF16Type(), builder.getF32Type(), builder.getF64Type(),
@@ -3335,15 +3375,16 @@ LogicalResult arith::BitcastOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::BitcastOp::getOperationName());
     arith::BitcastOp::build(builder, state, resultType, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::BitcastOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -3485,7 +3526,7 @@ OpFoldResult arith::CmpIOp::fold(FoldAdaptor adaptor) {
   return {};
 }
 
-LogicalResult arith::CmpIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::CmpIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<CmpIPredicate> predicateTypes = {
       CmpIPredicate::eq,  CmpIPredicate::ne,  CmpIPredicate::sge,
       CmpIPredicate::sgt, CmpIPredicate::sle, CmpIPredicate::slt,
@@ -3518,15 +3559,16 @@ LogicalResult arith::CmpIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::CmpIOp::getOperationName());
     arith::CmpIOp::build(builder, state, predicate, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::CmpIOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -3889,7 +3931,7 @@ public:
   }
 };
 
-LogicalResult arith::CmpFOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::CmpFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<CmpFPredicate> predicateTypes = {
       CmpFPredicate::AlwaysFalse, CmpFPredicate::AlwaysTrue, CmpFPredicate::OEQ,
       CmpFPredicate::OGE,         CmpFPredicate::OGT,        CmpFPredicate::OLE,
@@ -3925,15 +3967,16 @@ LogicalResult arith::CmpFOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::CmpFOp::getOperationName());
     arith::CmpFOp::build(builder, state, predicate, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 void arith::CmpFOp::getCanonicalizationPatterns(RewritePatternSet &patterns,
@@ -4134,7 +4177,7 @@ LogicalResult arith::SelectOp::verify() {
   return success();
 }
 
-LogicalResult arith::SelectOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::SelectOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -4160,15 +4203,16 @@ LogicalResult arith::SelectOp::generate(GeneratorOpBuilder &builder) {
                          arith::SelectOp::getOperationName());
     arith::SelectOp::build(builder, state, cond.value(), lhs.value(),
                            rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -4189,7 +4233,7 @@ OpFoldResult arith::ShLIOp::fold(FoldAdaptor adaptor) {
   return bounded ? result : Attribute();
 }
 
-LogicalResult arith::ShLIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::ShLIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -4212,15 +4256,16 @@ LogicalResult arith::ShLIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::ShLIOp::getOperationName());
     arith::ShLIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -4241,7 +4286,7 @@ OpFoldResult arith::ShRUIOp::fold(FoldAdaptor adaptor) {
   return bounded ? result : Attribute();
 }
 
-LogicalResult arith::ShRUIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::ShRUIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -4264,15 +4309,16 @@ LogicalResult arith::ShRUIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::ShRUIOp::getOperationName());
     arith::ShRUIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -4293,7 +4339,7 @@ OpFoldResult arith::ShRSIOp::fold(FoldAdaptor adaptor) {
   return bounded ? result : Attribute();
 }
 
-LogicalResult arith::ShRSIOp::generate(GeneratorOpBuilder &builder) {
+Operation *arith::ShRSIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
@@ -4316,15 +4362,16 @@ LogicalResult arith::ShRSIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          arith::ShRSIOp::getOperationName());
     arith::ShRSIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//

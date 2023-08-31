@@ -31,7 +31,7 @@ OpFoldResult math::AbsFOp::fold(FoldAdaptor adaptor) {
                                      [](const APFloat &a) { return abs(a); });
 }
 
-LogicalResult math::AbsFOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::AbsFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -54,15 +54,16 @@ LogicalResult math::AbsFOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::AbsFOp::getOperationName());
     math::AbsFOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -74,7 +75,7 @@ OpFoldResult math::AbsIOp::fold(FoldAdaptor adaptor) {
                                        [](const APInt &a) { return a.abs(); });
 }
 
-LogicalResult math::AbsIOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::AbsIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
       builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
@@ -96,15 +97,16 @@ LogicalResult math::AbsIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::AbsIOp::getOperationName());
     math::AbsIOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -125,7 +127,7 @@ OpFoldResult math::AtanOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::AtanOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::AtanOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -148,15 +150,16 @@ LogicalResult math::AtanOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::AtanOp::getOperationName());
     math::AtanOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -182,7 +185,7 @@ OpFoldResult math::Atan2Op::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::Atan2Op::generate(GeneratorOpBuilder &builder) {
+Operation *math::Atan2Op::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -206,15 +209,16 @@ LogicalResult math::Atan2Op::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::Atan2Op::getOperationName());
     math::Atan2Op::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -230,7 +234,7 @@ OpFoldResult math::CeilOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::CeilOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::CeilOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -253,15 +257,16 @@ LogicalResult math::CeilOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::CeilOp::getOperationName());
     math::CeilOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -277,7 +282,7 @@ OpFoldResult math::CopySignOp::fold(FoldAdaptor adaptor) {
                                       });
 }
 
-LogicalResult math::CopySignOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::CopySignOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -301,15 +306,16 @@ LogicalResult math::CopySignOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::CopySignOp::getOperationName());
     math::CopySignOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -330,7 +336,7 @@ OpFoldResult math::CosOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::CosOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::CosOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -353,15 +359,16 @@ LogicalResult math::CosOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::CosOp::getOperationName());
     math::CosOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -382,7 +389,7 @@ OpFoldResult math::SinOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::SinOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::SinOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -405,15 +412,16 @@ LogicalResult math::SinOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::SinOp::getOperationName());
     math::SinOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -426,7 +434,7 @@ OpFoldResult math::CountLeadingZerosOp::fold(FoldAdaptor adaptor) {
       [](const APInt &a) { return APInt(a.getBitWidth(), a.countl_zero()); });
 }
 
-LogicalResult math::CountLeadingZerosOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::CountLeadingZerosOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
       builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
@@ -448,15 +456,16 @@ LogicalResult math::CountLeadingZerosOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::CountLeadingZerosOp::getOperationName());
     math::CountLeadingZerosOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -469,8 +478,7 @@ OpFoldResult math::CountTrailingZerosOp::fold(FoldAdaptor adaptor) {
       [](const APInt &a) { return APInt(a.getBitWidth(), a.countr_zero()); });
 }
 
-LogicalResult
-math::CountTrailingZerosOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::CountTrailingZerosOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
       builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
@@ -492,15 +500,16 @@ math::CountTrailingZerosOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::CountTrailingZerosOp::getOperationName());
     math::CountTrailingZerosOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -513,7 +522,7 @@ OpFoldResult math::CtPopOp::fold(FoldAdaptor adaptor) {
       [](const APInt &a) { return APInt(a.getBitWidth(), a.popcount()); });
 }
 
-LogicalResult math::CtPopOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::CtPopOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
       builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
@@ -535,15 +544,16 @@ LogicalResult math::CtPopOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::CtPopOp::getOperationName());
     math::CtPopOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -564,7 +574,7 @@ OpFoldResult math::ErfOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::ErfOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::ErfOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -587,15 +597,16 @@ LogicalResult math::ErfOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::ErfOp::getOperationName());
     math::ErfOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -649,7 +660,7 @@ OpFoldResult math::IPowIOp::fold(FoldAdaptor adaptor) {
   return Attribute();
 }
 
-LogicalResult math::IPowIOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::IPowIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getI1Type(),  builder.getIndexType(), builder.getI8Type(),
       builder.getI16Type(), builder.getI32Type(),   builder.getI64Type(),
@@ -672,15 +683,16 @@ LogicalResult math::IPowIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::IPowIOp::getOperationName());
     math::IPowIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -703,7 +715,7 @@ OpFoldResult math::LogOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::LogOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::LogOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -726,15 +738,16 @@ LogicalResult math::LogOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::LogOp::getOperationName());
     math::LogOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -757,7 +770,7 @@ OpFoldResult math::Log2Op::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::Log2Op::generate(GeneratorOpBuilder &builder) {
+Operation *math::Log2Op::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -780,15 +793,16 @@ LogicalResult math::Log2Op::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::Log2Op::getOperationName());
     math::Log2Op::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -812,7 +826,7 @@ OpFoldResult math::Log10Op::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::Log10Op::generate(GeneratorOpBuilder &builder) {
+Operation *math::Log10Op::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -835,15 +849,16 @@ LogicalResult math::Log10Op::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::Log10Op::getOperationName());
     math::Log10Op::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -868,7 +883,7 @@ OpFoldResult math::Log1pOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::Log1pOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::Log1pOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -891,15 +906,16 @@ LogicalResult math::Log1pOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::Log1pOp::getOperationName());
     math::Log1pOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -922,7 +938,7 @@ OpFoldResult math::PowFOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::PowFOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::PowFOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -946,15 +962,16 @@ LogicalResult math::PowFOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::PowFOp::getOperationName());
     math::PowFOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -978,7 +995,7 @@ OpFoldResult math::SqrtOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::SqrtOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::SqrtOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1001,15 +1018,16 @@ LogicalResult math::SqrtOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::SqrtOp::getOperationName());
     math::SqrtOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1030,7 +1048,7 @@ OpFoldResult math::ExpOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::ExpOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::ExpOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1053,15 +1071,16 @@ LogicalResult math::ExpOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::ExpOp::getOperationName());
     math::ExpOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1082,7 +1101,7 @@ OpFoldResult math::Exp2Op::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::Exp2Op::generate(GeneratorOpBuilder &builder) {
+Operation *math::Exp2Op::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1105,15 +1124,16 @@ LogicalResult math::Exp2Op::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::Exp2Op::getOperationName());
     math::Exp2Op::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1134,7 +1154,7 @@ OpFoldResult math::ExpM1Op::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::ExpM1Op::generate(GeneratorOpBuilder &builder) {
+Operation *math::ExpM1Op::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1157,15 +1177,16 @@ LogicalResult math::ExpM1Op::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::ExpM1Op::getOperationName());
     math::ExpM1Op::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1186,7 +1207,7 @@ OpFoldResult math::TanOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::TanOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::TanOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1209,15 +1230,16 @@ LogicalResult math::TanOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::TanOp::getOperationName());
     math::TanOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1238,7 +1260,7 @@ OpFoldResult math::TanhOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::TanhOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::TanhOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1261,15 +1283,16 @@ LogicalResult math::TanhOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::TanhOp::getOperationName());
     math::TanhOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1285,7 +1308,7 @@ OpFoldResult math::RoundEvenOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::RoundEvenOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::RoundEvenOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1308,15 +1331,16 @@ LogicalResult math::RoundEvenOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::RoundEvenOp::getOperationName());
     math::RoundEvenOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1332,7 +1356,7 @@ OpFoldResult math::FloorOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::FloorOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::FloorOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1355,15 +1379,16 @@ LogicalResult math::FloorOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::FloorOp::getOperationName());
     math::FloorOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1384,7 +1409,7 @@ OpFoldResult math::RoundOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::RoundOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::RoundOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1407,15 +1432,16 @@ LogicalResult math::RoundOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::RoundOp::getOperationName());
     math::RoundOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1436,7 +1462,7 @@ OpFoldResult math::TruncOp::fold(FoldAdaptor adaptor) {
       });
 }
 
-LogicalResult math::TruncOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::TruncOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1459,22 +1485,23 @@ LogicalResult math::TruncOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::TruncOp::getOperationName());
     math::TruncOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
 // CbrtOp
 //===----------------------------------------------------------------------===//
 
-LogicalResult math::CbrtOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::CbrtOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1497,22 +1524,23 @@ LogicalResult math::CbrtOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::CbrtOp::getOperationName());
     math::CbrtOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
 // FPowIOp
 //===----------------------------------------------------------------------===//
 
-LogicalResult math::FPowIOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::FPowIOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> floatTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1545,22 +1573,23 @@ LogicalResult math::FPowIOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::FPowIOp::getOperationName());
     math::FPowIOp::build(builder, state, lhs.value(), rhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     std::tuple<Type, Type> *it = llvm::find(typeTuples, types);
     if (it != typeTuples.end())
       typeTuples.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
 // FmaOp
 //===----------------------------------------------------------------------===//
 
-LogicalResult math::FmaOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::FmaOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1585,22 +1614,23 @@ LogicalResult math::FmaOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::FmaOp::getOperationName());
     math::FmaOp::build(builder, state, v1.value(), v2.value(), v3.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
 // RsqrtOp
 //===----------------------------------------------------------------------===//
 
-LogicalResult math::RsqrtOp::generate(GeneratorOpBuilder &builder) {
+Operation *math::RsqrtOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getF16Type(),
       builder.getF32Type(),
@@ -1623,15 +1653,16 @@ LogicalResult math::RsqrtOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(),
                          math::RsqrtOp::getOperationName());
     math::RsqrtOp::build(builder, state, lhs.value());
-    if (builder.create(state) != nullptr)
-      return success();
+    Operation *op = builder.create(state);
+    if (op)
+      return op;
 
     Type *it = llvm::find(possibleTypes, resultType);
     if (it != possibleTypes.end())
       possibleTypes.erase(it);
   }
 
-  return failure();
+  return nullptr;
 }
 
 /// Materialize an integer or floating point constant.
