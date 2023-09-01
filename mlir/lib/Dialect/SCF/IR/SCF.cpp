@@ -2713,7 +2713,7 @@ Operation *IfOp::generate(GeneratorOpBuilder &builder) {
     return nullptr;
 
   llvm::SmallVector<Type> retTypes = builder.sampleTypes();
-  bool hasElse = builder.sampleUniform(1) == 1 || !retTypes.empty();
+  bool hasElse = builder.sampleBool() || !retTypes.empty();
 
   OperationState state(builder.getUnknownLoc(), IfOp::getOperationName());
   IfOp::build(builder, state, retTypes, cond.value(), hasElse);

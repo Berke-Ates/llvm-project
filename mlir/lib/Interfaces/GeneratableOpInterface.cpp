@@ -61,7 +61,7 @@ GeneratorOpBuilder::GeneratorOpBuilder(MLIRContext *ctx,
       availableOps.push_back(ron);
 
   // Setup random number generator.
-  rngGen = std::mt19937(generatorConfig.seed());
+  rng = std::mt19937(generatorConfig.seed());
 }
 
 //===----------------------------------------------------------------------===//
@@ -128,22 +128,23 @@ Operation *GeneratorOpBuilder::create(const OperationState &state) {
 //===----------------------------------------------------------------------===//
 
 llvm::SmallVector<Value>
-GeneratorOpBuilder::collectValues(std::function<bool(const Value &)> filterFn) {
+GeneratorOpBuilder::collectValues(std::function<bool(const Value &)> filter) {
   llvm::SmallVector<Value> possibleValues;
   llvm::SmallVector<Value> excludedValues;
   Block *block = getBlock();
 
   // FIXME: Only collect values that are defined before the insertion point.
+  // (visible)
   while (block) {
     // Add all values in the block.
     for (Operation &op : block->getOperations())
       for (OpResult res : op.getResults())
-        if (!filterFn || filterFn(res))
+        if (!filter || filter(res))
           possibleValues.push_back(res);
 
     // Add all arguments of the block.
     for (BlockArgument bArg : block->getArguments())
-      if (!filterFn || filterFn(bArg))
+      if (!filter || filter(bArg))
         possibleValues.push_back(bArg);
 
     // Move up the hierarchy.
@@ -164,11 +165,11 @@ GeneratorOpBuilder::collectValues(std::function<bool(const Value &)> filterFn) {
 }
 
 llvm::SmallVector<Type>
-GeneratorOpBuilder::collectTypes(std::function<bool(const Type &)> filterFn) {
+GeneratorOpBuilder::collectTypes(std::function<bool(const Type &)> filter) {
   llvm::DenseSet<Type> possibleTypes;
 
   for (Value v : collectValues())
-    if (!filterFn || filterFn(v.getType()))
+    if (!filter || filter(v.getType()))
       possibleTypes.insert(v.getType());
 
   return llvm::SmallVector<Type>(possibleTypes.begin(), possibleTypes.end());
@@ -178,34 +179,27 @@ GeneratorOpBuilder::collectTypes(std::function<bool(const Type &)> filterFn) {
 // Samplers
 //===----------------------------------------------------------------------===//
 
-unsigned GeneratorOpBuilder::sampleUniform(unsigned max) {
-  std::uniform_int_distribution<unsigned> dist(0, max);
-  return dist(rngGen);
+llvm::Optional<llvm::SmallVector<Value>> GeneratorOpBuilder::sampleValues(
+    llvm::SmallVector<std::function<bool(const Value &)>> filters) {
+  llvm::SmallVector<Value> possibleValues = {};
+
+  for (auto filter : filters) {
+    llvm::SmallVector<Value> values = collectValues(filter);
+    if (values.empty())
+      return std::nullopt;
+
+    possibleValues.push_back(sample(values).value());
+  }
+
+  return possibleValues;
 }
 
-bool GeneratorOpBuilder::sampleBool() {
-  // 0.5 is the probability for generating true.
-  std::bernoulli_distribution dist(0.5);
-  return dist(rngGen);
-}
-
-llvm::SmallVector<Type> GeneratorOpBuilder::sampleTypes(unsigned min) {
-  llvm::SmallVector<Type> availableTypes = collectTypes();
-
-  // Geometric distribution, p=0.2
-  std::geometric_distribution<> dist(0.2);
-  int length = dist(rngGen) + min;
-
-  llvm::Optional<llvm::SmallVector<Type>> types =
-      sample(availableTypes, length);
-
-  // Failed to sample.
-  if (!types.has_value())
-    return {};
-
-  LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilder::sampleTypes generated {"
-                          << types << "}\n");
-  return types.value();
+llvm::Optional<Value>
+GeneratorOpBuilder::sampleValue(std::function<bool(const Value &)> filter) {
+  llvm::Optional<llvm::SmallVector<Value>> values = sampleValues({filter});
+  if (!values.has_value())
+    return std::nullopt;
+  return values.value()[0];
 }
 
 llvm::Optional<llvm::SmallVector<Value>>
@@ -216,13 +210,8 @@ GeneratorOpBuilder::sampleValuesOfTypes(llvm::SmallVector<Type> types) {
     llvm::SmallVector<Value> values =
         collectValues([t](const Value &v) { return v.getType() == t; });
 
-    if (values.empty()) {
-      LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilder::sampleValuesOfTypes "
-                                 "failed to find possible values of type "
-                              << t << "\n");
+    if (values.empty())
       return std::nullopt;
-    }
-
     possibleValues.push_back(sample(values).value());
   }
 
@@ -236,6 +225,22 @@ llvm::Optional<Value> GeneratorOpBuilder::sampleValueOfType(Type type) {
   return values.value()[0];
 }
 
+llvm::SmallVector<Type>
+GeneratorOpBuilder::sampleTypes(unsigned min,
+                                std::function<bool(const Type &)> filter) {
+  llvm::SmallVector<Type> availableTypes = collectTypes(filter);
+
+  int length = sampleNumber<int>(/*useGeometric=*/true) + min;
+  llvm::Optional<llvm::SmallVector<Type>> types =
+      sample(availableTypes, length);
+
+  // Failed to sample.
+  if (!types.has_value())
+    return {};
+
+  return types.value();
+}
+
 //===----------------------------------------------------------------------===//
 // Generators
 //===----------------------------------------------------------------------===//
@@ -246,10 +251,9 @@ Operation *GeneratorOpBuilder::generateOperation(
     llvm::errs() << "GeneratorOpBuilder::generateOperation requires a "
                     "non-empty list of operations\n";
 
-  Operation *op = nullptr;
   GeneratorOpBuilder::Snapshot snapshot = takeSnapshot();
 
-  while (!op) {
+  while (!ops.empty()) {
     // Rollback first.
     rollback(snapshot);
 
@@ -258,6 +262,7 @@ Operation *GeneratorOpBuilder::generateOperation(
     for (RegisteredOperationName ron : ops)
       probs.push_back(generatorConfig.getProb(ron.getStringRef()));
 
+    // Sample an operation.
     llvm::Optional<RegisteredOperationName> sampledOp = sample(ops, probs);
     if (!sampledOp.has_value()) {
       LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilder::generateOperation "
@@ -265,13 +270,17 @@ Operation *GeneratorOpBuilder::generateOperation(
       return nullptr;
     }
 
-    op = generate(sampledOp.value());
+    Operation *op = generate(sampledOp.value());
+    if (op) {
+      // Set the insertion point after the inserted operation.
+      setInsertionPointAfter(op);
+      return op;
+    }
+
     llvm::erase_value(ops, sampledOp.value());
   }
 
-  // Set the insertion point after the inserted operation.
-  setInsertionPointAfter(op);
-  return op;
+  return nullptr;
 }
 
 Operation *GeneratorOpBuilder::generateTerminator() {
@@ -300,7 +309,7 @@ LogicalResult GeneratorOpBuilder::generateBlock(Block *block,
   // Guard the insertion point.
   OpBuilder::InsertionGuard guard(*this);
 
-  // Move insertion point.
+  // Move the insertion point.
   setInsertionPointToStart(block);
 
   // Filter available ops.
@@ -309,13 +318,10 @@ LogicalResult GeneratorOpBuilder::generateBlock(Block *block,
     if (!op.hasTrait<OpTrait::IsTerminator>())
       possibleOps.push_back(op);
 
-  // Geometric distribution, p=0.2
-  std::geometric_distribution<> dist(0.2);
-  int length = dist(rngGen);
-
   // Generate operations.
-  for (int i = 0; i < length && generateOperation(possibleOps); ++i) {
-  }
+  int length = sampleNumber<int>(/*useGeometric=*/true);
+  for (int i = 0; i < length && generateOperation(possibleOps); ++i)
+    ;
 
   // Try to generate terminator.
   setInsertionPointToEnd(block);

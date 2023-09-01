@@ -403,15 +403,7 @@ Operation *AllocOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    if (!isa<MemRefType>(possibleTypes[idx])) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-      continue;
-    }
-
-    MemRefType type = cast<MemRefType>(possibleTypes[idx]);
+    MemRefType type = cast<MemRefType>(builder.sample(possibleTypes).value());
 
     llvm::SmallVector<Value> dynamicSizes;
     for (int64_t i = 0; i < type.getNumDynamicDims(); ++i) {
@@ -446,15 +438,7 @@ Operation *AllocaOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    if (!isa<MemRefType>(possibleTypes[idx])) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-      continue;
-    }
-
-    MemRefType type = cast<MemRefType>(possibleTypes[idx]);
+    MemRefType type = cast<MemRefType>(builder.sample(possibleTypes).value());
 
     llvm::SmallVector<Value> dynamicSizes;
     for (int64_t i = 0; i < type.getNumDynamicDims(); ++i) {
@@ -1019,9 +1003,7 @@ Operation *CopyOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type type = possibleTypes[idx];
-
+    Type type = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(type);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(type);
 
@@ -1060,19 +1042,12 @@ Operation *DeallocOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    if (!isa<MemRefType>(possibleTypes[idx])) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-      continue;
-    }
-
     // Sample memref.
-    MemRefType type = cast<MemRefType>(possibleTypes[idx]);
+    MemRefType type = cast<MemRefType>(builder.sample(possibleTypes).value());
+
     llvm::Optional<Value> memrefOpt = builder.sampleValueOfType(type);
     if (!memrefOpt.has_value()) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+      Type *it = llvm::find(possibleTypes, type);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
@@ -1082,7 +1057,7 @@ Operation *DeallocOp::generate(GeneratorOpBuilder &builder) {
     // Check if it originated from alloc
     if (memref.getDefiningOp() == nullptr ||
         !isa<AllocOp>(memref.getDefiningOp())) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+      Type *it = llvm::find(possibleTypes, type);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
@@ -1876,24 +1851,14 @@ OpFoldResult LoadOp::fold(FoldAdaptor adaptor) {
 }
 
 Operation *LoadOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> possibleTypes;
-  for (Type t : getGeneratableTypes(builder))
-    if (isa<MemRefType>(t) && builder.sampleValueOfType(t).has_value())
-      possibleTypes.push_back(cast<MemRefType>(t).getElementType());
+  llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    if (!isa<MemRefType>(possibleTypes[idx])) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-      continue;
-    }
+    MemRefType type = cast<MemRefType>(builder.sample(possibleTypes).value());
 
-    MemRefType type = cast<MemRefType>(possibleTypes[idx]);
     // TODO: Handle dynamic sizes
     if (type.getNumDynamicDims() > 0) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+      Type *it = llvm::find(possibleTypes, type);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
@@ -1901,7 +1866,7 @@ Operation *LoadOp::generate(GeneratorOpBuilder &builder) {
 
     // TODO: Handle unranked sizes
     if (!type.hasRank()) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+      Type *it = llvm::find(possibleTypes, type);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
@@ -1910,7 +1875,7 @@ Operation *LoadOp::generate(GeneratorOpBuilder &builder) {
     // Sample memref.
     llvm::Optional<Value> memrefOpt = builder.sampleValueOfType(type);
     if (!memrefOpt.has_value()) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+      Type *it = llvm::find(possibleTypes, type);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
@@ -1923,7 +1888,7 @@ Operation *LoadOp::generate(GeneratorOpBuilder &builder) {
       // Ensure memref has been initialized.
       if (!defOp->hasAttrOfType<BoolAttr>("generate_initialized") ||
           !defOp->getAttrOfType<BoolAttr>("generate_initialized")) {
-        Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+        Type *it = llvm::find(possibleTypes, type);
         if (it != possibleTypes.end())
           possibleTypes.erase(it);
         continue;
@@ -1932,7 +1897,7 @@ Operation *LoadOp::generate(GeneratorOpBuilder &builder) {
       // Ensure memref has not been deallocated.
       if (defOp->hasAttrOfType<BoolAttr>("generate_deallocated") &&
           defOp->getAttrOfType<BoolAttr>("generate_deallocated")) {
-        Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+        Type *it = llvm::find(possibleTypes, type);
         if (it != possibleTypes.end())
           possibleTypes.erase(it);
         continue;
@@ -1943,7 +1908,7 @@ Operation *LoadOp::generate(GeneratorOpBuilder &builder) {
     llvm::SmallVector<Value> indices;
     for (int64_t i = 0; i < type.getRank(); ++i) {
       int32_t maxVal = type.getDimSize(i) > 0 ? type.getDimSize(i) - 1 : 0;
-      unsigned idx = builder.sampleUniform(maxVal);
+      unsigned idx = builder.sampleUniform(0, maxVal);
       OperationState constState(builder.getUnknownLoc(),
                                 arith::ConstantOp::getOperationName());
       arith::ConstantOp::build(builder, constState, builder.getIndexType(),
@@ -2865,18 +2830,11 @@ Operation *StoreOp::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = getGeneratableTypes(builder);
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    if (!isa<MemRefType>(possibleTypes[idx])) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-      continue;
-    }
+    MemRefType type = cast<MemRefType>(builder.sample(possibleTypes).value());
 
-    MemRefType type = cast<MemRefType>(possibleTypes[idx]);
     // TODO: Handle dynamic sizes
     if (type.getNumDynamicDims() > 0) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+      Type *it = llvm::find(possibleTypes, type);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
@@ -2884,7 +2842,7 @@ Operation *StoreOp::generate(GeneratorOpBuilder &builder) {
 
     // TODO: Handle unranked sizes
     if (!type.hasRank()) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+      Type *it = llvm::find(possibleTypes, type);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
@@ -2893,7 +2851,7 @@ Operation *StoreOp::generate(GeneratorOpBuilder &builder) {
     // Sample memref.
     llvm::Optional<Value> memrefOpt = builder.sampleValueOfType(type);
     if (!memrefOpt.has_value()) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+      Type *it = llvm::find(possibleTypes, type);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
@@ -2905,7 +2863,7 @@ Operation *StoreOp::generate(GeneratorOpBuilder &builder) {
       // Ensure memref has not been deallocated.
       if (defOp->hasAttrOfType<BoolAttr>("generate_deallocated") &&
           defOp->getAttrOfType<BoolAttr>("generate_deallocated")) {
-        Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+        Type *it = llvm::find(possibleTypes, type);
         if (it != possibleTypes.end())
           possibleTypes.erase(it);
         continue;
@@ -2916,7 +2874,7 @@ Operation *StoreOp::generate(GeneratorOpBuilder &builder) {
     llvm::Optional<Value> valueOpt =
         builder.sampleValueOfType(type.getElementType());
     if (!valueOpt.has_value()) {
-      Type *it = llvm::find(possibleTypes, possibleTypes[idx]);
+      Type *it = llvm::find(possibleTypes, type);
       if (it != possibleTypes.end())
         possibleTypes.erase(it);
       continue;
@@ -2927,7 +2885,7 @@ Operation *StoreOp::generate(GeneratorOpBuilder &builder) {
     llvm::SmallVector<Value> indices;
     for (int64_t i = 0; i < type.getRank(); ++i) {
       int32_t maxVal = type.getDimSize(i) > 0 ? type.getDimSize(i) - 1 : 0;
-      unsigned idx = builder.sampleUniform(maxVal);
+      unsigned idx = builder.sampleUniform(0, maxVal);
       OperationState constState(builder.getUnknownLoc(),
                                 arith::ConstantOp::getOperationName());
       arith::ConstantOp::build(builder, constState, builder.getIndexType(),

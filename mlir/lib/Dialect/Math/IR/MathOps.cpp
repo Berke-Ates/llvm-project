@@ -39,9 +39,7 @@ Operation *math::AbsFOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -82,9 +80,7 @@ Operation *math::AbsIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -135,9 +131,7 @@ Operation *math::AtanOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -193,9 +187,7 @@ Operation *math::Atan2Op::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -242,9 +234,7 @@ Operation *math::CeilOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -290,9 +280,7 @@ Operation *math::CopySignOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -344,9 +332,7 @@ Operation *math::CosOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -397,9 +383,7 @@ Operation *math::SinOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -441,9 +425,7 @@ Operation *math::CountLeadingZerosOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -485,9 +467,7 @@ Operation *math::CountTrailingZerosOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -529,9 +509,7 @@ Operation *math::CtPopOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -582,9 +560,7 @@ Operation *math::ErfOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -667,9 +643,7 @@ Operation *math::IPowIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -723,9 +697,7 @@ Operation *math::LogOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -778,9 +750,7 @@ Operation *math::Log2Op::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -834,9 +804,7 @@ Operation *math::Log10Op::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -891,9 +859,7 @@ Operation *math::Log1pOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -946,9 +912,7 @@ Operation *math::PowFOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1003,9 +967,7 @@ Operation *math::SqrtOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -1056,9 +1018,7 @@ Operation *math::ExpOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -1109,9 +1069,7 @@ Operation *math::Exp2Op::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -1162,9 +1120,7 @@ Operation *math::ExpM1Op::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -1215,9 +1171,7 @@ Operation *math::TanOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -1268,9 +1222,7 @@ Operation *math::TanhOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -1316,9 +1268,7 @@ Operation *math::RoundEvenOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -1364,9 +1314,7 @@ Operation *math::FloorOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -1417,9 +1365,7 @@ Operation *math::RoundOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -1470,9 +1416,7 @@ Operation *math::TruncOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -1509,9 +1453,7 @@ Operation *math::CbrtOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -1558,8 +1500,7 @@ Operation *math::FPowIOp::generate(GeneratorOpBuilder &builder) {
       typeTuples.push_back(std::make_tuple(floatType, intType));
 
   while (!typeTuples.empty()) {
-    unsigned idx = builder.sampleUniform(typeTuples.size() - 1);
-    std::tuple<Type, Type> types = typeTuples[idx];
+    std::tuple<Type, Type> types = builder.sample(typeTuples).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(std::get<0>(types));
     llvm::Optional<Value> rhs = builder.sampleValueOfType(std::get<1>(types));
 
@@ -1597,9 +1538,7 @@ Operation *math::FmaOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> v1 = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> v2 = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> v3 = builder.sampleValueOfType(resultType);
@@ -1638,9 +1577,7 @@ Operation *math::RsqrtOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {

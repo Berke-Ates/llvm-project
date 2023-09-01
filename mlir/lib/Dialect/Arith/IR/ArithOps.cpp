@@ -316,9 +316,7 @@ Operation *arith::AddIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -410,9 +408,7 @@ Operation *arith::AddUIExtendedOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -476,9 +472,7 @@ Operation *arith::SubIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -537,9 +531,7 @@ Operation *arith::MulIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -615,9 +607,7 @@ Operation *arith::MulSIExtendedOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -707,9 +697,7 @@ Operation *arith::MulUIExtendedOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -785,9 +773,7 @@ Operation *arith::DivUIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -887,9 +873,7 @@ Operation *arith::DivSIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -998,9 +982,7 @@ Operation *arith::CeilDivUIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1126,9 +1108,7 @@ Operation *arith::CeilDivSIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1242,9 +1222,7 @@ Operation *arith::FloorDivSIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1333,9 +1311,7 @@ Operation *arith::RemUIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1423,9 +1399,7 @@ Operation *arith::RemSIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1530,9 +1504,7 @@ Operation *arith::AndIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1583,9 +1555,7 @@ Operation *arith::OrIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1651,9 +1621,7 @@ Operation *arith::XOrIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1704,9 +1672,7 @@ Operation *arith::NegFOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
 
     if (!lhs.has_value()) {
@@ -1753,9 +1719,7 @@ Operation *arith::AddFOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1803,9 +1767,7 @@ Operation *arith::SubFOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1857,9 +1819,7 @@ Operation *arith::MaxFOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1918,9 +1878,7 @@ Operation *arith::MaxSIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -1977,9 +1935,7 @@ Operation *arith::MaxUIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -2031,9 +1987,7 @@ Operation *arith::MinFOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -2092,9 +2046,7 @@ Operation *arith::MinSIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -2151,9 +2103,7 @@ Operation *arith::MinUIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -2200,9 +2150,7 @@ Operation *arith::MulFOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -2261,9 +2209,7 @@ Operation *arith::DivFOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -2343,9 +2289,7 @@ Operation *arith::RemFOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -2522,9 +2466,7 @@ Operation *arith::ExtUIOp::generate(GeneratorOpBuilder &builder) {
         llvm::SmallVector<Type>(allTypes.begin() + i + 1, allTypes.end());
 
   while (!possibleTypes.empty()) {
-    unsigned inputIdx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[inputIdx];
-
+    Type inputType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
     if (!lhs.has_value()) {
       Type *it = llvm::find(possibleTypes, inputType);
@@ -2533,9 +2475,7 @@ Operation *arith::ExtUIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
-    unsigned outputIdx = builder.sampleUniform(typesMap[inputType].size() - 1);
-    Type outputType = typesMap[inputType][outputIdx];
-
+    Type outputType = builder.sample(typesMap[inputType]).value();
     OperationState state(builder.getUnknownLoc(),
                          arith::ExtUIOp::getOperationName());
     arith::ExtUIOp::build(builder, state, outputType, lhs.value());
@@ -2588,9 +2528,7 @@ Operation *arith::ExtSIOp::generate(GeneratorOpBuilder &builder) {
         llvm::SmallVector<Type>(allTypes.begin() + i + 1, allTypes.end());
 
   while (!possibleTypes.empty()) {
-    unsigned inputIdx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[inputIdx];
-
+    Type inputType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
     if (!lhs.has_value()) {
       Type *it = llvm::find(possibleTypes, inputType);
@@ -2599,9 +2537,7 @@ Operation *arith::ExtSIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
-    unsigned outputIdx = builder.sampleUniform(typesMap[inputType].size() - 1);
-    Type outputType = typesMap[inputType][outputIdx];
-
+    Type outputType = builder.sample(typesMap[inputType]).value();
     OperationState state(builder.getUnknownLoc(),
                          arith::ExtSIOp::getOperationName());
     arith::ExtSIOp::build(builder, state, outputType, lhs.value());
@@ -2661,9 +2597,7 @@ Operation *arith::ExtFOp::generate(GeneratorOpBuilder &builder) {
         llvm::SmallVector<Type>(allTypes.begin() + i + 1, allTypes.end());
 
   while (!possibleTypes.empty()) {
-    unsigned inputIdx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[inputIdx];
-
+    Type inputType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
     if (!lhs.has_value()) {
       Type *it = llvm::find(possibleTypes, inputType);
@@ -2672,9 +2606,7 @@ Operation *arith::ExtFOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
-    unsigned outputIdx = builder.sampleUniform(typesMap[inputType].size() - 1);
-    Type outputType = typesMap[inputType][outputIdx];
-
+    Type outputType = builder.sample(typesMap[inputType]).value();
     OperationState state(builder.getUnknownLoc(),
                          arith::ExtFOp::getOperationName());
     arith::ExtFOp::build(builder, state, outputType, lhs.value());
@@ -2756,9 +2688,7 @@ Operation *arith::TruncIOp::generate(GeneratorOpBuilder &builder) {
         llvm::SmallVector<Type>(allTypes.begin() + i + 1, allTypes.end());
 
   while (!possibleTypes.empty()) {
-    unsigned inputIdx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[inputIdx];
-
+    Type inputType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
     if (!lhs.has_value()) {
       Type *it = llvm::find(possibleTypes, inputType);
@@ -2767,9 +2697,7 @@ Operation *arith::TruncIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
-    unsigned outputIdx = builder.sampleUniform(typesMap[inputType].size() - 1);
-    Type outputType = typesMap[inputType][outputIdx];
-
+    Type outputType = builder.sample(typesMap[inputType]).value();
     OperationState state(builder.getUnknownLoc(),
                          arith::TruncIOp::getOperationName());
     arith::TruncIOp::build(builder, state, outputType, lhs.value());
@@ -2831,9 +2759,7 @@ Operation *arith::TruncFOp::generate(GeneratorOpBuilder &builder) {
         llvm::SmallVector<Type>(allTypes.begin() + i + 1, allTypes.end());
 
   while (!possibleTypes.empty()) {
-    unsigned inputIdx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type inputType = possibleTypes[inputIdx];
-
+    Type inputType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
     if (!lhs.has_value()) {
       Type *it = llvm::find(possibleTypes, inputType);
@@ -2842,9 +2768,7 @@ Operation *arith::TruncFOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
-    unsigned outputIdx = builder.sampleUniform(typesMap[inputType].size() - 1);
-    Type outputType = typesMap[inputType][outputIdx];
-
+    Type outputType = builder.sample(typesMap[inputType]).value();
     OperationState state(builder.getUnknownLoc(),
                          arith::TruncFOp::getOperationName());
     arith::TruncFOp::build(builder, state, outputType, lhs.value());
@@ -2923,14 +2847,7 @@ Operation *arith::UIToFPOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-    if (!isa<FloatType>(resultType)) {
-      Type *it = llvm::find(possibleTypes, resultType);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-    }
-
+    Type resultType = builder.sample(possibleTypes).value();
     Type inputType = builder.getIntegerType(resultType.getIntOrFloatBitWidth());
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
     if (!lhs.has_value()) {
@@ -2985,14 +2902,7 @@ Operation *arith::SIToFPOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-    if (!isa<FloatType>(resultType)) {
-      Type *it = llvm::find(possibleTypes, resultType);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-    }
-
+    Type resultType = builder.sample(possibleTypes).value();
     Type inputType = builder.getIntegerType(resultType.getIntOrFloatBitWidth());
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
     if (!lhs.has_value()) {
@@ -3053,14 +2963,7 @@ Operation *arith::FPToUIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-    if (!isa<IntegerType>(resultType)) {
-      Type *it = llvm::find(possibleTypes, resultType);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-    }
-
+    Type resultType = builder.sample(possibleTypes).value();
     Type inputType = typeMap[resultType];
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
     if (!lhs.has_value()) {
@@ -3121,14 +3024,7 @@ Operation *arith::FPToSIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-    if (!isa<IntegerType>(resultType)) {
-      Type *it = llvm::find(possibleTypes, resultType);
-      if (it != possibleTypes.end())
-        possibleTypes.erase(it);
-    }
-
+    Type resultType = builder.sample(possibleTypes).value();
     Type inputType = typeMap[resultType];
     llvm::Optional<Value> lhs = builder.sampleValueOfType(inputType);
     if (!lhs.has_value()) {
@@ -3208,8 +3104,7 @@ Operation *arith::IndexCastOp::generate(GeneratorOpBuilder &builder) {
   }
 
   while (!typeTuples.empty()) {
-    unsigned idx = builder.sampleUniform(typeTuples.size() - 1);
-    std::tuple<Type, Type> types = typeTuples[idx];
+    std::tuple<Type, Type> types = builder.sample(typeTuples).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(std::get<0>(types));
 
     if (!lhs.has_value()) {
@@ -3276,8 +3171,7 @@ Operation *arith::IndexCastUIOp::generate(GeneratorOpBuilder &builder) {
   }
 
   while (!typeTuples.empty()) {
-    unsigned idx = builder.sampleUniform(typeTuples.size() - 1);
-    std::tuple<Type, Type> types = typeTuples[idx];
+    std::tuple<Type, Type> types = builder.sample(typeTuples).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(std::get<0>(types));
 
     if (!lhs.has_value()) {
@@ -3361,8 +3255,7 @@ Operation *arith::BitcastOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(typeMap[resultType]);
 
     if (!lhs.has_value()) {
@@ -3540,9 +3433,7 @@ Operation *arith::CmpIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned typeIdx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[typeIdx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -3553,9 +3444,7 @@ Operation *arith::CmpIOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
-    unsigned predicateIdx = builder.sampleUniform(predicateTypes.size() - 1);
-    arith::CmpIPredicate predicate = predicateTypes[predicateIdx];
-
+    arith::CmpIPredicate predicate = builder.sample(predicateTypes).value();
     OperationState state(builder.getUnknownLoc(),
                          arith::CmpIOp::getOperationName());
     arith::CmpIOp::build(builder, state, predicate, lhs.value(), rhs.value());
@@ -3948,9 +3837,7 @@ Operation *arith::CmpFOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned typeIdx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[typeIdx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -3961,9 +3848,7 @@ Operation *arith::CmpFOp::generate(GeneratorOpBuilder &builder) {
       continue;
     }
 
-    unsigned predicateIdx = builder.sampleUniform(predicateTypes.size() - 1);
-    arith::CmpFPredicate predicate = predicateTypes[predicateIdx];
-
+    arith::CmpFPredicate predicate = builder.sample(predicateTypes).value();
     OperationState state(builder.getUnknownLoc(),
                          arith::CmpFOp::getOperationName());
     arith::CmpFOp::build(builder, state, predicate, lhs.value(), rhs.value());
@@ -4185,9 +4070,7 @@ Operation *arith::SelectOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> cond = builder.sampleValueOfType(builder.getI1Type());
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
@@ -4240,9 +4123,7 @@ Operation *arith::ShLIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -4293,9 +4174,7 @@ Operation *arith::ShRUIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 
@@ -4346,9 +4225,7 @@ Operation *arith::ShRSIOp::generate(GeneratorOpBuilder &builder) {
   };
 
   while (!possibleTypes.empty()) {
-    unsigned idx = builder.sampleUniform(possibleTypes.size() - 1);
-    Type resultType = possibleTypes[idx];
-
+    Type resultType = builder.sample(possibleTypes).value();
     llvm::Optional<Value> lhs = builder.sampleValueOfType(resultType);
     llvm::Optional<Value> rhs = builder.sampleValueOfType(resultType);
 

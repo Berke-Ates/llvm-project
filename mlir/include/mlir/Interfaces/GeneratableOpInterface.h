@@ -181,11 +181,11 @@ public:
 
   /// Returns a list of all available values in the current location.
   llvm::SmallVector<Value>
-  collectValues(std::function<bool(const Value &)> filterFn = nullptr);
+  collectValues(std::function<bool(const Value &)> filter = nullptr);
 
   /// Returns a list of all available types in the current location.
   llvm::SmallVector<Type>
-  collectTypes(std::function<bool(const Type &)> filterFn = nullptr);
+  collectTypes(std::function<bool(const Type &)> filter = nullptr);
 
   //===--------------------------------------------------------------------===//
   // Samplers
@@ -211,8 +211,7 @@ public:
       return std::nullopt;
 
     std::uniform_int_distribution<unsigned> dist(1, probs[probs.size() - 1]);
-
-    unsigned rngNum = dist(rngGen);
+    unsigned rngNum = dist(rng);
     unsigned idx = 0;
     while (rngNum > probs[idx])
       idx++;
@@ -255,38 +254,59 @@ public:
     return selected;
   }
 
-  /// Returns a random number using a normal distribution around zero. This
-  /// function combines all specialized functions.
-  template <typename T>
-  T sampleNumber() {
-    static_assert(std::is_arithmetic<T>::value, "Numeric type required");
-    // Normal distribution, mean=0, stddev=1
-    std::normal_distribution<> dist(0, 1);
+  /// Returns a random boolean.
+  bool sampleBool() { return sample<bool>({true, false}).value(); }
 
-    if constexpr (std::is_integral<T>::value) {
-      return static_cast<T>(std::round(dist(rngGen)));
-    } else if constexpr (std::is_floating_point<T>::value) {
-      return static_cast<T>(dist(rngGen));
-    }
+  /// Returns a random number between min and max (inclusive) using uniform
+  /// distribution.
+  template <typename T>
+  T sampleUniform(T min, T max) {
+    return std::uniform_int_distribution<T>(min, max)(rng);
   }
 
-  /// Returns a random number between 0 and max (inclusive) using uniform
-  /// distribution.
-  unsigned sampleUniform(unsigned max);
+  /// Returns a random number using normal or geometric distribution.
+  template <typename T>
+  T sampleNumber(bool useGeometric = false) {
+    static_assert(std::is_arithmetic<T>::value, "Numeric type required");
 
-  /// Returns a random boolean.
-  bool sampleBool();
+    double num;
+    if (useGeometric) {
+      std::geometric_distribution<> dist(0.2);
+      num = dist(rng);
+    } else {
+      std::normal_distribution<> dist(0, 1);
+      num = dist(rng);
+    }
 
-  /// Samples from a geometric distribution of available types in the current
-  /// position.
-  llvm::SmallVector<Type> sampleTypes(unsigned min = 0);
+    if constexpr (std::is_integral<T>::value) {
+      return static_cast<T>(std::round(num));
+    } else if constexpr (std::is_floating_point<T>::value) {
+      return static_cast<T>(num);
+    }
+
+    // Default return value, should never be reached.
+    return T();
+  }
+
+  /// Returns a list of values using the filters.
+  llvm::Optional<llvm::SmallVector<Value>>
+  sampleValues(llvm::SmallVector<std::function<bool(const Value &)>> filters);
+
+  /// Returns a value using the filter.
+  llvm::Optional<Value> sampleValue(std::function<bool(const Value &)> filter);
 
   /// Returns a list of values of the provided types.
   llvm::Optional<llvm::SmallVector<Value>>
   sampleValuesOfTypes(llvm::SmallVector<Type> types);
 
-  /// Returns a value with of the provided type.
+  /// Returns a value of the provided type.
   llvm::Optional<Value> sampleValueOfType(Type type);
+
+  /// Samples from a geometric distribution of available types in the current
+  /// position.
+  llvm::SmallVector<Type>
+  sampleTypes(unsigned min = 0,
+              std::function<bool(const Type &)> filter = nullptr);
 
   //===--------------------------------------------------------------------===//
   // Generators
@@ -308,14 +328,14 @@ private:
   Operation *generate(RegisteredOperationName ron);
 
   /// Random number generator.
-  std::mt19937 rngGen;
+  std::mt19937 rng;
 
   /// The configuration used for IR generation.
   GeneratorOpBuilderConfig generatorConfig;
 
   /// All operations that can be generated.
   llvm::SmallVector<RegisteredOperationName> availableOps = {};
-};
+}; // namespace mlir
 
 } // namespace mlir
 
