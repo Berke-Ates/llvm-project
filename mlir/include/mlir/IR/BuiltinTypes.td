@@ -17,6 +17,7 @@
 include "mlir/IR/AttrTypeBase.td"
 include "mlir/IR/BuiltinDialect.td"
 include "mlir/IR/BuiltinTypeInterfaces.td"
+include "mlir/Interfaces/GeneratableInterfaces.td"
 
 // TODO: Currently the types defined in this file are prefixed with `Builtin_`.
 // This is to differentiate the types here with the ones in OpBase.td. We should
@@ -377,7 +378,7 @@ def Builtin_Integer : Builtin_Type<"Integer"> {
 //===----------------------------------------------------------------------===//
 
 def Builtin_MemRef : Builtin_Type<"MemRef", [
-    ShapedTypeInterface
+    ShapedTypeInterface, DeclareTypeInterfaceMethods<GeneratableTypeInterface>
   ], "BaseMemRefType"> {
   let summary = "Shaped reference to a region of memory";
   let description = [{

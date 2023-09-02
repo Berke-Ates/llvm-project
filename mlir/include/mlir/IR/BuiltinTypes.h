@@ -11,6 +11,7 @@
 
 #include "mlir/IR/BuiltinAttributeInterfaces.h"
 #include "mlir/IR/BuiltinTypeInterfaces.h"
+#include "mlir/Interfaces/GeneratableInterfaces.h"
 
 namespace llvm {
 class BitVector;

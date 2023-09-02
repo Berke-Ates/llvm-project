@@ -231,7 +231,7 @@ GeneratorOpBuilder::sampleTypes(unsigned min,
                                 std::function<bool(const Type &)> filter) {
   llvm::SmallVector<Type> availableTypes = collectTypes(filter);
 
-  int length = sampleNumber<int>(/*useGeometric=*/true) + min;
+  int length = sampleGeometric<int>() + min;
   llvm::Optional<llvm::SmallVector<Type>> types =
       sample(availableTypes, length);
 
@@ -320,9 +320,10 @@ LogicalResult GeneratorOpBuilder::generateBlock(Block *block,
       possibleOps.push_back(op);
 
   // Generate operations.
-  int length = sampleNumber<int>(/*useGeometric=*/true);
-  for (int i = 0; i < length && generateOperation(possibleOps); ++i)
-    ;
+  int length = sampleGeometric<int>();
+  for (int i = 0; i < length; ++i)
+    if (!generateOperation(possibleOps))
+      break;
 
   // Try to generate terminator.
   setInsertionPointToEnd(block);

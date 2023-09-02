@@ -15,6 +15,7 @@
 #include "mlir/IR/Diagnostics.h"
 #include "mlir/IR/Dialect.h"
 #include "mlir/IR/FunctionInterfaces.h"
+#include "mlir/IR/GeneratorOpBuilder.h"
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/IR/TensorEncoding.h"
 #include "llvm/ADT/APFloat.h"
@@ -628,6 +629,23 @@ LogicalResult MemRefType::verify(function_ref<InFlightDiagnostic()> emitError,
     return emitError() << "unsupported memory space Attribute";
 
   return success();
+}
+
+llvm::Optional<Type> MemRefType::generate(GeneratorOpBuilder &builder) {
+  llvm::SmallVector<Type> possibleTypes = {
+      builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
+      builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
+      builder.getF16Type(),   builder.getF32Type(), builder.getF64Type(),
+  };
+
+  Type t = builder.sample(possibleTypes).value();
+  llvm::SmallVector<int64_t> shape;
+
+  unsigned length = builder.sampleGeometric<unsigned>();
+  for (unsigned i = 0; i < length; ++i)
+    shape.push_back(builder.sampleGeometric<int64_t>());
+
+  return get(shape, t);
 }
 
 //===----------------------------------------------------------------------===//

@@ -272,24 +272,32 @@ public:
     return std::uniform_int_distribution<T>(min, max)(rng);
   }
 
-  /// Returns a random number using normal or geometric distribution.
+  /// Returns a random number using normal distribution.
   template <typename T>
-  T sampleNumber(bool useGeometric = false) {
+  T sampleNormal(bool useGeometric = false) {
     static_assert(std::is_arithmetic<T>::value, "Numeric type required");
 
-    double num;
-    if (useGeometric) {
-      std::geometric_distribution<> dist(0.2);
-      num = dist(rng);
-    } else {
-      std::normal_distribution<> dist(0, 1);
-      num = dist(rng);
+    std::normal_distribution<> dist(0, 10);
+    if constexpr (std::is_integral<T>::value) {
+      return static_cast<T>(std::round(dist(rng)));
+    } else if constexpr (std::is_floating_point<T>::value) {
+      return static_cast<T>(dist(rng));
     }
 
+    // Default return value, should never be reached.
+    return T();
+  }
+
+  /// Returns a random number using geometric distribution.
+  template <typename T>
+  T sampleGeometric() {
+    static_assert(std::is_arithmetic<T>::value, "Numeric type required");
+
+    std::geometric_distribution<> dist(0.2);
     if constexpr (std::is_integral<T>::value) {
-      return static_cast<T>(std::round(num));
+      return static_cast<T>(std::round(dist(rng)));
     } else if constexpr (std::is_floating_point<T>::value) {
-      return static_cast<T>(num);
+      return static_cast<T>(dist(rng));
     }
 
     // Default return value, should never be reached.
