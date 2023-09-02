@@ -19,6 +19,7 @@ add_mlir_library(MLIRIR
   ExtensibleDialect.cpp
   FunctionImplementation.cpp
   FunctionInterfaces.cpp
+  GeneratorOpBuilder.cpp
   IntegerSet.cpp
   Location.cpp
   MLIRContext.cpp
@@ -54,6 +55,7 @@ add_mlir_library(MLIRIR
   MLIRCallInterfacesIncGen
   MLIRCastInterfacesIncGen
   MLIRDataLayoutInterfacesIncGen
+  MLIRGeneratableInterfacesIncGen
   MLIROpAsmInterfaceIncGen
   MLIRRegionKindInterfaceIncGen
   MLIRSideEffectInterfacesIncGen

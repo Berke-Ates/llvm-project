@@ -10,6 +10,7 @@
 #include "mlir/Dialect/CommonFolders.h"
 #include "mlir/Dialect/Math/IR/Math.h"
 #include "mlir/IR/Builders.h"
+#include "mlir/IR/GeneratorOpBuilder.h"
 #include <optional>
 
 using namespace mlir;
