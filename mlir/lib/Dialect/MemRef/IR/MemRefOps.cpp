@@ -387,7 +387,6 @@ Operation *AllocOp::generate(GeneratorOpBuilder &builder) {
   }
 
   OperationState state(builder.getUnknownLoc(), AllocOp::getOperationName());
-  state.addAttribute("generate_initialized", builder.getBoolAttr(false));
   if (dynamicSizes.empty())
     AllocOp::build(builder, state, type);
   else
@@ -419,7 +418,6 @@ Operation *AllocaOp::generate(GeneratorOpBuilder &builder) {
   }
 
   OperationState state(builder.getUnknownLoc(), AllocaOp::getOperationName());
-  state.addAttribute("generate_initialized", builder.getBoolAttr(false));
   if (dynamicSizes.empty())
     AllocaOp::build(builder, state, type);
   else
@@ -1015,7 +1013,7 @@ Operation *DeallocOp::generate(GeneratorOpBuilder &builder) {
     if (op) {
       // Mark memref as deallocated.
       memref.getDefiningOp()->setAttr("generate_deallocated",
-                                      builder.getBoolAttr(true));
+                                      builder.getUnitAttr());
       return op;
     }
 
@@ -1818,15 +1816,13 @@ Operation *LoadOp::generate(GeneratorOpBuilder &builder) {
     Operation *defOp = memref.getDefiningOp();
 
     // Ensure memref has been initialized.
-    if (!defOp->hasAttrOfType<BoolAttr>("generate_initialized") ||
-        !defOp->getAttrOfType<BoolAttr>("generate_initialized")) {
+    if (!defOp->hasAttrOfType<UnitAttr>("generate_initialized")) {
       llvm::erase_value(possibleValues, memref);
       continue;
     }
 
     // Ensure memref has not been deallocated.
-    if (defOp->hasAttrOfType<BoolAttr>("generate_deallocated") &&
-        defOp->getAttrOfType<BoolAttr>("generate_deallocated")) {
+    if (defOp->hasAttrOfType<UnitAttr>("generate_deallocated")) {
       llvm::erase_value(possibleValues, memref);
       continue;
     }
@@ -2778,8 +2774,7 @@ Operation *StoreOp::generate(GeneratorOpBuilder &builder) {
 
     Operation *defOp = memref.getDefiningOp();
     // Ensure memref has not been deallocated.
-    if (defOp->hasAttrOfType<BoolAttr>("generate_deallocated") &&
-        defOp->getAttrOfType<BoolAttr>("generate_deallocated")) {
+    if (defOp->hasAttrOfType<UnitAttr>("generate_deallocated")) {
       llvm::erase_value(possibleValues, memref);
       continue;
     }
@@ -2819,7 +2814,7 @@ Operation *StoreOp::generate(GeneratorOpBuilder &builder) {
     if (op) {
       // Mark memref as initialized.
       memref.getDefiningOp()->setAttr("generate_initialized",
-                                      builder.getBoolAttr(true));
+                                      builder.getUnitAttr());
       return op;
     }
 
