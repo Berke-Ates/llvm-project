@@ -183,6 +183,13 @@ public:
   /// enforces generator constraints.
   Operation *create(const OperationState &state);
 
+  /// Returns a list with `num` unknown locations.
+  llvm::SmallVector<Location> getUnknownLocs(unsigned num);
+
+  /// Adds result types to an exisitng operation by creating a clone above the
+  /// operation.
+  Operation *addResultTypes(Operation *op, llvm::ArrayRef<Type> resultTypes);
+
   //===--------------------------------------------------------------------===//
   // Collectors
   //===--------------------------------------------------------------------===//

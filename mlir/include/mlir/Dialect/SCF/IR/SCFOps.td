@@ -40,7 +40,6 @@ class SCF_Op<string mnemonic, list<Trait> traits = []> :
 def ConditionOp : SCF_Op<"condition", [
   HasParent<"WhileOp">,
   DeclareOpInterfaceMethods<RegionBranchTerminatorOpInterface>,
-  DeclareOpInterfaceMethods<GeneratableOpInterface>,
   Pure,
   Terminator
 ]> {

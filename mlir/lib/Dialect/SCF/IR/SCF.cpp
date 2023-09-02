@@ -289,34 +289,6 @@ ConditionOp::getMutableSuccessorOperands(std::optional<unsigned> index) {
   return getArgsMutable();
 }
 
-Operation *ConditionOp::generate(GeneratorOpBuilder &builder) {
-  Block *block = builder.getBlock();
-  if (block == nullptr)
-    return nullptr;
-
-  Operation *parent = block->getParentOp();
-  if (parent == nullptr || !isa<WhileOp>(parent))
-    return nullptr;
-
-  WhileOp whileOp = cast<WhileOp>(parent);
-  if (&whileOp.getBefore().back() != block)
-    return nullptr;
-
-  llvm::Optional<Value> cond = builder.sampleValueOfType(builder.getI1Type());
-  if (!cond.has_value())
-    return nullptr;
-
-  llvm::Optional<llvm::SmallVector<Value>> args = builder.sampleValuesOfTypes(
-      llvm::SmallVector<Type>(whileOp.getResultTypes()));
-  if (!args.has_value())
-    return nullptr;
-
-  OperationState state(builder.getUnknownLoc(),
-                       ConditionOp::getOperationName());
-  ConditionOp::build(builder, state, cond.value(), args.value());
-  return builder.create(state);
-}
-
 //===----------------------------------------------------------------------===//
 // ForOp
 //===----------------------------------------------------------------------===//
@@ -3994,42 +3966,58 @@ void WhileOp::getCanonicalizationPatterns(RewritePatternSet &results,
 }
 
 Operation *WhileOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Type> operandTypes = builder.sampleTypes(/*min=*/1);
-  llvm::SmallVector<Type> resultTypes = builder.sampleTypes(/*min=*/1);
-  llvm::Optional<llvm::SmallVector<Value>> operands =
-      builder.sampleValuesOfTypes(operandTypes);
-  if (!operands.has_value())
-    return nullptr;
+  llvm::SmallVector<Type> operandTypes = builder.sampleTypes();
+  llvm::SmallVector<Value> operands =
+      builder.sampleValuesOfTypes(operandTypes).value();
 
   OperationState state(builder.getUnknownLoc(), WhileOp::getOperationName());
-  WhileOp::build(builder, state, resultTypes, operands.value());
+  WhileOp::build(builder, state, {}, operands);
   Operation *op = builder.create(state);
   if (!op)
     return nullptr;
 
-  llvm::SmallVector<Location> operandLocs;
-  llvm::SmallVector<Location> resultLocs;
-
-  for (size_t i = 0; i < operandTypes.size(); ++i)
-    operandLocs.push_back(builder.getUnknownLoc());
-  for (size_t i = 0; i < resultTypes.size(); ++i)
-    resultLocs.push_back(builder.getUnknownLoc());
-
   WhileOp whileOp = cast<WhileOp>(op);
-  builder.createBlock(&whileOp.getAfter(), whileOp.getAfter().end(),
-                      resultTypes, resultLocs);
-  builder.createBlock(&whileOp.getBefore(), whileOp.getBefore().end(),
-                      operandTypes, operandLocs);
 
-  llvm::SmallVector<Type> beforeTypes = resultTypes;
-  beforeTypes.push_back(builder.getI1Type());
-  if (builder
-          .generateBlock(&whileOp.getBefore().front(),
-                         /*ensureTerminator=*/true)
-          .failed()) {
+  builder.createBlock(&whileOp.getBefore(), whileOp.getBefore().end(),
+                      operandTypes,
+                      builder.getUnknownLocs(operandTypes.size()));
+
+  if (builder.generateBlock(&whileOp.getBefore().front()).failed()) {
     whileOp.erase();
     return nullptr;
   }
+
+  // Generate condition.
+  builder.setInsertionPointToEnd(&whileOp.getBefore().front());
+  llvm::Optional<Value> cond = builder.sampleValueOfType(builder.getI1Type());
+  if (!cond.has_value()) {
+    whileOp.erase();
+    return nullptr;
+  }
+
+  llvm::SmallVector<Type> condTypes = builder.sampleTypes();
+  llvm::SmallVector<Value> condArgs =
+      builder.sampleValuesOfTypes(condTypes).value();
+
+  OperationState condState(builder.getUnknownLoc(),
+                           ConditionOp::getOperationName());
+  ConditionOp::build(builder, condState, cond.value(), condArgs);
+  if (!builder.create(condState)) {
+    whileOp.erase();
+    return nullptr;
+  }
+
+  // Rebuild with new result types.
+  op = builder.addResultTypes(whileOp, condTypes);
+  whileOp.erase();
+  if (!op)
+    return nullptr;
+
+  whileOp = cast<WhileOp>(op);
+
+  builder.createBlock(&whileOp.getAfter(), whileOp.getAfter().end(),
+                      whileOp.getResultTypes(),
+                      builder.getUnknownLocs(whileOp.getResultTypes().size()));
 
   if (builder
           .generateBlock(&whileOp.getAfter().front(), /*ensureTerminator=*/true)

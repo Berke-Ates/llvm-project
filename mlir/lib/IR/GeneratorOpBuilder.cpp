@@ -124,6 +124,33 @@ Operation *GeneratorOpBuilder::create(const OperationState &state) {
   return nullptr;
 }
 
+llvm::SmallVector<Location> GeneratorOpBuilder::getUnknownLocs(unsigned num) {
+  llvm::SmallVector<Location> locs;
+  for (unsigned i = 0; i < num; ++i)
+    locs.push_back(getUnknownLoc());
+  return locs;
+}
+
+Operation *
+GeneratorOpBuilder::addResultTypes(Operation *op,
+                                   llvm::ArrayRef<Type> resultTypes) {
+  if (!op || op->getNumResults() > 0)
+    return nullptr;
+
+  // Guard the insertion point.
+  OpBuilder::InsertionGuard guard(*this);
+  setInsertionPoint(op);
+
+  OperationState state(op->getLoc(), op->getName());
+  state.addTypes(resultTypes);
+  state.addAttributes(op->getAttrs());
+  state.addOperands(op->getOperands());
+  for (unsigned i = 0; i < op->getNumRegions(); ++i)
+    state.addRegion()->takeBody(op->getRegion(i));
+
+  return OpBuilder::create(state);
+}
+
 //===----------------------------------------------------------------------===//
 // Collectors
 //===----------------------------------------------------------------------===//
