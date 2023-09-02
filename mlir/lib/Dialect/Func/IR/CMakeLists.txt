@@ -13,4 +13,4 @@ add_mlir_dialect_library(
   MLIRInferTypeOpInterface
   MLIRIR
   MLIRSideEffectInterfaces
-  MLIRGeneratableOpInterface)
+  MLIRGeneratableInterfaces)

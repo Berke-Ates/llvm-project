@@ -1,4 +1,4 @@
-//===- GeneratableOpInterface.cpp - Generatable operations interface ------===//
+//===- GeneratableInterfaces.cpp - Generatable interfaces -----------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "GeneratableOpInterface"
-#include "mlir/Interfaces/GeneratableOpInterface.h"
+#define DEBUG_TYPE "GeneratableInterfaces"
+#include "mlir/Interfaces/GeneratableInterfaces.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Signals.h"
 #include <random>
@@ -346,5 +346,5 @@ Operation *GeneratorOpBuilder::generate(RegisteredOperationName ron) {
 // Table-generated class definitions
 //===----------------------------------------------------------------------===//
 
-/// Include the definitions of the copy operation interface.
-#include "mlir/Interfaces/GeneratableOpInterface.cpp.inc"
+/// Include the definitions of the generatable interfaces.
+#include "mlir/Interfaces/GeneratableInterfaces.cpp.inc"

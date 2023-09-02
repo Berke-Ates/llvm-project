@@ -1,4 +1,4 @@
-//===- GeneratableOpInterface.h - Generatable interface ---------*- C++ -*-===//
+//===- GeneratableInterfaces.h - Generatable interfaces ---------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,12 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the operation interface for generatable operations.
+// This file implements the interfaces for generatable operations and types.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MLIR_INTERFACES_GENERATABLEOPINTERFACE_H
-#define MLIR_INTERFACES_GENERATABLEOPINTERFACE_H
+#ifndef MLIR_INTERFACES_GENERATABLEINTERFACES_H
+#define MLIR_INTERFACES_GENERATABLEINTERFACES_H
 
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/PatternMatch.h"
@@ -343,6 +343,6 @@ private:
 // Generated Interface Declarations
 //===----------------------------------------------------------------------===//
 
-#include "mlir/Interfaces/GeneratableOpInterface.h.inc"
+#include "mlir/Interfaces/GeneratableInterfaces.h.inc"
 
-#endif // MLIR_INTERFACES_GENERATABLEOPINTERFACE_H
+#endif // MLIR_INTERFACES_GENERATABLEINTERFACES_H

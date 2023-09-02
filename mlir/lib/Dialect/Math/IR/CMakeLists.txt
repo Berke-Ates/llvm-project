@@ -10,5 +10,5 @@ add_mlir_dialect_library(
   PUBLIC
   MLIRArithDialect
   MLIRDialect
-  MLIRGeneratableOpInterface
+  MLIRGeneratableInterfaces
   MLIRIR)

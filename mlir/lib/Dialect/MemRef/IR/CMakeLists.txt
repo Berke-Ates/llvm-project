@@ -16,7 +16,7 @@ add_mlir_dialect_library(
   MLIRControlFlowInterfaces
   MLIRDialect
   MLIRDialectUtils
-  MLIRGeneratableOpInterface
+  MLIRGeneratableInterfaces
   MLIRInferTypeOpInterface
   MLIRIR
   MLIRShapedOpInterfaces

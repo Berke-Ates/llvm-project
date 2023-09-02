@@ -7,4 +7,4 @@ add_mlir_library(
   PUBLIC
   MLIRIR
   MLIRSupport
-  MLIRGeneratableOpInterface)
+  MLIRGeneratableInterfaces)

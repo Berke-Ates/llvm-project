@@ -22,7 +22,7 @@ add_mlir_dialect_library(
   MLIRInferIntRangeCommon
   MLIRInferIntRangeInterface
   MLIRInferTypeOpInterface
-  MLIRGeneratableOpInterface
+  MLIRGeneratableInterfaces
   MLIRIR)
 
 add_mlir_dialect_library(
