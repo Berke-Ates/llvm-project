@@ -81,7 +81,7 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
 
   // Override configuration values with CLI values
   if (seedOpt.getNumOccurrences() > 0)
-    config.Seed = seedOpt.getValue();
+    config.seed(seedOpt.getValue());
 
   // Dump config.
   if (shouldDumpConfig) {
