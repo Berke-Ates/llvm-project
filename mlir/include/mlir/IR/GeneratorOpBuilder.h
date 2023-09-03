@@ -187,7 +187,7 @@ public:
   llvm::SmallVector<Location> getUnknownLocs(unsigned num);
 
   /// Adds result types to an exisitng operation by creating a clone above the
-  /// operation.
+  /// operation. Make sure to erase the original operation.
   Operation *addResultTypes(Operation *op, llvm::ArrayRef<Type> resultTypes);
 
   //===--------------------------------------------------------------------===//
@@ -324,6 +324,12 @@ public:
 
   /// Returns a value of the provided type.
   llvm::Optional<Value> sampleValueOfType(Type type);
+
+  /// Samples from a geometric distribution of available values in the current
+  /// position.
+  llvm::SmallVector<Value>
+  sampleValues(unsigned min = 0,
+               std::function<bool(const Value &)> filter = nullptr);
 
   /// Samples from a geometric distribution of available types in the current
   /// position.

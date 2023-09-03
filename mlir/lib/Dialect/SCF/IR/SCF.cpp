@@ -1171,8 +1171,8 @@ Operation *ForOp::generate(GeneratorOpBuilder &builder) {
   if (!bounds.has_value())
     return nullptr;
 
-  // Limit bounds.
-  // FIXME: ABS() would be better
+  // Ensure step size is at least one.
+  // FIXME: ABS()+1 would be better
   OperationState constState(builder.getUnknownLoc(),
                             arith::ConstantOp::getOperationName());
   arith::ConstantOp::build(builder, constState, indexType,
@@ -1191,18 +1191,11 @@ Operation *ForOp::generate(GeneratorOpBuilder &builder) {
     return nullptr;
   }
 
-  llvm::SmallVector<Type> iterTypes = builder.sampleTypes();
-  llvm::Optional<llvm::SmallVector<Value>> iterArgs =
-      builder.sampleValuesOfTypes(iterTypes);
-  if (!iterArgs.has_value()) {
-    maxOp->erase();
-    constOp->erase();
-    return nullptr;
-  }
+  llvm::SmallVector<Value> iterArgs = builder.sampleValues();
 
   OperationState state(builder.getUnknownLoc(), ForOp::getOperationName());
   ForOp::build(builder, state, bounds.value()[0], bounds.value()[1],
-               maxOp->getResult(0), iterArgs.value());
+               maxOp->getResult(0), iterArgs);
   Operation *op = builder.create(state);
   if (op == nullptr) {
     maxOp->erase();
@@ -1211,10 +1204,20 @@ Operation *ForOp::generate(GeneratorOpBuilder &builder) {
   }
 
   ForOp forOp = cast<ForOp>(op);
-  if (builder
-          .generateBlock(forOp.getBody(),
-                         /*ensureTerminator=*/!iterTypes.empty())
-          .failed()) {
+  if (builder.generateBlock(forOp.getBody()).failed()) {
+    forOp.erase();
+    maxOp->erase();
+    constOp->erase();
+    return nullptr;
+  }
+
+  // Implicit yield.
+  if (forOp.getNumResults() == 0)
+    return forOp;
+
+  // Add yield operation.
+  builder.setInsertionPointToEnd(forOp.getBody());
+  if (!YieldOp::generate(builder)) {
     forOp.erase();
     maxOp->erase();
     constOp->erase();
@@ -2685,27 +2688,60 @@ Operation *IfOp::generate(GeneratorOpBuilder &builder) {
   if (!cond.has_value())
     return nullptr;
 
-  llvm::SmallVector<Type> retTypes = builder.sampleTypes();
-  bool hasElse = builder.sampleBool() || !retTypes.empty();
-
   OperationState state(builder.getUnknownLoc(), IfOp::getOperationName());
-  IfOp::build(builder, state, retTypes, cond.value(), hasElse);
+  IfOp::build(builder, state, {}, cond.value(), true);
   Operation *op = builder.create(state);
   if (op == nullptr)
     return nullptr;
 
   IfOp ifOp = cast<IfOp>(op);
-  if (builder.generateBlock(ifOp.thenBlock(), /*ensureTerminator=*/true)
-          .failed()) {
+  if (builder.generateBlock(ifOp.thenBlock()).failed()) {
     ifOp.erase();
     return nullptr;
   }
 
-  if (!hasElse)
-    return ifOp;
+  if (builder.generateBlock(ifOp.elseBlock()).failed()) {
+    ifOp.erase();
+    return nullptr;
+  }
 
-  if (builder.generateBlock(ifOp.elseBlock(), /*ensureTerminator=*/true)
-          .failed()) {
+  // Take the intersection of available types in both regions.
+  builder.setInsertionPointToEnd(ifOp.thenBlock());
+  llvm::SmallVector<Type> thenTypes = builder.collectTypes();
+
+  builder.setInsertionPointToEnd(ifOp.elseBlock());
+  llvm::SmallVector<Type> resultTypes =
+      builder.sampleTypes(/*min=*/0, /*filter=*/[thenTypes](const Type &t) {
+        return llvm::is_contained(thenTypes, t);
+      });
+
+  // Implicit yield.
+  if (resultTypes.empty()) {
+    // Remove else block.
+    if (builder.sampleBool())
+      ifOp.getElseRegion().getBlocks().clear();
+
+    return ifOp;
+  }
+
+  op = builder.addResultTypes(op, resultTypes);
+  ifOp.erase();
+  if (!op)
+    return nullptr;
+  ifOp = cast<IfOp>(op);
+
+  // Resample yield operations.
+  ifOp.thenYield().erase();
+  ifOp.elseYield().erase();
+
+  builder.setInsertionPointToEnd(ifOp.thenBlock());
+  if (!YieldOp::generate(builder)) {
+    ifOp.erase();
+    return nullptr;
+  }
+
+  builder.setInsertionPointToEnd(ifOp.elseBlock());
+  if (!YieldOp::generate(builder)) {
     ifOp.erase();
     return nullptr;
   }
@@ -4019,9 +4055,13 @@ Operation *WhileOp::generate(GeneratorOpBuilder &builder) {
                       whileOp.getResultTypes(),
                       builder.getUnknownLocs(whileOp.getResultTypes().size()));
 
-  if (builder
-          .generateBlock(&whileOp.getAfter().front(), /*ensureTerminator=*/true)
-          .failed()) {
+  if (builder.generateBlock(&whileOp.getAfter().front()).failed()) {
+    whileOp.erase();
+    return nullptr;
+  }
+
+  builder.setInsertionPointToEnd(&whileOp.getAfter().front());
+  if (!YieldOp::generate(builder)) {
     whileOp.erase();
     return nullptr;
   }
@@ -4173,9 +4213,7 @@ Operation *YieldOp::generate(GeneratorOpBuilder &builder) {
 
   Operation *parent = block->getParentOp();
   if (parent == nullptr ||
-      !(isa<ExecuteRegionOp>(parent) || isa<ForOp>(parent) ||
-        isa<IfOp>(parent) || isa<IndexSwitchOp>(parent) ||
-        isa<ParallelOp>(parent) || isa<WhileOp>(parent)))
+      !(isa<ForOp>(parent) || isa<IfOp>(parent) || isa<WhileOp>(parent)))
     return nullptr;
 
   // Has implicit yield.
@@ -4186,21 +4224,10 @@ Operation *YieldOp::generate(GeneratorOpBuilder &builder) {
   if (isa<WhileOp>(parent) && &cast<WhileOp>(parent).getAfter().back() != block)
     return nullptr;
 
-  // Get required types.
-  TypeRange retTypes;
-
-  if (ExecuteRegionOp op = dyn_cast<ExecuteRegionOp>(parent))
-    retTypes = op.getResultTypes();
-  else if (ForOp op = dyn_cast<ForOp>(parent))
-    retTypes = op.getResultTypes();
-  else if (IfOp op = dyn_cast<IfOp>(parent))
-    retTypes = op.getResultTypes();
-  else if (IndexSwitchOp op = dyn_cast<IndexSwitchOp>(parent))
-    retTypes = op.getResultTypes();
-  else if (ParallelOp op = dyn_cast<ParallelOp>(parent))
-    retTypes = op.getResultTypes();
-  else if (WhileOp op = dyn_cast<WhileOp>(parent))
-    retTypes = op.getOperandTypes();
+  // Sample required types.
+  TypeRange retTypes = parent->getResultTypes();
+  if (isa<WhileOp>(parent))
+    retTypes = parent->getOperandTypes();
 
   llvm::Optional<llvm::SmallVector<Value>> results =
       builder.sampleValuesOfTypes(retTypes);

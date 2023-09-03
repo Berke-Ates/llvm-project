@@ -253,6 +253,22 @@ llvm::Optional<Value> GeneratorOpBuilder::sampleValueOfType(Type type) {
   return values.value()[0];
 }
 
+llvm::SmallVector<Value>
+GeneratorOpBuilder::sampleValues(unsigned min,
+                                 std::function<bool(const Value &)> filter) {
+  llvm::SmallVector<Value> availableValues = collectValues(filter);
+
+  int length = sampleGeometric<int>() + min;
+  llvm::Optional<llvm::SmallVector<Value>> values =
+      sample(availableValues, length);
+
+  // Failed to sample.
+  if (!values.has_value())
+    return {};
+
+  return values.value();
+}
+
 llvm::SmallVector<Type>
 GeneratorOpBuilder::sampleTypes(unsigned min,
                                 std::function<bool(const Type &)> filter) {
