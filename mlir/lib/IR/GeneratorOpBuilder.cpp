@@ -207,6 +207,27 @@ GeneratorOpBuilder::collectTypes(std::function<bool(const Type &)> filter) {
 // Samplers
 //===----------------------------------------------------------------------===//
 
+std::string GeneratorOpBuilder::sampleString() {
+  char alphas[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  char nums[] = "0123456789";
+  llvm::SmallVector<char> charset;
+  for (char c : alphas)
+    charset.push_back(c);
+
+  unsigned length = sampleGeometric<unsigned>() + 1;
+  std::string result;
+  result.reserve(length);
+  result += sample(charset).value();
+
+  for (char c : nums)
+    charset.push_back(c);
+
+  for (unsigned i = 1; i < length; ++i)
+    result += sample(charset).value();
+
+  return result;
+}
+
 llvm::Optional<llvm::SmallVector<Value>> GeneratorOpBuilder::sampleValues(
     llvm::SmallVector<std::function<bool(const Value &)>> filters) {
   llvm::SmallVector<Value> possibleValues = {};
@@ -258,7 +279,7 @@ GeneratorOpBuilder::sampleValues(unsigned min,
                                  std::function<bool(const Value &)> filter) {
   llvm::SmallVector<Value> availableValues = collectValues(filter);
 
-  int length = sampleGeometric<int>() + min;
+  unsigned length = sampleGeometric<unsigned>() + min;
   llvm::Optional<llvm::SmallVector<Value>> values =
       sample(availableValues, length);
 
@@ -274,7 +295,7 @@ GeneratorOpBuilder::sampleTypes(unsigned min,
                                 std::function<bool(const Type &)> filter) {
   llvm::SmallVector<Type> availableTypes = collectTypes(filter);
 
-  int length = sampleGeometric<int>() + min;
+  unsigned length = sampleGeometric<unsigned>() + min;
   llvm::Optional<llvm::SmallVector<Type>> types =
       sample(availableTypes, length);
 
@@ -363,8 +384,8 @@ LogicalResult GeneratorOpBuilder::generateBlock(Block *block,
       possibleOps.push_back(op);
 
   // Generate operations.
-  int length = sampleGeometric<int>();
-  for (int i = 0; i < length; ++i)
+  unsigned length = sampleGeometric<unsigned>();
+  for (unsigned i = 0; i < length; ++i)
     if (!generateOperation(possibleOps))
       break;
 

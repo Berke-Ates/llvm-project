@@ -14,11 +14,16 @@
 #define MLIR_TOOLS_MLIR_SMITH_MLIRSMITHMAIN_H
 
 #include "mlir/Support/LogicalResult.h"
+#include <functional>
 
 namespace mlir {
 class DialectRegistry;
+class Operation;
+class GeneratorOpBuilder;
 
-LogicalResult mlirSmithMain(int argc, char **argv, DialectRegistry &registry);
+LogicalResult
+mlirSmithMain(int argc, char **argv, DialectRegistry &registry,
+              std::function<Operation *(GeneratorOpBuilder &)> entry);
 
 } // namespace mlir
 

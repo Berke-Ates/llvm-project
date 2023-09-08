@@ -20,5 +20,5 @@ int main(int argc, char **argv) {
   DialectRegistry registry;
   registerAllDialects(registry);
 
-  return failed(mlirSmithMain(argc, argv, registry));
+  return failed(mlirSmithMain(argc, argv, registry, func::FuncOp::generate));
 }

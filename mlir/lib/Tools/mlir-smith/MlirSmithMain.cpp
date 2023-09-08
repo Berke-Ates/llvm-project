@@ -26,8 +26,9 @@
 using namespace mlir;
 using namespace llvm;
 
-LogicalResult mlir::mlirSmithMain(int argc, char **argv,
-                                  DialectRegistry &registry) {
+LogicalResult
+mlir::mlirSmithMain(int argc, char **argv, DialectRegistry &registry,
+                    std::function<Operation *(GeneratorOpBuilder &)> entry) {
   static cl::OptionCategory mlirSmithCategory("mlir-smith options");
 
   static cl::opt<std::string> outputFilename(
@@ -105,8 +106,8 @@ LogicalResult mlir::mlirSmithMain(int argc, char **argv,
 
   ModuleOp module = cast<ModuleOp>(moduleOp);
   builder.setInsertionPointToStart(module.getBody());
-  if (!func::FuncOp::generate(builder)) {
-    llvm::errs() << "failed to generate main function\n";
+  if (!entry(builder)) {
+    llvm::errs() << "failed to generate module body\n";
     module.erase();
     return failure();
   }
