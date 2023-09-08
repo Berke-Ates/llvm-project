@@ -349,9 +349,11 @@ Operation *FuncOp::generate(GeneratorOpBuilder &builder) {
 
   ModuleOp moduleOp = cast<ModuleOp>(parent);
   builder.setInsertionPointToStart(moduleOp.getBody());
+  std::string name =
+      moduleOp.getOps<FuncOp>().empty() ? "main" : builder.sampleString();
 
   OperationState state(builder.getUnknownLoc(), FuncOp::getOperationName());
-  FuncOp::build(builder, state, "main", builder.getFunctionType({}, {}));
+  FuncOp::build(builder, state, name, builder.getFunctionType({}, {}));
   Operation *op = builder.create(state);
   if (!op)
     return nullptr;

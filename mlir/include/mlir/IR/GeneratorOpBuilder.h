@@ -281,7 +281,7 @@ public:
 
   /// Returns a random number using normal distribution.
   template <typename T>
-  T sampleNormal(bool useGeometric = false) {
+  T sampleNormal() {
     static_assert(std::is_arithmetic<T>::value, "Numeric type required");
 
     std::normal_distribution<> dist(0, 10);
@@ -310,6 +310,11 @@ public:
     // Default return value, should never be reached.
     return T();
   }
+
+  /// Returns a random string of at least length one using alphanumeric
+  /// characters. The string will start with an alphabetical character and use a
+  /// geometric distribution for the length.
+  std::string sampleString();
 
   /// Returns a list of values using the filters.
   llvm::Optional<llvm::SmallVector<Value>>
