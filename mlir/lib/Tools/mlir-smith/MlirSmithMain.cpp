@@ -17,6 +17,7 @@
 #include "mlir/IR/GeneratorOpBuilder.h"
 #include "mlir/IR/Location.h"
 #include "mlir/IR/MLIRContext.h"
+#include "mlir/IR/Verifier.h"
 #include "mlir/Support/FileUtilities.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/InitLLVM.h"
@@ -59,10 +60,11 @@ mlir::mlirSmithMain(int argc, char **argv, DialectRegistry &registry,
     return failure();
   }
 
-  // Load configuration.
+  // Load dialects.
   MLIRContext ctx(registry);
   ctx.loadAllAvailableDialects();
 
+  // Load configuration.
   GeneratorOpBuilderConfig config;
   config.loadDefaultValues(&ctx);
 
@@ -112,13 +114,11 @@ mlir::mlirSmithMain(int argc, char **argv, DialectRegistry &registry,
     return failure();
   }
 
-  // Output the result.
   module.print(output->os());
-
-  // Keep the output file if the generation was successful.
   output->keep();
 
-  // Deallocate.
+  // Verify generated MLIR.
+  LogicalResult result = verify(module);
   module.erase();
-  return success();
+  return result;
 }

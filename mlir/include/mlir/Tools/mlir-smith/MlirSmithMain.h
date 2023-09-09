@@ -13,6 +13,7 @@
 #ifndef MLIR_TOOLS_MLIR_SMITH_MLIRSMITHMAIN_H
 #define MLIR_TOOLS_MLIR_SMITH_MLIRSMITHMAIN_H
 
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Support/LogicalResult.h"
 #include <functional>
 
@@ -21,9 +22,9 @@ class DialectRegistry;
 class Operation;
 class GeneratorOpBuilder;
 
-LogicalResult
-mlirSmithMain(int argc, char **argv, DialectRegistry &registry,
-              std::function<Operation *(GeneratorOpBuilder &)> entry);
+LogicalResult mlirSmithMain(int argc, char **argv, DialectRegistry &registry,
+                            std::function<Operation *(GeneratorOpBuilder &)>
+                                entry = func::FuncOp::generate);
 
 } // namespace mlir
 

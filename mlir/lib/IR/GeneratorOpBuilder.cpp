@@ -8,6 +8,7 @@
 
 #define DEBUG_TYPE "GeneratorOpBuilder"
 #include "mlir/IR/GeneratorOpBuilder.h"
+#include "mlir/IR/Verifier.h"
 #include "mlir/Interfaces/GeneratableInterfaces.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Signals.h"
@@ -161,8 +162,7 @@ GeneratorOpBuilder::collectValues(std::function<bool(const Value &)> filter) {
   llvm::SmallVector<Value> excludedValues;
   Block *block = getBlock();
 
-  // FIXME: Only collect values that are defined before the insertion point.
-  // (visible)
+  // FIXME: Only collect values that are defined above the insertion point.
   while (block) {
     // Add all values in the block.
     for (Operation &op : block->getOperations())
@@ -336,13 +336,25 @@ Operation *GeneratorOpBuilder::generateOperation(
     }
 
     Operation *op = generate(sampledOp.value());
-    if (op) {
-      // Set the insertion point after the inserted operation.
+    if (!op) {
+      llvm::erase_value(ops, sampledOp.value());
+      continue;
+    }
+
+    // Silence diagnostics for verification.
+    DiagnosticEngine::HandlerID handlerID =
+        context->getDiagEngine().registerHandler([](Diagnostic &diag) {});
+    LogicalResult verified = verify(op);
+    context->getDiagEngine().eraseHandler(handlerID);
+
+    if (verified.succeeded()) {
       setInsertionPointAfter(op);
       return op;
     }
 
-    llvm::erase_value(ops, sampledOp.value());
+    // Abort further generation attemps as verification failure indicates bugs
+    // in the Op generation functions.
+    return nullptr;
   }
 
   return nullptr;
@@ -356,10 +368,9 @@ Operation *GeneratorOpBuilder::generateTerminator() {
       terminatorOps.push_back(op);
 
   Operation *op = generateOperation(terminatorOps);
-  if (!op) {
+  if (!op)
     LLVM_DEBUG(llvm::dbgs() << "GeneratorOpBuilder::generateTerminator "
                                "failed to generate terminator\n");
-  }
 
   return op;
 }
