@@ -358,8 +358,10 @@ Operation *FuncOp::generate(GeneratorOpBuilder &builder) {
     return nullptr;
 
   FuncOp funcOp = cast<FuncOp>(op);
-  if (builder.generateBlock(funcOp.addEntryBlock()).failed())
+  if (builder.generateBlock(funcOp.addEntryBlock()).failed()) {
+    funcOp.erase();
     return nullptr;
+  }
 
   // Generate return operation.
   builder.setInsertionPointToEnd(&funcOp.getBody().front());
