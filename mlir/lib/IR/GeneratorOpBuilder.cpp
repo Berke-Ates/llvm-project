@@ -140,7 +140,7 @@ GeneratorOpBuilder::addResultTypes(Operation *op,
 
   // Guard the insertion point.
   OpBuilder::InsertionGuard guard(*this);
-  setInsertionPoint(op);
+  OpBuilder::setInsertionPoint(op);
 
   OperationState state(op->getLoc(), op->getName());
   state.addTypes(resultTypes);
@@ -348,7 +348,7 @@ Operation *GeneratorOpBuilder::generateOperation(
     context->getDiagEngine().eraseHandler(handlerID);
 
     if (verified.succeeded()) {
-      setInsertionPointAfter(op);
+      OpBuilder::setInsertionPointAfter(op);
       return op;
     }
 
@@ -386,7 +386,7 @@ LogicalResult GeneratorOpBuilder::generateBlock(Block *block,
   OpBuilder::InsertionGuard guard(*this);
 
   // Move the insertion point.
-  setInsertionPointToStart(block);
+  OpBuilder::setInsertionPointToStart(block);
 
   // Filter available ops.
   llvm::SmallVector<mlir::RegisteredOperationName> possibleOps;
@@ -401,7 +401,7 @@ LogicalResult GeneratorOpBuilder::generateBlock(Block *block,
       break;
 
   // Try to generate terminator.
-  setInsertionPointToEnd(block);
+  OpBuilder::setInsertionPointToEnd(block);
   if (ensureTerminator && !generateTerminator()) {
     LLVM_DEBUG(llvm::errs() << "GeneratorOpBuilder::generateBlock failed "
                                "to generate terminator\n");

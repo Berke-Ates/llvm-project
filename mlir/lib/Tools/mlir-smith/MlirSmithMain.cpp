@@ -107,7 +107,7 @@ mlir::mlirSmithMain(int argc, char **argv, DialectRegistry &registry,
   }
 
   ModuleOp module = cast<ModuleOp>(moduleOp);
-  builder.setInsertionPointToStart(module.getBody());
+  builder.setInsertionPointToEnd(module.getBody());
   if (!entry(builder)) {
     llvm::errs() << "failed to generate module body\n";
     module.erase();

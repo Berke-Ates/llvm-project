@@ -348,7 +348,6 @@ Operation *FuncOp::generate(GeneratorOpBuilder &builder) {
     return nullptr;
 
   ModuleOp moduleOp = cast<ModuleOp>(parent);
-  builder.setInsertionPointToStart(moduleOp.getBody());
   std::string name =
       moduleOp.getOps<FuncOp>().empty() ? "main" : builder.sampleString();
 
@@ -364,7 +363,10 @@ Operation *FuncOp::generate(GeneratorOpBuilder &builder) {
 
   // Generate return operation.
   builder.setInsertionPointToEnd(&funcOp.getBody().front());
-  llvm::SmallVector<Type> types = builder.sampleTypes();
+  llvm::SmallVector<Type> i32Types = builder.collectTypes(
+      [](const Type &t) { return t.isSignlessInteger(32); });
+  llvm::SmallVector<Type> types =
+      name == "main" ? i32Types : builder.sampleTypes();
 
   FunctionType funcType =
       builder.getFunctionType(funcOp.getArgumentTypes(), types);

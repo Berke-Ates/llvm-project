@@ -150,6 +150,16 @@ public:
   explicit GeneratorOpBuilder(MLIRContext *ctxt,
                               GeneratorOpBuilderConfig generatorConfig);
 
+  // Disallow generators to move the insertion point up.
+  void setInsertionPoint(Block *block, Block::iterator insertPoint) = delete;
+  void setInsertionPoint(Operation *op) = delete;
+  void setInsertionPointAfter(Operation *op) = delete;
+  void setInsertionPointAfterValue(Value val) = delete;
+  void setInsertionPointToStart(Block *block) = delete;
+
+  // FIXME: Constrain this as well.
+  // void setInsertionPointToEnd(Block *block) = delete;
+
   //===--------------------------------------------------------------------===//
   // State Management
   //===--------------------------------------------------------------------===//
