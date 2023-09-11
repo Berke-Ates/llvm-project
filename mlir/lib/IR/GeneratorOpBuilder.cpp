@@ -8,6 +8,7 @@
 
 #define DEBUG_TYPE "GeneratorOpBuilder"
 #include "mlir/IR/GeneratorOpBuilder.h"
+#include "mlir/IR/SymbolTable.h"
 #include "mlir/IR/Verifier.h"
 #include "mlir/Interfaces/GeneratableInterfaces.h"
 #include "llvm/Support/Debug.h"
@@ -203,6 +204,34 @@ GeneratorOpBuilder::collectTypes(std::function<bool(const Type &)> filter) {
   return llvm::SmallVector<Type>(possibleTypes.begin(), possibleTypes.end());
 }
 
+llvm::SmallVector<llvm::StringRef> GeneratorOpBuilder::collectSymbols(
+    std::function<bool(const Operation &, const llvm::StringRef &)> filter) {
+  llvm::SmallVector<llvm::StringRef> possibleSymbols;
+  Block *block = getBlock();
+  if (!block)
+    return {};
+
+  Operation *parent = block->getParentOp();
+  if (!parent)
+    return {};
+
+  Operation *symbolTable = SymbolTable::getNearestSymbolTable(parent);
+  if (!symbolTable)
+    return {};
+
+  // FIXME: Extend this simplified symbol search with parents/children.
+  // In the current symbol table, any visibility is allowed.
+  symbolTable->walk([&](Operation *op) {
+    if (op && op != symbolTable)
+      if (StringAttr symName =
+              op->getAttrOfType<StringAttr>(SymbolTable::getSymbolAttrName()))
+        if (!filter || filter(*op, symName))
+          possibleSymbols.push_back(symName);
+  });
+
+  return possibleSymbols;
+}
+
 //===----------------------------------------------------------------------===//
 // Samplers
 //===----------------------------------------------------------------------===//
@@ -304,6 +333,15 @@ GeneratorOpBuilder::sampleTypes(unsigned min,
     return {};
 
   return types.value();
+}
+
+llvm::Optional<llvm::StringRef> GeneratorOpBuilder::sampleSymbol(
+    std::function<bool(const Operation &, const llvm::StringRef &)> filter) {
+  llvm::SmallVector<llvm::StringRef> availableSymbols = collectSymbols(filter);
+  if (availableSymbols.empty())
+    return std::nullopt;
+
+  return sample(availableSymbols);
 }
 
 //===----------------------------------------------------------------------===//

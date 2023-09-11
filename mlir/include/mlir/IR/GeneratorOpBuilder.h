@@ -212,6 +212,11 @@ public:
   llvm::SmallVector<Type>
   collectTypes(std::function<bool(const Type &)> filter = nullptr);
 
+  /// Returns a list of all available symbols in the current location.
+  llvm::SmallVector<llvm::StringRef> collectSymbols(
+      std::function<bool(const Operation &, const llvm::StringRef &)> filter =
+          nullptr);
+
   //===--------------------------------------------------------------------===//
   // Samplers
   //===--------------------------------------------------------------------===//
@@ -331,7 +336,8 @@ public:
   sampleValues(llvm::SmallVector<std::function<bool(const Value &)>> filters);
 
   /// Returns a value using the filter.
-  llvm::Optional<Value> sampleValue(std::function<bool(const Value &)> filter);
+  llvm::Optional<Value>
+  sampleValue(std::function<bool(const Value &)> filter = nullptr);
 
   /// Returns a list of values of the provided types.
   llvm::Optional<llvm::SmallVector<Value>>
@@ -351,6 +357,11 @@ public:
   llvm::SmallVector<Type>
   sampleTypes(unsigned min = 0,
               std::function<bool(const Type &)> filter = nullptr);
+
+  /// Returns a symbol using the filter.
+  llvm::Optional<llvm::StringRef> sampleSymbol(
+      std::function<bool(const Operation &, const llvm::StringRef &)> filter =
+          nullptr);
 
   //===--------------------------------------------------------------------===//
   // Generators
