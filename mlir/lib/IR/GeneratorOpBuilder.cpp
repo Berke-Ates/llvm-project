@@ -54,17 +54,16 @@ std::string getImmediateCaller() {
 // GeneratorOpBuilder
 //===----------------------------------------------------------------------===//
 
-GeneratorOpBuilder::GeneratorOpBuilder(MLIRContext *ctx,
-                                       GeneratorOpBuilderConfig generatorConfig)
-    : OpBuilder(ctx) {
+GeneratorOpBuilder::GeneratorOpBuilder(MLIRContext *ctx, Config config)
+    : OpBuilder(ctx), config(config) {
   // Collect all operations usable for generation.
   for (RegisteredOperationName ron : ctx->getRegisteredOperations())
     if (ron.hasInterface<GeneratableOpInterface>() &&
-        generatorConfig.getProb(ron.getStringRef()) > 0)
+        config.getProb(ron.getStringRef()) > 0)
       availableOps.push_back(ron);
 
   // Setup random number generator.
-  rng = std::mt19937(generatorConfig.seed());
+  rng = std::mt19937(config.seed());
 }
 
 //===----------------------------------------------------------------------===//
@@ -100,7 +99,7 @@ bool GeneratorOpBuilder::canCreate(Operation *op) {
       block = parent->getBlock();
   }
 
-  if (depth > generatorConfig.regionDepthLimit()) {
+  if (depth > config.regionDepthLimit()) {
     LLVM_DEBUG(llvm::dbgs()
                << "GeneratorOpBuilder::canCreate reached region depth limit\n");
     return false;
@@ -109,7 +108,7 @@ bool GeneratorOpBuilder::canCreate(Operation *op) {
   // Enforce block length limit.
   block = getBlock();
   if (!op->hasTrait<OpTrait::IsTerminator>() && block)
-    if (block->getOperations().size() >= generatorConfig.blockLengthLimit())
+    if (block->getOperations().size() >= config.blockLengthLimit())
       return false;
 
   return true;
@@ -363,7 +362,7 @@ Operation *GeneratorOpBuilder::generateOperation(
     // Lookup probabilities.
     llvm::SmallVector<unsigned> probs;
     for (RegisteredOperationName ron : ops)
-      probs.push_back(generatorConfig.getProb(ron.getStringRef()));
+      probs.push_back(config.getProb(ron.getStringRef()));
 
     // Sample an operation.
     llvm::Optional<RegisteredOperationName> sampledOp = sample(ops, probs);

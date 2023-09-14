@@ -23,122 +23,6 @@ namespace mlir {
 class GeneratableOpInterface;
 
 //===----------------------------------------------------------------------===//
-// Configuration options for the generator
-//===----------------------------------------------------------------------===//
-
-struct GeneratorOpBuilderConfig {
-  /// Returns the initial seed for the random number generator.
-  unsigned seed() { return Seed; }
-
-  /// Sets the initial seed for the random number generator.
-  void seed(unsigned seed) { Seed = seed; }
-
-  /// Returns the maximum depth for nested regions.
-  unsigned regionDepthLimit() { return RegionDepthLimit; }
-
-  /// Returns the maximum number of operations that can be generated in a block.
-  unsigned blockLengthLimit() { return BlockLengthLimit; }
-
-  /// Returns the default probability for generating an operation.
-  unsigned defaultProb() { return DefaultProb; }
-
-  /// Returns a map of operation names to their respective probabilities.
-  llvm::StringMap<unsigned> opProbs() { return OpProbs; }
-
-  /// Returns the probability of generating an operation with a given name.
-  /// If the operation name is not in the map, returns the default probability.
-  unsigned getProb(StringRef name) {
-    return OpProbs.contains(name) ? OpProbs[name] : DefaultProb;
-  }
-
-  /// Loads configuration from a string containing the content of a config file.
-  /// Optionally returns an error message if the parsing fails.
-  LogicalResult
-  loadFromFileContent(StringRef configFileContent,
-                      std::string *errorMessage = (std::string *)nullptr) {
-    // Clear previous default values
-    OpProbs = {};
-
-    std::istringstream input(configFileContent.str());
-    std::string line;
-    unsigned lineNr = 0;
-
-    while (std::getline(input, line)) {
-      if (line.empty())
-        continue;
-      std::istringstream lineStream(line);
-      std::string key;
-      char equalsSign;
-      unsigned value;
-      lineNr++;
-
-      if (lineStream >> key >> equalsSign >> value && equalsSign == '=') {
-        if (key == "seed")
-          Seed = value;
-        else if (key == "regionDepthLimit")
-          RegionDepthLimit = value;
-        else if (key == "blockLengthLimit")
-          BlockLengthLimit = value;
-        else if (key == "defaultProb")
-          DefaultProb = value;
-        else
-          OpProbs[key] = value;
-      } else {
-        if (errorMessage)
-          *errorMessage =
-              "failed to parse config file at line " + std::to_string(lineNr);
-        return failure();
-      }
-    }
-
-    return success();
-  }
-
-  /// Initializes the configuration with default values.
-  void loadDefaultValues(MLIRContext *ctx) {
-    Seed = time(0);
-    RegionDepthLimit = 3;
-    BlockLengthLimit = 20;
-    DefaultProb = 1;
-    OpProbs = {};
-
-    for (RegisteredOperationName ron : ctx->getRegisteredOperations())
-      if (ron.hasInterface<GeneratableOpInterface>())
-        OpProbs[ron.getStringRef()] = DefaultProb;
-  }
-
-  /// Dumps the current configuration to an output stream.
-  void dumpConfig(llvm::raw_ostream &os) {
-    os << "seed = " << Seed << "\n";
-    os << "regionDepthLimit = " << RegionDepthLimit << "\n";
-    os << "blockLengthLimit = " << BlockLengthLimit << "\n";
-    os << "defaultProb = " << DefaultProb << "\n";
-
-    // Sort OpProbs for nicer print.
-    std::vector<llvm::StringMapEntry<unsigned> *> vec;
-    vec.reserve(OpProbs.size());
-    for (auto &pair : OpProbs)
-      vec.push_back(&pair);
-
-    std::sort(vec.begin(), vec.end(),
-              [](const llvm::StringMapEntry<unsigned> *a,
-                 const llvm::StringMapEntry<unsigned> *b) {
-                return a->getKey().compare(b->getKey()) < 0;
-              });
-
-    for (auto *entry : vec)
-      os << entry->getKey() << " = " << entry->getValue() << "\n";
-  }
-
-private:
-  unsigned Seed;
-  unsigned RegionDepthLimit;
-  unsigned BlockLengthLimit;
-  unsigned DefaultProb;
-  llvm::StringMap<unsigned> OpProbs;
-};
-
-//===----------------------------------------------------------------------===//
 // OpBuilder with utilities for IR generation
 //===----------------------------------------------------------------------===//
 
@@ -147,8 +31,145 @@ private:
 /// common structures and to sample from a configured distribution.
 class GeneratorOpBuilder final : public OpBuilder {
 public:
-  explicit GeneratorOpBuilder(MLIRContext *ctxt,
-                              GeneratorOpBuilderConfig generatorConfig);
+  //===--------------------------------------------------------------------===//
+  // Configuration Options
+  //===--------------------------------------------------------------------===//
+
+  /// This class manages configurations used during the generation.
+  class Config {
+  public:
+    struct Entry {
+      std::string name;
+      std::variant<unsigned, int, float> value;
+    };
+
+    Config(MLIRContext *ctx) {
+      (void)registerConfig({"_gen.seed", (unsigned)time(0)});
+      (void)registerConfig({"_gen.regionDepthLimit", (unsigned)3});
+      (void)registerConfig({"_gen.blockLengthLimit", (unsigned)20});
+      (void)registerConfig({"_gen.defaultProb", (unsigned)1});
+
+      for (RegisteredOperationName ron : ctx->getRegisteredOperations())
+        if (ron.hasInterface<GeneratableOpInterface>())
+          (void)registerConfig({ron.getStringRef().str(), (unsigned)1});
+    }
+
+    /// Registers a new configuration. Entry name must be unique.
+    LogicalResult registerConfig(Entry e) {
+      if (entries.contains(e.name)) {
+        llvm::errs() << "GeneratorOpBuilder::Config " << e.name
+                     << " already registered\n";
+        return failure();
+      }
+
+      entries[e.name] = e;
+      return success();
+    }
+
+    /// Returns the value of a config if it exists in the requested type.
+    template <typename T>
+    llvm::Optional<T> getConfig(llvm::StringRef name) {
+      if (!entries.contains(name) ||
+          !std::holds_alternative<T>(entries[name].value))
+        return std::nullopt;
+
+      return std::get<T>(entries[name].value);
+    }
+
+    /// Loads configuration from a string containing the content of a config
+    /// file. Writes the error message to `errorMessage` if errors occur and
+    /// `errorMessage` is not nullptr.
+    LogicalResult
+    loadFromFileContent(llvm::StringRef configFileContent,
+                        std::string *errorMessage = (std::string *)nullptr) {
+      // FIXME: Rewrite to use more llvm style.
+      std::istringstream input(configFileContent.str());
+      std::string line;
+      unsigned lineNr = 0;
+
+      while (std::getline(input, line)) {
+        if (line.empty())
+          continue;
+        std::istringstream lineStream(line);
+        std::string key;
+        char equalsSign;
+        unsigned value;
+        lineNr++;
+
+        if (lineStream >> key >> equalsSign >> value && equalsSign == '=') {
+          // FIXME: Consider other value types.
+          entries[key].value = value;
+        } else {
+          if (errorMessage)
+            *errorMessage =
+                "failed to parse config file at line " + std::to_string(lineNr);
+          return failure();
+        }
+      }
+
+      return success();
+    }
+
+    /// Dumps the current configuration to an output stream.
+    void dumpConfig(llvm::raw_ostream &os) {
+      // Sort configs for nicer print.
+      std::vector<llvm::StringMapEntry<Entry> *> entryVec;
+      entryVec.reserve(entries.size());
+      for (llvm::StringMapEntry<Entry> &entry : entries)
+        entryVec.push_back(&entry);
+
+      llvm::sort(entryVec, [](const llvm::StringMapEntry<Entry> *a,
+                              const llvm::StringMapEntry<Entry> *b) {
+        return a->getKey().compare(b->getKey()) < 0;
+      });
+
+      for (llvm::StringMapEntry<Entry> *e : entryVec) {
+        os << e->getKey() << " = ";
+        std::visit([&os](auto &&arg) { os << arg; }, e->getValue().value);
+        os << "\n";
+      }
+    }
+
+    /// Returns the initial seed for the random number generator.
+    unsigned seed() { return getConfig<unsigned>("_gen.seed").value(); }
+
+    /// Sets the initial seed for the random number generator.
+    void seed(unsigned seed) { entries["_gen.seed"].value = seed; }
+
+    /// Returns the maximum depth for nested regions.
+    unsigned regionDepthLimit() {
+      return getConfig<unsigned>("_gen.regionDepthLimit").value();
+    }
+
+    /// Returns the maximum number of operations that can be generated in a
+    /// block.
+    unsigned blockLengthLimit() {
+      return getConfig<unsigned>("_gen.blockLengthLimit").value();
+    }
+
+    /// Returns the default probability for generating an operation.
+    unsigned defaultProb() {
+      return getConfig<unsigned>("_gen.defaultProb").value();
+    }
+
+    /// Returns the probability of generating an operation with a given name.
+    /// If the operation name is not in the map, returns the default
+    /// probability.
+    unsigned getProb(llvm::StringRef name) {
+      return getConfig<unsigned>(name).has_value()
+                 ? getConfig<unsigned>(name).value()
+                 : defaultProb();
+    }
+
+  private:
+    llvm::StringMap<Entry> entries = {};
+  };
+
+  //===--------------------------------------------------------------------===//
+  // Constructor
+  //===--------------------------------------------------------------------===//
+
+  explicit GeneratorOpBuilder(MLIRContext *ctxt, Config config);
 
   // Disallow generators to move the insertion point up.
   void setInsertionPoint(Block *block, Block::iterator insertPoint) = delete;
@@ -189,8 +210,8 @@ public:
   /// Checks if the given OperationState adheres to the generator constraints.
   bool canCreate(Operation *op);
 
-  /// Creates an operation given the fields represented as an OperationState and
-  /// enforces generator constraints.
+  /// Creates an operation given the fields represented as an OperationState
+  /// and enforces generator constraints.
   Operation *create(const OperationState &state);
 
   /// Returns a list with `num` unknown locations.
@@ -249,8 +270,8 @@ public:
     return choices[idx];
   }
 
-  /// Samples multiple times from a vector of choices. If no probability vector
-  /// is provided, it samples using a uniform distribution.
+  /// Samples multiple times from a vector of choices. If no probability
+  /// vector is provided, it samples using a uniform distribution.
   template <typename T>
   llvm::Optional<llvm::SmallVector<T>>
   sample(llvm::SmallVector<T> choices, unsigned num,
@@ -327,8 +348,8 @@ public:
   }
 
   /// Returns a random string of at least length one using alphanumeric
-  /// characters. The string will start with an alphabetical character and use a
-  /// geometric distribution for the length.
+  /// characters. The string will start with an alphabetical character and use
+  /// a geometric distribution for the length.
   std::string sampleString();
 
   /// Returns a list of values using the filters.
@@ -386,7 +407,7 @@ private:
   std::mt19937 rng;
 
   /// The configuration used for IR generation.
-  GeneratorOpBuilderConfig generatorConfig;
+  Config config;
 
   /// All operations that can be generated.
   llvm::SmallVector<RegisteredOperationName> availableOps = {};

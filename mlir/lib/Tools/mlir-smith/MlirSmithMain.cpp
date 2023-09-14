@@ -65,8 +65,7 @@ mlir::mlirSmithMain(int argc, char **argv, DialectRegistry &registry,
   ctx.loadAllAvailableDialects();
 
   // Load configuration.
-  GeneratorOpBuilderConfig config;
-  config.loadDefaultValues(&ctx);
+  GeneratorOpBuilder::Config config(&ctx);
 
   if (!configFilename.empty()) {
     auto configFile = openInputFile(configFilename.getValue(), &errorMessage);
