@@ -54,16 +54,19 @@ std::string getImmediateCaller() {
 // GeneratorOpBuilder
 //===----------------------------------------------------------------------===//
 
-GeneratorOpBuilder::GeneratorOpBuilder(MLIRContext *ctx, Config config)
-    : OpBuilder(ctx), config(config) {
+GeneratorOpBuilder::GeneratorOpBuilder(Config config)
+    : OpBuilder(config.getContext()), config(config) {
+  // Freeze configuration.
+  config.freeze();
+
   // Collect all operations usable for generation.
-  for (RegisteredOperationName ron : ctx->getRegisteredOperations())
-    if (ron.hasInterface<GeneratableOpInterface>() &&
-        config.getProb(ron.getStringRef()) > 0)
+  for (RegisteredOperationName ron :
+       config.getContext()->getRegisteredOperations())
+    if (ron.hasInterface<GeneratableOpInterface>() && getProb(ron) > 0)
       availableOps.push_back(ron);
 
   // Setup random number generator.
-  rng = std::mt19937(config.seed());
+  rng = std::mt19937(config.get<unsigned>("_gen.seed").value());
 }
 
 //===----------------------------------------------------------------------===//
@@ -99,7 +102,7 @@ bool GeneratorOpBuilder::canCreate(Operation *op) {
       block = parent->getBlock();
   }
 
-  if (depth > config.regionDepthLimit()) {
+  if (depth > config.get<unsigned>("_gen.regionDepthLimit").value()) {
     LLVM_DEBUG(llvm::dbgs()
                << "GeneratorOpBuilder::canCreate reached region depth limit\n");
     return false;
@@ -108,7 +111,8 @@ bool GeneratorOpBuilder::canCreate(Operation *op) {
   // Enforce block length limit.
   block = getBlock();
   if (!op->hasTrait<OpTrait::IsTerminator>() && block)
-    if (block->getOperations().size() >= config.blockLengthLimit())
+    if (block->getOperations().size() >=
+        config.get<unsigned>("_gen.blockLengthLimit").value())
       return false;
 
   return true;
@@ -362,7 +366,7 @@ Operation *GeneratorOpBuilder::generateOperation(
     // Lookup probabilities.
     llvm::SmallVector<unsigned> probs;
     for (RegisteredOperationName ron : ops)
-      probs.push_back(config.getProb(ron.getStringRef()));
+      probs.push_back(getProb(ron));
 
     // Sample an operation.
     llvm::Optional<RegisteredOperationName> sampledOp = sample(ops, probs);
@@ -454,6 +458,14 @@ Operation *GeneratorOpBuilder::generate(RegisteredOperationName ron) {
     return nullptr;
   }
   return ron.getInterface<GeneratableOpInterface>()->generate(*this);
+}
+
+unsigned GeneratorOpBuilder::getProb(RegisteredOperationName ron) {
+  llvm::Optional<int> prob = config.get<int>(ron.getStringRef());
+  if (!prob.has_value() || prob.value() < 0)
+    return config.get<unsigned>("_gen.defaultProb").value();
+
+  return prob.value();
 }
 
 //===----------------------------------------------------------------------===//

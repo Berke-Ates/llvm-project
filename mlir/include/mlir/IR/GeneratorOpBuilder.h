@@ -39,6 +39,8 @@ public:
   /// This class manages configurations used during the generation.
   class Config {
   public:
+    /// Represents one particular configuration entry.
+    /// FIXME: Rewrite to allow user-defined values.
     struct Entry {
       std::variant<unsigned, int, double> value;
 
@@ -72,16 +74,21 @@ public:
       }
     };
 
-    Config(MLIRContext *ctx) {
+    Config(MLIRContext *ctx) : context(ctx) {
       (void)registerConfig<unsigned>("_gen.seed", time(0));
       (void)registerConfig<unsigned>("_gen.regionDepthLimit", 3);
       (void)registerConfig<unsigned>("_gen.blockLengthLimit", 20);
       (void)registerConfig<unsigned>("_gen.defaultProb", 1);
+      (void)registerConfig<double>("_gen.geometricProb", 0.2);
+      (void)registerConfig<double>("_gen.normalMean", 0);
+      (void)registerConfig<double>("_gen.normalStddev", 10);
 
       for (RegisteredOperationName ron : ctx->getRegisteredOperations())
         if (ron.hasInterface<GeneratableOpInterface>())
           (void)registerConfig<int>(ron.getStringRef().str(), -1);
     }
+
+    MLIRContext *getContext() const { return context; }
 
     /// Registers a new configuration. Entry name must be unique.
     template <typename T>
@@ -97,20 +104,29 @@ public:
 
     /// Returns the value of a config if it exists in the requested type.
     template <typename T>
-    llvm::Optional<T> getConfig(llvm::StringRef name) {
+    llvm::Optional<T> get(llvm::StringRef name) {
       if (!entries.contains(name) ||
-          !std::holds_alternative<T>(entries[name].value))
+          !std::holds_alternative<T>(entries[name].value)) {
+        llvm::errs() << "Config " << name << " unknown or wrong type\n";
         return std::nullopt;
+      }
 
       return std::get<T>(entries[name].value);
     }
 
     /// Sets the value of a config if it exists in the requested type.
     template <typename T>
-    LogicalResult setConfig(llvm::StringRef name, T value) {
-      if (!entries.contains(name) ||
-          !std::holds_alternative<T>(entries[name].value))
+    LogicalResult set(llvm::StringRef name, T value) {
+      if (frozen) {
+        llvm::errs() << "Config is frozen\n";
         return failure();
+      }
+
+      if (!entries.contains(name) ||
+          !std::holds_alternative<T>(entries[name].value)) {
+        llvm::errs() << "Config " << name << " unknown or wrong type\n";
+        return failure();
+      }
 
       entries[name].value = value;
       return success();
@@ -122,6 +138,11 @@ public:
     LogicalResult
     loadFromFileContent(llvm::StringRef fileContent,
                         std::string *errorMessage = (std::string *)nullptr) {
+      if (frozen) {
+        llvm::errs() << "Config is frozen\n";
+        return failure();
+      }
+
       for (unsigned lineNr = 1; !fileContent.empty(); ++lineNr) {
         StringRef line, rest;
         std::tie(line, rest) = fileContent.split("\n");
@@ -152,7 +173,7 @@ public:
     }
 
     /// Dumps the current configuration to an output stream.
-    void dumpConfig(llvm::raw_ostream &os) {
+    void dump(llvm::raw_ostream &os) {
       // Sort configs for nicer print.
       std::vector<llvm::StringMapEntry<Entry> *> entryVec;
       entryVec.reserve(entries.size());
@@ -168,48 +189,31 @@ public:
         os << e->getKey() << " = " << e->getValue() << "\n";
     }
 
-    /// Returns the initial seed for the random number generator.
-    unsigned seed() { return getConfig<unsigned>("_gen.seed").value(); }
+    /// Freezes this configuration to prevent any changes and replaces negative
+    /// operation probabilities with default probability.
+    void freeze() {
+      // Replace unspecified probabilites by default probability.
+      unsigned defaultProb = get<unsigned>("_gen.defaultProb").value();
 
-    /// Sets the initial seed for the random number generator.
-    void seed(unsigned seed) { (void)setConfig<unsigned>("_gen.seed", seed); }
+      for (RegisteredOperationName ron : context->getRegisteredOperations())
+        if (ron.hasInterface<GeneratableOpInterface>() &&
+            get<int>(ron.getStringRef()).value() < 0)
+          (void)set<int>(ron.getStringRef(), defaultProb);
 
-    /// Returns the maximum depth for nested regions.
-    unsigned regionDepthLimit() {
-      return getConfig<unsigned>("_gen.regionDepthLimit").value();
-    }
-
-    /// Returns the maximum number of operations that can be generated in a
-    /// block.
-    unsigned blockLengthLimit() {
-      return getConfig<unsigned>("_gen.blockLengthLimit").value();
-    }
-
-    /// Returns the default probability for generating an operation.
-    unsigned defaultProb() {
-      return getConfig<unsigned>("_gen.defaultProb").value();
-    }
-
-    /// Returns the probability of generating an operation with a given name.
-    /// If the operation name is not registered or negative, returns the default
-    /// probability.
-    unsigned getProb(llvm::StringRef name) {
-      if (!getConfig<int>(name).has_value())
-        return defaultProb();
-
-      return getConfig<int>(name).value() < 0 ? defaultProb()
-                                              : getConfig<int>(name).value();
+      frozen = true;
     }
 
   private:
+    MLIRContext *context;
     llvm::StringMap<Entry> entries = {};
+    bool frozen = false;
   };
 
   //===--------------------------------------------------------------------===//
-  // Constructor
+  // GeneratorOpBuilder
   //===--------------------------------------------------------------------===//
 
-  explicit GeneratorOpBuilder(MLIRContext *ctxt, Config config);
+  explicit GeneratorOpBuilder(Config config);
 
   // Disallow generators to move the insertion point up.
   void setInsertionPoint(Block *block, Block::iterator insertPoint) = delete;
@@ -360,7 +364,9 @@ public:
   T sampleNormal() {
     static_assert(std::is_arithmetic<T>::value, "Numeric type required");
 
-    std::normal_distribution<> dist(0, 10);
+    std::normal_distribution<> dist(
+        config.get<double>("_gen.normalMean").value(),
+        config.get<double>("_gen.normalStddev").value());
     if constexpr (std::is_integral<T>::value) {
       return static_cast<T>(std::round(dist(rng)));
     } else if constexpr (std::is_floating_point<T>::value) {
@@ -376,7 +382,8 @@ public:
   T sampleGeometric() {
     static_assert(std::is_arithmetic<T>::value, "Numeric type required");
 
-    std::geometric_distribution<> dist(0.2);
+    std::geometric_distribution<> dist(
+        config.get<double>("_gen.geometricProb").value());
     if constexpr (std::is_integral<T>::value) {
       return static_cast<T>(std::round(dist(rng)));
     } else if constexpr (std::is_floating_point<T>::value) {
@@ -442,6 +449,9 @@ public:
 private:
   /// Utility function to generate an operation.
   Operation *generate(RegisteredOperationName ron);
+
+  /// Utility function to get operation probabilities;
+  unsigned getProb(RegisteredOperationName ron);
 
   /// Random number generator.
   std::mt19937 rng;

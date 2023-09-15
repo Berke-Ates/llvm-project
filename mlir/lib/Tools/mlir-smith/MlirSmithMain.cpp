@@ -83,17 +83,18 @@ mlir::mlirSmithMain(int argc, char **argv, DialectRegistry &registry,
 
   // Override configuration values with CLI values
   if (seedOpt.getNumOccurrences() > 0)
-    config.seed(seedOpt.getValue());
+    (void)config.set<unsigned>("_gen.seed", seedOpt.getValue());
 
   // Dump config.
   if (shouldDumpConfig) {
-    config.dumpConfig(output->os());
+    config.freeze();
+    config.dump(output->os());
     output->keep();
     return success();
   }
 
   // Start generation.
-  GeneratorOpBuilder builder(&ctx, config);
+  GeneratorOpBuilder builder(config);
   Location loc = builder.getUnknownLoc();
 
   // Create top-level module.
