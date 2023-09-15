@@ -18,6 +18,7 @@
 #include "llvm/ADT/StringMap.h"
 #include <functional>
 #include <random>
+#include <variant>
 
 namespace mlir {
 class GeneratableOpInterface;
@@ -39,30 +40,58 @@ public:
   class Config {
   public:
     struct Entry {
-      std::string name;
-      std::variant<unsigned, int, float> value;
-    };
+      std::variant<unsigned, int, double> value;
 
-    Config(MLIRContext *ctx) {
-      (void)registerConfig({"_gen.seed", (unsigned)time(0)});
-      (void)registerConfig({"_gen.regionDepthLimit", (unsigned)3});
-      (void)registerConfig({"_gen.blockLengthLimit", (unsigned)20});
-      (void)registerConfig({"_gen.defaultProb", (unsigned)1});
+      LogicalResult parseString(llvm::StringRef s) {
+        unsigned unsignedV;
+        if (std::holds_alternative<unsigned>(value) &&
+            !s.getAsInteger(10, unsignedV)) {
+          value = unsignedV;
+          return success();
+        }
 
-      for (RegisteredOperationName ron : ctx->getRegisteredOperations())
-        if (ron.hasInterface<GeneratableOpInterface>())
-          (void)registerConfig({ron.getStringRef().str(), (unsigned)1});
-    }
+        int intV;
+        if (std::holds_alternative<int>(value) && !s.getAsInteger(10, intV)) {
+          value = intV;
+          return success();
+        }
 
-    /// Registers a new configuration. Entry name must be unique.
-    LogicalResult registerConfig(Entry e) {
-      if (entries.contains(e.name)) {
-        llvm::errs() << "GeneratorOpBuilder::Config " << e.name
-                     << " already registered\n";
+        double doubleV;
+        if (std::holds_alternative<double>(value) && !s.getAsDouble(doubleV)) {
+          value = doubleV;
+          return success();
+        }
+
         return failure();
       }
 
-      entries[e.name] = e;
+      friend llvm::raw_ostream &operator<<(llvm::raw_ostream &os,
+                                           const Entry &entry) {
+        std::visit([&os](auto &&arg) { os << arg; }, entry.value);
+        return os;
+      }
+    };
+
+    Config(MLIRContext *ctx) {
+      (void)registerConfig<unsigned>("_gen.seed", time(0));
+      (void)registerConfig<unsigned>("_gen.regionDepthLimit", 3);
+      (void)registerConfig<unsigned>("_gen.blockLengthLimit", 20);
+      (void)registerConfig<unsigned>("_gen.defaultProb", 1);
+
+      for (RegisteredOperationName ron : ctx->getRegisteredOperations())
+        if (ron.hasInterface<GeneratableOpInterface>())
+          (void)registerConfig<int>(ron.getStringRef().str(), -1);
+    }
+
+    /// Registers a new configuration. Entry name must be unique.
+    template <typename T>
+    LogicalResult registerConfig(llvm::StringRef name, T value) {
+      if (entries.contains(name)) {
+        llvm::errs() << "Config " << name << " already registered\n";
+        return failure();
+      }
+
+      entries[name] = {value};
       return success();
     }
 
@@ -76,33 +105,45 @@ public:
       return std::get<T>(entries[name].value);
     }
 
+    /// Sets the value of a config if it exists in the requested type.
+    template <typename T>
+    LogicalResult setConfig(llvm::StringRef name, T value) {
+      if (!entries.contains(name) ||
+          !std::holds_alternative<T>(entries[name].value))
+        return failure();
+
+      entries[name].value = value;
+      return success();
+    }
+
     /// Loads configuration from a string containing the content of a config
     /// file. Writes the error message to `errorMessage` if errors occur and
     /// `errorMessage` is not nullptr.
     LogicalResult
-    loadFromFileContent(llvm::StringRef configFileContent,
+    loadFromFileContent(llvm::StringRef fileContent,
                         std::string *errorMessage = (std::string *)nullptr) {
-      // FIXME: Rewrite to use more llvm style.
-      std::istringstream input(configFileContent.str());
-      std::string line;
-      unsigned lineNr = 0;
-
-      while (std::getline(input, line)) {
+      for (unsigned lineNr = 1; !fileContent.empty(); ++lineNr) {
+        StringRef line, rest;
+        std::tie(line, rest) = fileContent.split("\n");
+        fileContent = rest;
+        line = line.trim();
         if (line.empty())
           continue;
-        std::istringstream lineStream(line);
-        std::string key;
-        char equalsSign;
-        unsigned value;
-        lineNr++;
 
-        if (lineStream >> key >> equalsSign >> value && equalsSign == '=') {
-          // FIXME: Consider other value types.
-          entries[key].value = value;
-        } else {
+        StringRef key, value;
+        std::tie(key, value) = line.split("=");
+        key = key.trim();
+        value = value.trim();
+        if (!entries.contains(key)) {
+          if (errorMessage)
+            *errorMessage = "unknown key at line " + std::to_string(lineNr);
+          return failure();
+        }
+
+        if (entries[key].parseString(value).failed()) {
           if (errorMessage)
             *errorMessage =
-                "failed to parse config file at line " + std::to_string(lineNr);
+                "failed to parse value at line " + std::to_string(lineNr);
           return failure();
         }
       }
@@ -123,18 +164,15 @@ public:
         return a->getKey().compare(b->getKey()) < 0;
       });
 
-      for (llvm::StringMapEntry<Entry> *e : entryVec) {
-        os << e->getKey() << " = ";
-        std::visit([&os](auto &&arg) { os << arg; }, e->getValue().value);
-        os << "\n";
-      }
+      for (llvm::StringMapEntry<Entry> *e : entryVec)
+        os << e->getKey() << " = " << e->getValue() << "\n";
     }
 
     /// Returns the initial seed for the random number generator.
     unsigned seed() { return getConfig<unsigned>("_gen.seed").value(); }
 
     /// Sets the initial seed for the random number generator.
-    void seed(unsigned seed) { entries["_gen.seed"].value = seed; }
+    void seed(unsigned seed) { (void)setConfig<unsigned>("_gen.seed", seed); }
 
     /// Returns the maximum depth for nested regions.
     unsigned regionDepthLimit() {
@@ -153,12 +191,14 @@ public:
     }
 
     /// Returns the probability of generating an operation with a given name.
-    /// If the operation name is not in the map, returns the default
+    /// If the operation name is not registered or negative, returns the default
     /// probability.
     unsigned getProb(llvm::StringRef name) {
-      return getConfig<unsigned>(name).has_value()
-                 ? getConfig<unsigned>(name).value()
-                 : defaultProb();
+      if (!getConfig<int>(name).has_value())
+        return defaultProb();
+
+      return getConfig<int>(name).value() < 0 ? defaultProb()
+                                              : getConfig<int>(name).value();
     }
 
   private:
