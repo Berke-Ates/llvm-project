@@ -52,7 +52,7 @@ def GeneratableTypeInterface : TypeInterface<"GeneratableTypeInterface"> {
   let methods = [
     StaticInterfaceMethod<
       /*desc=*/"Attempts to generate this type.",
-      /*retTy=*/"::llvm::Optional<::mlir::Type>",
+      /*retTy=*/"::mlir::Type",
       /*methodName=*/"generate",
       /*args=*/(ins "::mlir::GeneratorOpBuilder &":$builder)
     >,

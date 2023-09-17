@@ -369,12 +369,11 @@ void AllocaOp::getCanonicalizationPatterns(RewritePatternSet &results,
 }
 
 Operation *AllocOp::generate(GeneratorOpBuilder &builder) {
-  llvm::Optional<Type> memrefType = MemRefType::generate(builder);
-
-  if (!memrefType.has_value())
+  Type memrefType = MemRefType::generate(builder);
+  if (!memrefType)
     return nullptr;
 
-  MemRefType type = memrefType.value().cast<MemRefType>();
+  MemRefType type = memrefType.cast<MemRefType>();
 
   llvm::SmallVector<Value> dynamicSizes;
   for (int64_t i = 0; i < type.getNumDynamicDims(); ++i) {

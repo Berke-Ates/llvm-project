@@ -631,7 +631,7 @@ LogicalResult MemRefType::verify(function_ref<InFlightDiagnostic()> emitError,
   return success();
 }
 
-llvm::Optional<Type> MemRefType::generate(GeneratorOpBuilder &builder) {
+Type MemRefType::generate(GeneratorOpBuilder &builder) {
   llvm::SmallVector<Type> possibleTypes = {
       builder.getIndexType(), builder.getI1Type(),  builder.getI8Type(),
       builder.getI16Type(),   builder.getI32Type(), builder.getI64Type(),
