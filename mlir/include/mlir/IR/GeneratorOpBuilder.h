@@ -435,6 +435,9 @@ public:
   // Generators
   //===--------------------------------------------------------------------===//
 
+  /// Utility function to generate an operation.
+  Operation *generate(RegisteredOperationName ron);
+
   /// Randomly generates an operation in the current position and returns it.
   /// Returns nullptr if it fails.
   Operation *generateOperation(llvm::SmallVector<RegisteredOperationName> ops);
@@ -447,9 +450,6 @@ public:
   LogicalResult generateBlock(Block *block, bool ensureTerminator = false);
 
 private:
-  /// Utility function to generate an operation.
-  Operation *generate(RegisteredOperationName ron);
-
   /// Utility function to get operation probabilities;
   unsigned getProb(RegisteredOperationName ron);
 

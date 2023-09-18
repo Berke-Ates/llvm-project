@@ -351,6 +351,14 @@ llvm::Optional<llvm::StringRef> GeneratorOpBuilder::sampleSymbol(
 // Generators
 //===----------------------------------------------------------------------===//
 
+Operation *GeneratorOpBuilder::generate(RegisteredOperationName ron) {
+  if (!ron.hasInterface<GeneratableOpInterface>()) {
+    llvm::errs() << ron << "does not implement GeneratableOpInterface";
+    return nullptr;
+  }
+  return ron.getInterface<GeneratableOpInterface>()->generate(*this);
+}
+
 Operation *GeneratorOpBuilder::generateOperation(
     llvm::SmallVector<RegisteredOperationName> ops) {
   if (ops.empty())
@@ -450,14 +458,6 @@ LogicalResult GeneratorOpBuilder::generateBlock(Block *block,
   }
 
   return success();
-}
-
-Operation *GeneratorOpBuilder::generate(RegisteredOperationName ron) {
-  if (!ron.hasInterface<GeneratableOpInterface>()) {
-    llvm::errs() << ron << "does not implement GeneratableOpInterface";
-    return nullptr;
-  }
-  return ron.getInterface<GeneratableOpInterface>()->generate(*this);
 }
 
 unsigned GeneratorOpBuilder::getProb(RegisteredOperationName ron) {
