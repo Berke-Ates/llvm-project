@@ -10,6 +10,7 @@
 #include "mlir/Dialect/Arith/Utils/Utils.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/MemRef/Utils/MemRefUtils.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/Dialect/Utils/StaticValueUtils.h"
 #include "mlir/IR/AffineMap.h"
 #include "mlir/IR/Builders.h"
@@ -374,28 +375,18 @@ Operation *AllocOp::generate(GeneratorOpBuilder &builder) {
     return nullptr;
 
   MemRefType type = memrefType.cast<MemRefType>();
-
-  llvm::SmallVector<Value> dynamicSizes;
-  for (int64_t i = 0; i < type.getNumDynamicDims(); ++i) {
-    llvm::Optional<Value> sampleValue =
-        builder.sampleValueOfType(builder.getIndexType());
-    if (!sampleValue.has_value())
-      return nullptr;
-
-    dynamicSizes.push_back(sampleValue.value());
-  }
-
   OperationState state(builder.getUnknownLoc(), AllocOp::getOperationName());
-  if (dynamicSizes.empty())
-    AllocOp::build(builder, state, type);
-  else
-    AllocOp::build(builder, state, type, dynamicSizes);
+  AllocOp::build(builder, state, type);
 
   Operation *op = builder.create(state);
-  if (op)
-    return op;
+  if (!op)
+    return nullptr;
 
-  return nullptr;
+  // Initialize
+  for (unsigned i = 0; i < type.getNumElements(); ++i) {
+  }
+
+  return op;
 }
 
 Operation *AllocaOp::generate(GeneratorOpBuilder &builder) {
@@ -405,28 +396,10 @@ Operation *AllocaOp::generate(GeneratorOpBuilder &builder) {
     return nullptr;
 
   MemRefType type = memrefType.value().cast<MemRefType>();
-
-  llvm::SmallVector<Value> dynamicSizes;
-  for (int64_t i = 0; i < type.getNumDynamicDims(); ++i) {
-    llvm::Optional<Value> sampleValue =
-        builder.sampleValueOfType(builder.getIndexType());
-    if (!sampleValue.has_value())
-      return nullptr;
-
-    dynamicSizes.push_back(sampleValue.value());
-  }
-
   OperationState state(builder.getUnknownLoc(), AllocaOp::getOperationName());
-  if (dynamicSizes.empty())
-    AllocaOp::build(builder, state, type);
-  else
-    AllocaOp::build(builder, state, type, dynamicSizes);
+  AllocaOp::build(builder, state, type);
 
-  Operation *op = builder.create(state);
-  if (op)
-    return op;
-
-  return nullptr;
+  return builder.create(state);
 }
 
 //===----------------------------------------------------------------------===//
@@ -955,13 +928,18 @@ LogicalResult CopyOp::fold(FoldAdaptor adaptor,
 }
 
 Operation *CopyOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Value> possibleValues = builder.collectValues(
-      [](const Value &v) { return v.getType().isa<MemRefType>(); });
+  llvm::SmallVector<Value> possibleValues =
+      builder.collectValues([](const Value &v) {
+        return v.getType().isa<MemRefType>() && v.getDefiningOp() &&
+               !v.getDefiningOp()->hasAttrOfType<UnitAttr>("_gen_dealloc");
+      });
 
   while (!possibleValues.empty()) {
     Value lhs = builder.sample(possibleValues).value();
+
     llvm::Optional<Value> rhs = builder.sampleValue([lhs](const Value &v) {
-      return lhs.getType() == v.getType() && lhs != v;
+      return lhs.getType() == v.getType() && lhs != v && v.getDefiningOp() &&
+             !v.getDefiningOp()->hasAttrOfType<UnitAttr>("_gen_dealloc");
     });
 
     if (!rhs.has_value()) {
@@ -1011,8 +989,7 @@ Operation *DeallocOp::generate(GeneratorOpBuilder &builder) {
     Operation *op = builder.create(state);
     if (op) {
       // Mark memref as deallocated.
-      memref.getDefiningOp()->setAttr("generate_deallocated",
-                                      builder.getUnitAttr());
+      memref.getDefiningOp()->setAttr("_gen_dealloc", builder.getUnitAttr());
       return op;
     }
 
@@ -1787,8 +1764,11 @@ OpFoldResult LoadOp::fold(FoldAdaptor adaptor) {
 }
 
 Operation *LoadOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Value> possibleValues = builder.collectValues(
-      [](const Value &v) { return v.getType().isa<MemRefType>(); });
+  llvm::SmallVector<Value> possibleValues =
+      builder.collectValues([](const Value &v) {
+        return v.getType().isa<MemRefType>() && v.getDefiningOp() &&
+               !v.getDefiningOp()->hasAttrOfType<UnitAttr>("_gen_dealloc");
+      });
 
   while (!possibleValues.empty()) {
     Value memref = builder.sample(possibleValues).value();
@@ -1802,26 +1782,6 @@ Operation *LoadOp::generate(GeneratorOpBuilder &builder) {
 
     // TODO: Handle unranked sizes
     if (!type.hasRank()) {
-      llvm::erase_value(possibleValues, memref);
-      continue;
-    }
-
-    // TODO: Handle block arguments
-    if (!memref.getDefiningOp()) {
-      llvm::erase_value(possibleValues, memref);
-      continue;
-    }
-
-    Operation *defOp = memref.getDefiningOp();
-
-    // Ensure memref has been initialized.
-    if (!defOp->hasAttrOfType<UnitAttr>("generate_initialized")) {
-      llvm::erase_value(possibleValues, memref);
-      continue;
-    }
-
-    // Ensure memref has not been deallocated.
-    if (defOp->hasAttrOfType<UnitAttr>("generate_deallocated")) {
       llvm::erase_value(possibleValues, memref);
       continue;
     }
@@ -2746,8 +2706,11 @@ LogicalResult StoreOp::fold(FoldAdaptor adaptor,
 }
 
 Operation *StoreOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Value> possibleValues = builder.collectValues(
-      [](const Value &v) { return v.getType().isa<MemRefType>(); });
+  llvm::SmallVector<Value> possibleValues =
+      builder.collectValues([](const Value &v) {
+        return v.getType().isa<MemRefType>() && v.getDefiningOp() &&
+               !v.getDefiningOp()->hasAttrOfType<UnitAttr>("_gen_dealloc");
+      });
 
   while (!possibleValues.empty()) {
     Value memref = builder.sample(possibleValues).value();
@@ -2761,19 +2724,6 @@ Operation *StoreOp::generate(GeneratorOpBuilder &builder) {
 
     // TODO: Handle unranked sizes
     if (!type.hasRank()) {
-      llvm::erase_value(possibleValues, memref);
-      continue;
-    }
-
-    // TODO: Handle block arguments
-    if (!memref.getDefiningOp()) {
-      llvm::erase_value(possibleValues, memref);
-      continue;
-    }
-
-    Operation *defOp = memref.getDefiningOp();
-    // Ensure memref has not been deallocated.
-    if (defOp->hasAttrOfType<UnitAttr>("generate_deallocated")) {
       llvm::erase_value(possibleValues, memref);
       continue;
     }
@@ -2810,12 +2760,8 @@ Operation *StoreOp::generate(GeneratorOpBuilder &builder) {
     OperationState state(builder.getUnknownLoc(), StoreOp::getOperationName());
     StoreOp::build(builder, state, value, memref, indices);
     Operation *op = builder.create(state);
-    if (op) {
-      // Mark memref as initialized.
-      memref.getDefiningOp()->setAttr("generate_initialized",
-                                      builder.getUnitAttr());
+    if (op)
       return op;
-    }
 
     for (Value v : indices)
       v.getDefiningOp()->erase();
