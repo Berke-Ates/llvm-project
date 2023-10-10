@@ -209,28 +209,32 @@ GeneratorOpBuilder::collectTypes(std::function<bool(const Type &)> filter) {
 
 llvm::SmallVector<llvm::StringRef> GeneratorOpBuilder::collectSymbols(
     std::function<bool(const Operation &, const llvm::StringRef &)> filter) {
-  llvm::SmallVector<llvm::StringRef> possibleSymbols;
-  Block *block = getBlock();
-  if (!block)
-    return {};
-
-  Operation *parent = block->getParentOp();
-  if (!parent)
-    return {};
-
-  Operation *symbolTable = SymbolTable::getNearestSymbolTable(parent);
-  if (!symbolTable)
-    return {};
-
   // FIXME: Extend this simplified symbol search with parents/children.
-  // In the current symbol table, any visibility is allowed.
-  symbolTable->walk([&](Operation *op) {
-    if (op && op != symbolTable)
-      if (StringAttr symName =
-              op->getAttrOfType<StringAttr>(SymbolTable::getSymbolAttrName()))
-        if (!filter || filter(*op, symName))
-          possibleSymbols.push_back(symName);
-  });
+  llvm::SmallVector<llvm::StringRef> possibleSymbols;
+  llvm::SmallVector<llvm::StringRef> excludedSymbols;
+  Block *block = getBlock();
+
+  while (block) {
+    // Add all symbols in the block.
+    for (Operation &op : block->getOperations())
+      if (op.hasAttrOfType<StringAttr>(SymbolTable::getSymbolAttrName()))
+        if (!filter || filter(op, SymbolTable::getSymbolName(&op)))
+          possibleSymbols.push_back(SymbolTable::getSymbolName(&op));
+
+    // Move up the hierarchy.
+    Operation *parent = block->getParentOp();
+    block = nullptr;
+
+    if (parent && !parent->hasTrait<OpTrait::IsIsolatedFromAbove>()) {
+      if (parent->hasAttrOfType<StringAttr>(SymbolTable::getSymbolAttrName()))
+        excludedSymbols.push_back(SymbolTable::getSymbolName(parent));
+      block = parent->getBlock();
+    }
+  }
+
+  // Remove results of the parents.
+  for (llvm::StringRef sym : excludedSymbols)
+    llvm::erase_value(possibleSymbols, sym);
 
   return possibleSymbols;
 }
