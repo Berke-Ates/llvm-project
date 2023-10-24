@@ -16,6 +16,7 @@
 
 #include "mlir/IR/Builders.h"
 #include "llvm/ADT/StringMap.h"
+#include <chrono>
 #include <functional>
 #include <random>
 #include <variant>
@@ -75,7 +76,10 @@ public:
     };
 
     Config(MLIRContext *ctx) : context(ctx) {
-      (void)registerConfig<unsigned>("_gen.seed", time(0));
+      unsigned default_seed =
+          std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+      (void)registerConfig<unsigned>("_gen.seed", default_seed);
       (void)registerConfig<unsigned>("_gen.regionDepthLimit", 3);
       (void)registerConfig<unsigned>("_gen.blockLengthLimit", 20);
       (void)registerConfig<unsigned>("_gen.defaultProb", 1);
