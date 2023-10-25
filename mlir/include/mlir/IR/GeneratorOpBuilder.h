@@ -90,6 +90,8 @@ public:
       for (RegisteredOperationName ron : ctx->getRegisteredOperations())
         if (ron.hasInterface<GeneratableOpInterface>())
           (void)registerConfig<int>(ron.getStringRef().str(), -1);
+
+      registerOpConfigs();
     }
 
     MLIRContext *getContext() const { return context; }
@@ -206,6 +208,9 @@ public:
 
       frozen = true;
     }
+
+    /// Registers configs from registered operations.
+    void registerOpConfigs();
 
   private:
     MLIRContext *context;

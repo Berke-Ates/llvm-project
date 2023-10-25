@@ -51,6 +51,16 @@ std::string getImmediateCaller() {
 }
 
 //===----------------------------------------------------------------------===//
+// GeneratorOpBuilder::Config
+//===----------------------------------------------------------------------===//
+
+void GeneratorOpBuilder::Config::registerOpConfigs() {
+  for (RegisteredOperationName ron : context->getRegisteredOperations())
+    if (ron.hasInterface<GeneratableOpInterface>())
+      ron.getInterface<GeneratableOpInterface>()->registerConfigs(*this);
+}
+
+//===----------------------------------------------------------------------===//
 // GeneratorOpBuilder
 //===----------------------------------------------------------------------===//
 

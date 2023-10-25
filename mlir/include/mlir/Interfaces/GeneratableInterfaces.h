@@ -13,11 +13,8 @@
 #ifndef MLIR_INTERFACES_GENERATABLEINTERFACES_H
 #define MLIR_INTERFACES_GENERATABLEINTERFACES_H
 
+#include "mlir/IR/GeneratorOpBuilder.h"
 #include "mlir/IR/OpDefinition.h"
-
-namespace mlir {
-class GeneratorOpBuilder;
-}
 
 //===----------------------------------------------------------------------===//
 // Generated Interface Declarations

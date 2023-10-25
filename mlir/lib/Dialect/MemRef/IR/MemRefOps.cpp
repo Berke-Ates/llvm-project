@@ -370,6 +370,18 @@ void AllocaOp::getCanonicalizationPatterns(RewritePatternSet &results,
 }
 
 Operation *AllocOp::generate(GeneratorOpBuilder &builder) {
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getIndexType(), builder.getIndexAttr(0)},
+      {builder.getI1Type(), builder.getBoolAttr(false)},
+      {builder.getI8Type(), builder.getI8IntegerAttr(0)},
+      {builder.getI16Type(), builder.getI16IntegerAttr(0)},
+      {builder.getI32Type(), builder.getI32IntegerAttr(0)},
+      {builder.getI64Type(), builder.getI64IntegerAttr(0)},
+      {builder.getF16Type(), builder.getF16FloatAttr(0)},
+      {builder.getF32Type(), builder.getF32FloatAttr(0)},
+      {builder.getF64Type(), builder.getF64FloatAttr(0)},
+  };
+
   Type memrefType = MemRefType::generate(builder);
   if (!memrefType)
     return nullptr;
@@ -383,23 +395,102 @@ Operation *AllocOp::generate(GeneratorOpBuilder &builder) {
     return nullptr;
 
   // Initialize
-  for (unsigned i = 0; i < type.getNumElements(); ++i) {
+  OperationState constState(builder.getUnknownLoc(),
+                            arith::ConstantOp::getOperationName());
+  arith::ConstantOp::build(builder, constState, type.getElementType(),
+                           attrMap[type.getElementType()]);
+  Operation *constOp = builder.create(constState);
+  if (!constOp) {
+    op->erase();
+    return nullptr;
   }
 
-  return op;
+  OperationState idxState(builder.getUnknownLoc(),
+                          arith::ConstantOp::getOperationName());
+  arith::ConstantOp::build(builder, idxState, builder.getIndexType(),
+                           builder.getIndexAttr(0));
+  Operation *idxOp = builder.create(idxState);
+  if (!idxOp) {
+    constOp->erase();
+    op->erase();
+    return nullptr;
+  }
+
+  OperationState storeState(builder.getUnknownLoc(),
+                            StoreOp::getOperationName());
+  StoreOp::build(builder, storeState, constOp->getResult(0), op->getResult(0),
+                 {idxOp->getResult(0)});
+  Operation *storeOp = builder.create(storeState);
+  if (!storeOp) {
+    idxOp->erase();
+    constOp->erase();
+    op->erase();
+    return nullptr;
+  }
+
+  return storeOp;
 }
 
 Operation *AllocaOp::generate(GeneratorOpBuilder &builder) {
-  llvm::Optional<Type> memrefType = MemRefType::generate(builder);
+  llvm::DenseMap<Type, TypedAttr> attrMap = {
+      {builder.getIndexType(), builder.getIndexAttr(0)},
+      {builder.getI1Type(), builder.getBoolAttr(false)},
+      {builder.getI8Type(), builder.getI8IntegerAttr(0)},
+      {builder.getI16Type(), builder.getI16IntegerAttr(0)},
+      {builder.getI32Type(), builder.getI32IntegerAttr(0)},
+      {builder.getI64Type(), builder.getI64IntegerAttr(0)},
+      {builder.getF16Type(), builder.getF16FloatAttr(0)},
+      {builder.getF32Type(), builder.getF32FloatAttr(0)},
+      {builder.getF64Type(), builder.getF64FloatAttr(0)},
+  };
 
-  if (!memrefType.has_value())
+  Type memrefType = MemRefType::generate(builder);
+  if (!memrefType)
     return nullptr;
 
-  MemRefType type = memrefType.value().cast<MemRefType>();
+  MemRefType type = memrefType.cast<MemRefType>();
   OperationState state(builder.getUnknownLoc(), AllocaOp::getOperationName());
   AllocaOp::build(builder, state, type);
 
-  return builder.create(state);
+  Operation *op = builder.create(state);
+  if (!op)
+    return nullptr;
+
+  // Initialize
+  OperationState constState(builder.getUnknownLoc(),
+                            arith::ConstantOp::getOperationName());
+  arith::ConstantOp::build(builder, constState, type.getElementType(),
+                           attrMap[type.getElementType()]);
+  Operation *constOp = builder.create(constState);
+  if (!constOp) {
+    op->erase();
+    return nullptr;
+  }
+
+  OperationState idxState(builder.getUnknownLoc(),
+                          arith::ConstantOp::getOperationName());
+  arith::ConstantOp::build(builder, idxState, builder.getIndexType(),
+                           builder.getIndexAttr(0));
+  Operation *idxOp = builder.create(idxState);
+  if (!idxOp) {
+    constOp->erase();
+    op->erase();
+    return nullptr;
+  }
+
+  OperationState storeState(builder.getUnknownLoc(),
+                            StoreOp::getOperationName());
+  StoreOp::build(builder, storeState, constOp->getResult(0), op->getResult(0),
+                 {idxOp->getResult(0)});
+  Operation *storeOp = builder.create(storeState);
+  if (!storeOp) {
+    idxOp->erase();
+    constOp->erase();
+    op->erase();
+    return nullptr;
+  }
+
+  return storeOp;
 }
 
 //===----------------------------------------------------------------------===//

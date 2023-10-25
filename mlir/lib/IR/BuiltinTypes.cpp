@@ -640,10 +640,7 @@ Type MemRefType::generate(GeneratorOpBuilder &builder) {
 
   Type t = builder.sample(possibleTypes).value();
   llvm::SmallVector<int64_t> shape;
-
-  unsigned length = builder.sampleGeometric<unsigned>();
-  for (unsigned i = 0; i < length; ++i)
-    shape.push_back(builder.sampleGeometric<int64_t>());
+  shape.push_back(1);
 
   return get(shape, t);
 }

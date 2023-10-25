@@ -34,6 +34,14 @@ def GeneratableOpInterface : OpInterface<"GeneratableOpInterface"> {
       /*methodName=*/"generate",
       /*args=*/(ins "::mlir::GeneratorOpBuilder &":$builder)
     >,
+    StaticInterfaceMethod<
+      /*desc=*/"Registers configurations for the GeneratorOpBuilder.",
+      /*retTy=*/"void",
+      /*methodName=*/"registerConfigs",
+      /*args=*/(ins "::mlir::GeneratorOpBuilder::Config &":$config),
+      /*body=*/[{}],
+      /*default=*/[{ return; }]
+    >,
   ];
 }
 
