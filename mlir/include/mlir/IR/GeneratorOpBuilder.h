@@ -218,6 +218,9 @@ public:
     bool frozen = false;
   };
 
+  /// The configuration used for IR generation.
+  Config config;
+
   //===--------------------------------------------------------------------===//
   // GeneratorOpBuilder
   //===--------------------------------------------------------------------===//
@@ -464,9 +467,6 @@ private:
 
   /// Random number generator.
   std::mt19937 rng;
-
-  /// The configuration used for IR generation.
-  Config config;
 
   /// All operations that can be generated.
   llvm::SmallVector<RegisteredOperationName> availableOps = {};
