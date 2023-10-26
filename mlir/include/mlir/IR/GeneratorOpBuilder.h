@@ -80,8 +80,8 @@ public:
           std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
       (void)registerConfig<unsigned>("_gen.seed", default_seed);
-      (void)registerConfig<unsigned>("_gen.regionDepthLimit", 3);
-      (void)registerConfig<unsigned>("_gen.blockLengthLimit", 20);
+      (void)registerConfig<unsigned>("_gen.regionDepthLimit", 5);
+      (void)registerConfig<unsigned>("_gen.blockLengthLimit", 100);
       (void)registerConfig<unsigned>("_gen.defaultProb", 1);
       (void)registerConfig<double>("_gen.geometricProb", 0.2);
       (void)registerConfig<double>("_gen.normalMean", 0);
