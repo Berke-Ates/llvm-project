@@ -44,6 +44,10 @@ mlir::mlirSmithMain(int argc, char **argv, DialectRegistry &registry,
                                         cl::init(false),
                                         cl::cat(mlirSmithCategory));
 
+  static cl::opt<bool> shouldCollectMetrics(
+      "metrics", cl::desc("Collect Metrics: Code (B), Time (µs)"),
+      cl::init(false), cl::cat(mlirSmithCategory));
+
   static cl::opt<unsigned> seedOpt(
       "seed", cl::desc("Random number generator seed"), cl::value_desc("seed"),
       cl::Optional, cl::cat(mlirSmithCategory));
@@ -93,6 +97,9 @@ mlir::mlirSmithMain(int argc, char **argv, DialectRegistry &registry,
     return success();
   }
 
+  // Collect metrics.
+  auto startTime = std::chrono::high_resolution_clock::now();
+
   // Start generation.
   GeneratorOpBuilder builder(config);
   Location loc = builder.getUnknownLoc();
@@ -114,11 +121,33 @@ mlir::mlirSmithMain(int argc, char **argv, DialectRegistry &registry,
     return failure();
   }
 
-  module.print(output->os());
-  output->keep();
-
   // Verify generated MLIR.
   LogicalResult result = verify(module);
+
+  // Collect metrics.
+  auto stopTime = std::chrono::high_resolution_clock::now();
+
+  // Print code if not collecting metrics.
+  unsigned codeBytes = 0;
+  if (shouldCollectMetrics) {
+    std::string genCode;
+    llvm::raw_string_ostream genCodeStream(genCode);
+    module.print(genCodeStream);
+    codeBytes = genCode.size();
+  } else {
+    module.print(output->os());
+  }
+
+  // Cleanup.
   module.erase();
+
+  // Print metrics.
+  if (shouldCollectMetrics) {
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(
+        stopTime - startTime);
+    output->os() << codeBytes << ", " << duration.count() << "\n";
+  }
+
+  output->keep();
   return result;
 }
