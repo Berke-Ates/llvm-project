@@ -8,6 +8,7 @@
 
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 
+#include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
@@ -365,8 +366,7 @@ Operation *FuncOp::generate(GeneratorOpBuilder &builder) {
 
   // Generate return operation.
   builder.setInsertionPointToEnd(&funcOp.getBody().front());
-  llvm::SmallVector<Type> i32Types = builder.collectTypes(
-      [](const Type &t) { return t.isSignlessInteger(32); });
+  llvm::SmallVector<Type> i32Types = {builder.getI32Type()};
   llvm::SmallVector<Type> types =
       name == "main" ? i32Types : builder.sampleTypes();
 
@@ -376,15 +376,31 @@ Operation *FuncOp::generate(GeneratorOpBuilder &builder) {
 
   llvm::Optional<llvm::SmallVector<Value>> results =
       builder.sampleValuesOfTypes(types);
-  if (!results.has_value()) {
+  if (!results.has_value() && name != "main") {
     funcOp.erase();
     return nullptr;
+  }
+
+  Operation *constOp;
+  if (!results.has_value()) {
+    OperationState constState = OperationState(
+        builder.getUnknownLoc(), arith::ConstantOp::getOperationName());
+    arith::ConstantOp::build(builder, constState, builder.getI32Type(),
+                             builder.getI32IntegerAttr(0));
+    constOp = builder.create(constState);
+    if (!constOp) {
+      funcOp.erase();
+      return nullptr;
+    }
+    results = {constOp->getResult(0)};
   }
 
   state = OperationState(builder.getUnknownLoc(), ReturnOp::getOperationName());
   ReturnOp::build(builder, state, results.value());
   op = builder.create(state);
   if (!op) {
+    if (constOp)
+      constOp->erase();
     funcOp.erase();
     return nullptr;
   }
