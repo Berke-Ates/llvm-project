@@ -1061,17 +1061,15 @@ LogicalResult DeallocOp::fold(FoldAdaptor adaptor,
 }
 
 Operation *DeallocOp::generate(GeneratorOpBuilder &builder) {
-  llvm::SmallVector<Value> possibleValues = builder.collectValues(
-      [](const Value &v) { return v.getType().isa<MemRefType>(); });
+  llvm::SmallVector<Value> possibleValues =
+      builder.collectValues([](const Value &v) {
+        return v.getType().isa<MemRefType>() && v.getDefiningOp() &&
+               isa<AllocOp>(v.getDefiningOp()) &&
+               !v.getDefiningOp()->hasAttrOfType<UnitAttr>("_gen_dealloc");
+      });
 
   while (!possibleValues.empty()) {
     Value memref = builder.sample(possibleValues).value();
-
-    // Check if it originated from alloc.
-    if (!memref.getDefiningOp() || !isa<AllocOp>(memref.getDefiningOp())) {
-      llvm::erase_value(possibleValues, memref);
-      continue;
-    }
 
     // Create DeallocOp.
     OperationState state(builder.getUnknownLoc(),
