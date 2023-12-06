@@ -421,10 +421,10 @@ public:
 
   /// Returns a list of values of the provided types.
   llvm::Optional<llvm::SmallVector<Value>>
-  sampleValuesOfTypes(llvm::SmallVector<Type> types);
+  sampleValuesOfTypes(llvm::SmallVector<Type> types, bool unusedFirst = false);
 
   /// Returns a value of the provided type.
-  llvm::Optional<Value> sampleValueOfType(Type type);
+  llvm::Optional<Value> sampleValueOfType(Type type, bool unusedFirst = false);
 
   /// Samples from a geometric distribution of available values in the current
   /// position.

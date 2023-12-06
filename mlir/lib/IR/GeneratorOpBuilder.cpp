@@ -298,23 +298,36 @@ GeneratorOpBuilder::sampleValue(std::function<bool(const Value &)> filter) {
 }
 
 llvm::Optional<llvm::SmallVector<Value>>
-GeneratorOpBuilder::sampleValuesOfTypes(llvm::SmallVector<Type> types) {
+GeneratorOpBuilder::sampleValuesOfTypes(llvm::SmallVector<Type> types,
+                                        bool unusedFirst) {
   llvm::SmallVector<Value> possibleValues = {};
 
   for (Type t : types) {
-    llvm::SmallVector<Value> values =
+    llvm::SmallVector<Value> valuesUnused = collectValues([t](const Value &v) {
+      return v.getType() == t && v.getUses().empty();
+    });
+
+    llvm::SmallVector<Value> valuesAll =
         collectValues([t](const Value &v) { return v.getType() == t; });
 
-    if (values.empty())
+    if (unusedFirst)
+      if (!valuesUnused.empty()) {
+        possibleValues.push_back(sample(valuesUnused).value());
+        continue;
+      }
+
+    if (valuesAll.empty())
       return std::nullopt;
-    possibleValues.push_back(sample(values).value());
+    possibleValues.push_back(sample(valuesAll).value());
   }
 
   return possibleValues;
 }
 
-llvm::Optional<Value> GeneratorOpBuilder::sampleValueOfType(Type type) {
-  llvm::Optional<llvm::SmallVector<Value>> values = sampleValuesOfTypes({type});
+llvm::Optional<Value> GeneratorOpBuilder::sampleValueOfType(Type type,
+                                                            bool unusedFirst) {
+  llvm::Optional<llvm::SmallVector<Value>> values =
+      sampleValuesOfTypes({type}, unusedFirst);
   if (!values.has_value())
     return std::nullopt;
   return values.value()[0];
