@@ -113,7 +113,7 @@ public:
     llvm::Optional<T> get(llvm::StringRef name) {
       if (!entries.contains(name) ||
           !std::holds_alternative<T>(entries[name].value)) {
-        llvm::errs() << "Config " << name << " unknown or wrong type\n";
+        // llvm::errs() << "Config " << name << " unknown or wrong type\n";
         return std::nullopt;
       }
 
