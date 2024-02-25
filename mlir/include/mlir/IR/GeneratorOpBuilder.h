@@ -413,11 +413,13 @@ public:
 
   /// Returns a list of values using the filters.
   llvm::Optional<llvm::SmallVector<Value>>
-  sampleValues(llvm::SmallVector<std::function<bool(const Value &)>> filters);
+  sampleValues(llvm::SmallVector<std::function<bool(const Value &)>> filters,
+               bool unusedFirst = false);
 
   /// Returns a value using the filter.
   llvm::Optional<Value>
-  sampleValue(std::function<bool(const Value &)> filter = nullptr);
+  sampleValue(std::function<bool(const Value &)> filter = nullptr,
+              bool unusedFirst = false);
 
   /// Returns a list of values of the provided types.
   llvm::Optional<llvm::SmallVector<Value>>

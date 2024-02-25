@@ -275,23 +275,35 @@ std::string GeneratorOpBuilder::sampleString() {
 }
 
 llvm::Optional<llvm::SmallVector<Value>> GeneratorOpBuilder::sampleValues(
-    llvm::SmallVector<std::function<bool(const Value &)>> filters) {
+    llvm::SmallVector<std::function<bool(const Value &)>> filters,
+    bool unusedFirst) {
   llvm::SmallVector<Value> possibleValues = {};
 
   for (auto filter : filters) {
-    llvm::SmallVector<Value> values = collectValues(filter);
-    if (values.empty())
+    llvm::SmallVector<Value> valuesUnused = collectValues(
+        [&](const Value &v) { return filter(v) && v.getUses().empty(); });
+    llvm::SmallVector<Value> valuesAll = collectValues(filter);
+
+    if (unusedFirst)
+      if (!valuesUnused.empty()) {
+        possibleValues.push_back(sample(valuesUnused).value());
+        continue;
+      }
+
+    if (valuesAll.empty())
       return std::nullopt;
 
-    possibleValues.push_back(sample(values).value());
+    possibleValues.push_back(sample(valuesAll).value());
   }
 
   return possibleValues;
 }
 
 llvm::Optional<Value>
-GeneratorOpBuilder::sampleValue(std::function<bool(const Value &)> filter) {
-  llvm::Optional<llvm::SmallVector<Value>> values = sampleValues({filter});
+GeneratorOpBuilder::sampleValue(std::function<bool(const Value &)> filter,
+                                bool unusedFirst) {
+  llvm::Optional<llvm::SmallVector<Value>> values =
+      sampleValues({filter}, unusedFirst);
   if (!values.has_value())
     return std::nullopt;
   return values.value()[0];
